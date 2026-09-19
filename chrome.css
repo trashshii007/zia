@@ -523,6 +523,7 @@
 
     .zen-current-workspace-indicator-name {
       flex: 0 0 auto !important;
+      margin-inline-start: calc(12px - var(--indicator-gap)) !important;
     }
 
     &:hover .zen-current-workspace-indicator-name {
@@ -537,21 +538,29 @@
   }
 }
 
-:root[zen-sidebar-expanded] :is(#zia-workspace-slot[haspinnedtabs] > .zen-current-workspace-indicator:hover, #zia-workspace-slot[collapsedpinnedtabs] > .zen-current-workspace-indicator) {
-  .zen-current-workspace-indicator-stack:not([zen-emoji-open="true"]) {
-    .zen-current-workspace-indicator-chevron {
-      display: flex;
-      opacity: 1;
-    }
+:root[zen-sidebar-expanded] #zia-workspace-slot[haspinnedtabs] .zen-current-workspace-indicator-stack:not([no-icon="true"], [zen-emoji-open="true"]) {
+  display: flex !important;
+  align-items: center !important;
 
-    .zen-current-workspace-indicator-icon {
-      display: none;
-    }
+  .zen-current-workspace-indicator-chevron {
+    display: flex !important;
+    width: 0 !important;
+    padding: 0 !important;
+    margin-inline-end: 0 !important;
+    opacity: 0 !important;
+    transition: width 0.1s, padding 0.1s, margin-inline-end 0.1s, opacity 0.15s, transform 0.1s !important;
   }
 }
 
+:root[zen-sidebar-expanded] :is(#zia-workspace-slot[haspinnedtabs] > .zen-current-workspace-indicator:hover, #zia-workspace-slot[collapsedpinnedtabs] > .zen-current-workspace-indicator) .zen-current-workspace-indicator-stack:not([no-icon="true"], [zen-emoji-open="true"]) .zen-current-workspace-indicator-chevron {
+  width: 16px !important;
+  padding: 1px !important;
+  margin-inline-end: var(--indicator-gap) !important;
+  opacity: 1 !important;
+}
+
 :root[zen-sidebar-expanded] #zia-workspace-slot[collapsedpinnedtabs] .zen-current-workspace-indicator-chevron {
-  transform: rotate(0deg);
+  transform: rotate(0deg) !important;
 }
 
 @media -moz-pref("zen.theme.essentials-favicon-bg") {
@@ -1013,6 +1022,10 @@ zen-folder[collapsed] > .tab-group-label-container > label {
 
 .pinned-tabs-container-separator toolbarseparator {
   background: rgba(255, 255, 255, 0.13) !important;
+}
+
+zen-workspace[collapsedpinnedtabs] > .workspace-arrowscrollbox[overflowing]::before {
+  display: none !important;
 }
 
 .tabbrowser-tab:not([zen-essential], [visuallyselected]):hover > .tab-stack > .tab-background {
