@@ -48,9 +48,8 @@
       setFlag("zia-site-dark", true);
       return;
     }
-    const [r, g, b] = rgb;
-    root.style.setProperty("--zia-site-bg", `rgb(${r}, ${g}, ${b})`);
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    root.style.setProperty("--zia-site-bg", cssColor(rgb));
+    const brightness = brightnessOf(rgb);
     setFlag("zia-site-light", brightness > LIGHT_THRESHOLD);
     setFlag("zia-site-dark", brightness < DARK_THRESHOLD);
   }
@@ -96,14 +95,15 @@
   async function sampleTopColor(browser) {
     const windowGlobal = browser?.browsingContext?.currentWindowGlobal;
     const width = browser?.clientWidth;
-    if (!windowGlobal || !width || browser.getAttribute("transparent") === "true") {
+    if (!windowGlobal || !width) {
       return null;
     }
 
+    const backing = browser.getAttribute("transparent") === "true" ? "transparent" : "rgb(255, 255, 255)";
     const pos = scrollPositions.get(browser);
     const bitmap = pos
-      ? await windowGlobal.drawSnapshot(new DOMRect(pos.x, pos.y, width, STRIP_HEIGHT), STRIP_SCALE, "rgb(255, 255, 255)")
-      : await windowGlobal.drawSnapshot(null, FULL_VIEW_SCALE, "rgb(255, 255, 255)");
+      ? await windowGlobal.drawSnapshot(new DOMRect(pos.x, pos.y, width, STRIP_HEIGHT), STRIP_SCALE, backing)
+      : await windowGlobal.drawSnapshot(null, FULL_VIEW_SCALE, backing);
 
     sampleTopColor.canvas ||= document.createElementNS("http://www.w3.org/1999/xhtml", "canvas");
     const canvas = sampleTopColor.canvas;
@@ -117,12 +117,13 @@
 
     const buckets = new Map();
     for (let i = 0; i < data.length; i += 4) {
-      const key = ((data[i] >> 3) << 10) | ((data[i + 1] >> 3) << 5) | (data[i + 2] >> 3);
-      const bucket = buckets.get(key) || { count: 0, r: 0, g: 0, b: 0 };
+      const key = ((data[i] >> 3) << 13) | ((data[i + 1] >> 3) << 8) | ((data[i + 2] >> 3) << 3) | (data[i + 3] >> 5);
+      const bucket = buckets.get(key) || { count: 0, r: 0, g: 0, b: 0, a: 0 };
       bucket.count++;
       bucket.r += data[i];
       bucket.g += data[i + 1];
       bucket.b += data[i + 2];
+      bucket.a += data[i + 3];
       buckets.set(key, bucket);
     }
     let best = null;
@@ -134,17 +135,58 @@
     if (!best) {
       return null;
     }
+    let rgb = [best.r, best.g, best.b, best.a].map((v) => Math.round(v / best.count));
+    if (rgb[3] < 255) {
+      rgb = colorOver(rgb, chromeBackdrop(browser));
+    }
     return {
-      rgb: [best.r, best.g, best.b].map((v) => Math.round(v / best.count)),
+      rgb: rgb[3] === 255 ? rgb.slice(0, 3) : rgb,
       share: best.count / (data.length / 4),
     };
+  }
+
+  function parseColor(text) {
+    const parts = text.match(/[\d.]+/g)?.map(Number) || [];
+    return parts.length >= 3 ? [parts[0], parts[1], parts[2], Math.round((parts[3] ?? 1) * 255)] : [0, 0, 0, 0];
+  }
+
+  function colorOver(top, bottom) {
+    const ta = top[3] / 255;
+    const ba = (bottom[3] / 255) * (1 - ta);
+    const a = ta + ba;
+    if (!a) {
+      return [0, 0, 0, 0];
+    }
+    return [0, 1, 2].map((i) => Math.round((top[i] * ta + bottom[i] * ba) / a)).concat(Math.round(a * 255));
+  }
+
+  function chromeBackdrop(browser) {
+    const shared = document.getElementById("zen-appcontent-navbar-wrapper")?.parentElement;
+    const layers = [];
+    for (let el = browser; el && el !== shared; el = el.parentElement) {
+      layers.push(el);
+    }
+    let color = [0, 0, 0, 0];
+    for (const el of layers.reverse()) {
+      color = colorOver(parseColor(getComputedStyle(el).backgroundColor), color);
+    }
+    return color;
+  }
+
+  function cssColor([r, g, b, a = 255]) {
+    return a === 255 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${a / 255})`;
+  }
+
+  function brightnessOf([r, g, b, a = 255]) {
+    const behind = matchMedia("(prefers-color-scheme: dark)").matches ? 0 : 255;
+    return ((r * 299 + g * 587 + b * 114) / 1000) * (a / 255) + behind * (1 - a / 255);
   }
 
   function colorDistance(a, b) {
     if (!a || !b) {
       return Infinity;
     }
-    return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]);
+    return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]) + Math.abs((a[3] ?? 255) - (b[3] ?? 255));
   }
 
   async function updateColor(fromScroll = false, duringLoad = false) {
@@ -2386,10 +2428,8 @@
     if (!reading?.rgb) {
       return;
     }
-    const [r, g, b] = reading.rgb;
-    bar.style.setProperty("--zia-pane-bg", `rgb(${r}, ${g}, ${b})`);
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    bar.toggleAttribute("light", brightness > LIGHT_THRESHOLD);
+    bar.style.setProperty("--zia-pane-bg", cssColor(reading.rgb));
+    bar.toggleAttribute("light", brightnessOf(reading.rgb) > LIGHT_THRESHOLD);
   }
 
   function colorPaneSoon(container, delay = 60) {
