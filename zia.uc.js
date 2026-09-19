@@ -833,6 +833,10 @@
   const ZEN_FOLDER_ANIMATION_MS = 180;
   const FOLDER_SETTLE_MS = 180;
   const FOLDER_BOUNCE_PX = 1;
+  const FOLDER_SELECTOR = "zen-folder, tab-group:not([split-view-group])";
+
+  const isFolder = (el) =>
+    el?.localName === "zen-folder" || (el?.localName === "tab-group" && !el.hasAttribute("split-view-group"));
 
   function bounceFolderBox(folder, opening) {
     const total = ZEN_FOLDER_ANIMATION_MS + FOLDER_SETTLE_MS;
@@ -880,7 +884,7 @@
       }
       for (const mutation of mutations) {
         const folder = mutation.target;
-        if (folder.localName !== "zen-folder") {
+        if (!isFolder(folder)) {
           continue;
         }
         const collapsedNow = folder.hasAttribute("collapsed");
@@ -1003,7 +1007,7 @@
     let suspicious = false;
 
     const tab = [...space.querySelectorAll(".tabbrowser-tab:not([zen-essential])")].find(
-      (t) => !t.closest("zen-folder") && visibleRect(t.querySelector(".tab-background"))
+      (t) => !t.closest(FOLDER_SELECTOR) && visibleRect(t.querySelector(".tab-background"))
     );
     if (tab) {
       const rect = visibleRect(tab.querySelector(".tab-background"));
@@ -1016,7 +1020,7 @@
       }
     }
 
-    const folder = [...space.querySelectorAll("zen-folder")].find((f) => !f.parentElement?.closest("zen-folder") && visibleRect(f));
+    const folder = [...space.querySelectorAll(FOLDER_SELECTOR)].find((f) => !f.parentElement?.closest(FOLDER_SELECTOR) && visibleRect(f));
     if (folder) {
       const rect = visibleRect(folder);
       const rightFix = rect.right - essentialsRight;
@@ -1042,19 +1046,19 @@
 
   function alignFolderBottoms(space) {
     let ok = true;
-    for (const folder of space.querySelectorAll("zen-folder")) {
+    for (const folder of space.querySelectorAll(FOLDER_SELECTOR)) {
       const rect = visibleRect(folder);
       const open = folder.hasAttribute("collapsed") === false;
       const container = folder.querySelector(":scope > .tab-group-container");
       let last = null;
       if (rect && open && container) {
         const items = [...container.children].filter(
-          (el) => (el.localName === "zen-folder" || el.classList.contains("tabbrowser-tab")) && visibleRect(el)
+          (el) => (isFolder(el) || el.classList.contains("tabbrowser-tab")) && visibleRect(el)
         );
         last = items[items.length - 1];
       }
       const current = parseFloat(folder.style.getPropertyValue("--zia-folder-bottom-extra")) || 0;
-      if (!last || last.localName !== "zen-folder") {
+      if (!isFolder(last)) {
         if (current) {
           folder.style.removeProperty("--zia-folder-bottom-extra");
         }
@@ -3812,11 +3816,38 @@
     container.style.removeProperty("position");
   }
 
+  const isDefaultName = (name) => !name || DEFAULT_FOLDER_NAMES.test(name);
+
+  function currentFolderName(folder) {
+    const editor = findNameEditor(folder);
+    const name = editor ? ("value" in editor ? editor.value : editor.textContent) : folder.name;
+    return (name || "").trim();
+  }
+
+  function folderIconURL(folder) {
+    if (folder.localName === "zen-folder") {
+      return folder.iconURL;
+    }
+    const icon = folder.querySelector(":scope > .tab-group-label-container .tab-group-icon > :is(.group-icon, label)");
+    if (icon) {
+      return icon.localName === "label" ? icon.textContent : icon.getAttribute("src");
+    }
+    return window.advancedTabGroups?.savedIcons?.[folder.id] || "";
+  }
+
+  function setFolderIcon(folder, icon) {
+    if (folder.localName === "zen-folder") {
+      window.gZenFolders?.setFolderUserIcon(folder, icon);
+    } else {
+      window.advancedTabGroups?.applyGroupIcon(folder, icon);
+    }
+  }
+
   function applySuggestedFolderIcon(folder) {
     if (!featureOn("folder-icon-suggest")) {
       return;
     }
-    if (!folder || folder.localName !== "zen-folder" || folder.iconURL) {
+    if (!isFolder(folder) || folderIconURL(folder)) {
       return;
     }
 
@@ -3827,7 +3858,7 @@
         if (!folder.isConnected) {
           return;
         }
-        if (!folder.iconURL) {
+        if (!folderIconURL(folder)) {
           let icon = null;
           try {
             icon = await suggestIconByMeaning(folder);
@@ -3835,12 +3866,12 @@
             console.warn("[Zia] The embedding model wasn't available:", err);
           }
           icon = icon || suggestFolderIcon(folder);
-          if (icon && !folder.iconURL) {
-            window.gZenFolders?.setFolderUserIcon(folder, icon);
+          if (icon && !folderIconURL(folder)) {
+            setFolderIcon(folder, icon);
             folder.dispatchEvent(new CustomEvent("TabGroupUpdate", { bubbles: true }));
           }
         }
-        if (DEFAULT_FOLDER_NAMES.test((folder.name || folder.label || "").trim())) {
+        if (isDefaultName(currentFolderName(folder))) {
           let name = null;
           try {
             name = await suggestNameByModel(folder);
@@ -3848,7 +3879,7 @@
             console.warn("[Zia] Couldn't name the folder with the model:", err);
           }
           name = name || suggestFolderName(folder);
-          if (name && DEFAULT_FOLDER_NAMES.test((folder.name || "").trim())) {
+          if (name && isDefaultName(currentFolderName(folder))) {
             renameFolder(folder, name);
           }
         }
@@ -3863,7 +3894,8 @@
 
   function watchNewFolders() {
     gBrowser.tabContainer.addEventListener("TabGroupCreate", (event) => {
-      applySuggestedFolderIcon(event.target);
+      // Other mods build the group's label row on this same event; measure the skeleton after they have
+      requestAnimationFrame(() => requestAnimationFrame(() => applySuggestedFolderIcon(event.target)));
     });
   }
 

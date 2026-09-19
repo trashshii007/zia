@@ -54,7 +54,7 @@ Opened, the panel follows Dia's shape: short rows with air around them, one size
 
 ### The sidebar
 
-Essentials sit as tiles, four to a row and six when the sidebar is wide. Folders get hover boxes, a bounce when they open, and icon or emoji covers. Downloads live next to the space name with a progress ring around them. Closing a tab by accident is undone with Cmd/Ctrl+Z for ten seconds afterwards.
+Essentials sit as tiles, four to a row and six when the sidebar is wide. Folders get hover boxes, a bounce when they open, and icon or emoji covers. Plain tab groups, like the ones [Advanced Tab Groups](https://github.com/Vertex-Mods/Advanced-Tab-Groups) makes, get the same folder treatment. Downloads live next to the space name with a progress ring around them. Closing a tab by accident is undone with Cmd/Ctrl+Z for ten seconds afterwards.
 
 ![Essentials and folders in the sidebar](https://github.com/user-attachments/assets/0c439e9d-651e-414c-8b85-d5bc8308aef4)
 
@@ -131,7 +131,8 @@ The first folder you make takes a few seconds while the model downloads and the
 are cached in your profile.
 
 It only ever fills in a folder that has no icon and still has its default name,
-so anything you've named or chosen yourself is left alone.
+so anything you've named or chosen yourself is left alone. Groups made with
+Advanced Tab Groups get the same treatment, with the icon saved through that mod.
 
 <details>
 <summary><b>Known gaps</b></summary>

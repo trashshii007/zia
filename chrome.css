@@ -707,7 +707,30 @@
   initial-value: 0px;
 }
 
-:root[zen-sidebar-expanded="true"] zen-folder {
+:root[zen-sidebar-expanded="true"] tab-group:not([split-view-group]) {
+  display: flex !important;
+  flex-direction: column !important;
+  margin-block: 0 !important;
+  margin-inline-end: 0 !important;
+
+  & > .tab-group-container {
+    margin-inline-start: 0 !important;
+
+    &::after {
+      content: none !important;
+    }
+
+    & > :is(.tabbrowser-tab, tab-group, zen-folder) {
+      margin-inline-start: 14px !important;
+    }
+
+    & > tab-group:not([split-view-group]) {
+      margin-block: 0 !important;
+    }
+  }
+}
+
+:root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group])) {
   --zia-folder-box-top: var(--tab-margin-block);
   --zia-folder-inner-gap: 5px;
   --zia-folder-box-bottom: 0px;
@@ -719,7 +742,7 @@
   isolation: isolate;
   transition: none !important;
 
-  &[collapsed]:not([has-active]) {
+  &[collapsed]:not([has-active], :has(tab[selected], tab[atg-folder-active])) {
     --zia-folder-box-bottom: var(--tab-margin-block);
   }
 
@@ -795,21 +818,21 @@
     rotate: -90deg;
   }
 
-  &:is(:not([collapsed]), [collapsed][has-active]) {
+  &:is(:not([collapsed]), [collapsed]:is([has-active], :has(tab[selected], tab[atg-folder-active]))) {
     padding-bottom: max(0px, calc(var(--zia-folder-inner-gap) - var(--tab-margin-block))) !important;
   }
 
-  & zen-folder {
+  & :is(zen-folder, tab-group:not([split-view-group])) {
     --zia-folder-box-left: 0px;
     --zia-folder-box-right: calc(var(--zia-folder-right-fix, 0px) + var(--zia-folder-inner-gap));
     --zia-folder-box-bottom: var(--tab-margin-block);
 
-    &:is(:not([collapsed]), [collapsed][has-active]) {
+    &:is(:not([collapsed]), [collapsed]:is([has-active], :has(tab[selected], tab[atg-folder-active]))) {
       padding-bottom: var(--zia-folder-inner-gap) !important;
     }
   }
 
-  & zen-folder zen-folder {
+  & :is(zen-folder, tab-group:not([split-view-group])) :is(zen-folder, tab-group:not([split-view-group])) {
     --zia-folder-box-right: calc(var(--zia-folder-right-fix, 0px) + 2 * var(--zia-folder-inner-gap));
   }
 
@@ -855,7 +878,7 @@
   overflow: hidden !important;
 }
 
-:root[zen-sidebar-expanded="true"] zen-folder::before {
+:root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group]))::before {
   corner-shape: round !important;
 }
 
@@ -887,7 +910,7 @@
   transition: none !important;
 }
 
-zen-folder > .tab-group-label-container > label,
+:is(zen-folder, tab-group:not([split-view-group])) > .tab-group-label-container > label,
 #urlbar:not([breakout-extend]) :is(.urlbar-input, #zia-url-title, #zia-url-plain) {
   font-size: var(--zia-text-size) !important;
 }
@@ -905,15 +928,15 @@ zen-folder > .tab-group-label-container > label,
   scale: 1 !important;
 }
 
-zen-folder > .tab-group-label-container .tab-group-folder-icon {
+:is(zen-folder, tab-group:not([split-view-group])) > .tab-group-label-container .tab-group-folder-icon {
   translate: 0 var(--zia-folder-icon-offset);
 }
 
-zen-folder > .tab-group-label-container .tab-group-folder-icon svg:not(:has(.icon image:not([href=""]))) {
+:is(zen-folder, tab-group:not([split-view-group])) > .tab-group-label-container .tab-group-folder-icon svg:not(:has(.icon image:not([href=""]))) {
   scale: 0.9;
 }
 
-zen-folder > .tab-group-label-container .tab-group-folder-icon svg:has(.icon image:not([href=""])) {
+:is(zen-folder, tab-group:not([split-view-group])) > .tab-group-label-container .tab-group-folder-icon svg:has(.icon image:not([href=""])) {
   & :is(.back, .front, .dots) {
     display: none !important;
   }
@@ -928,7 +951,7 @@ zen-folder > .tab-group-label-container .tab-group-folder-icon svg:has(.icon ima
   }
 }
 
-zen-folder > .tab-group-label-container .tab-group-folder-icon:not(:has(.icon image:not([href=""]))) {
+:is(zen-folder, tab-group:not([split-view-group])) > .tab-group-label-container .tab-group-folder-icon:not(:has(.icon image:not([href=""]))) {
   background-color: var(--zia-folder-mark-color);
   mask: url("chrome://sine/content/zia/icons/tab-default.svg") center / 16px no-repeat;
 
@@ -974,7 +997,7 @@ zen-folder > .tab-group-label-container .tab-group-folder-icon:not(:has(.icon im
   backdrop-filter: blur(8px) !important;
 }
 
-:root[zen-sidebar-expanded="true"] zen-folder > .tab-group-container > .tabbrowser-tab {
+:root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group])) > .tab-group-container > .tabbrowser-tab {
   margin-inline-end: 0 !important;
 }
 
@@ -986,8 +1009,8 @@ zen-folder > .tab-group-label-container .tab-group-folder-icon:not(:has(.icon im
   color: rgb(28, 28, 30) !important;
 }
 
-zen-folder > .tab-group-label-container > label,
-zen-folder[collapsed] > .tab-group-label-container > label {
+:is(zen-folder, tab-group:not([split-view-group])) > .tab-group-label-container > label,
+:is(zen-folder, tab-group:not([split-view-group]))[collapsed] > .tab-group-label-container > label {
   color: rgb(255, 255, 255) !important;
   opacity: 1 !important;
 }
@@ -1052,7 +1075,7 @@ zen-workspace[collapsedpinnedtabs] > .workspace-arrowscrollbox[overflowing]::bef
   scrollbar-width: none !important;
 }
 
-zen-folder > .tab-group-label-container {
+:is(zen-folder, tab-group:not([split-view-group])) > .tab-group-label-container {
   font-weight: var(--zia-folder-weight) !important;
 }
 
@@ -1060,7 +1083,7 @@ zen-folder > .tab-group-label-container {
   margin-inline-end: var(--zia-tab-right-fix, 0px) !important;
 }
 
-:root[zen-sidebar-expanded="true"] zen-folder .tabbrowser-tab:not([zen-essential]) > .tab-stack > .tab-background {
+:root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group])) .tabbrowser-tab:not([zen-essential]) > .tab-stack > .tab-background {
   margin-inline-end: calc(var(--zia-folder-right-fix, 0px) + var(--zia-folder-inner-gap, 5px)) !important;
 }
 
@@ -1068,31 +1091,31 @@ zen-folder > .tab-group-label-container {
   margin-inline-end: var(--zia-tab-right-fix, 0px) !important;
 }
 
-:root[zen-sidebar-expanded="true"] zen-folder .tabbrowser-tab:not([zen-essential]) > .tab-stack > .tab-content {
+:root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group])) .tabbrowser-tab:not([zen-essential]) > .tab-stack > .tab-content {
   margin-inline-end: calc(var(--zia-folder-right-fix, 0px) + var(--zia-folder-inner-gap, 5px)) !important;
 }
 
-:root[zen-sidebar-expanded="true"] zen-folder zen-folder .tabbrowser-tab:not([zen-essential]) > .tab-stack > .tab-content {
+:root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group])) :is(zen-folder, tab-group:not([split-view-group])) .tabbrowser-tab:not([zen-essential]) > .tab-stack > .tab-content {
   margin-inline-end: calc(var(--zia-folder-right-fix, 0px) + 2 * var(--zia-folder-inner-gap, 5px)) !important;
 }
 
-:root[zen-sidebar-expanded="true"] zen-folder zen-folder zen-folder .tabbrowser-tab:not([zen-essential]) > .tab-stack > .tab-content {
+:root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group])) :is(zen-folder, tab-group:not([split-view-group])) :is(zen-folder, tab-group:not([split-view-group])) .tabbrowser-tab:not([zen-essential]) > .tab-stack > .tab-content {
   margin-inline-end: calc(var(--zia-folder-right-fix, 0px) + 3 * var(--zia-folder-inner-gap, 5px)) !important;
 }
 
-:root[zen-sidebar-expanded="true"] zen-folder > .tab-group-label-container {
+:root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group])) > .tab-group-label-container {
   padding-inline-end: calc(var(--zia-folder-right-fix, 0px) + var(--zia-folder-inner-gap, 5px)) !important;
 }
 
-:root[zen-sidebar-expanded="true"] zen-folder zen-folder > .tab-group-label-container {
+:root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group])) :is(zen-folder, tab-group:not([split-view-group])) > .tab-group-label-container {
   padding-inline-end: calc(var(--zia-folder-right-fix, 0px) + 2 * var(--zia-folder-inner-gap, 5px)) !important;
 }
 
-:root[zen-sidebar-expanded="true"] zen-folder zen-folder .tabbrowser-tab:not([zen-essential]) > .tab-stack > .tab-background {
+:root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group])) :is(zen-folder, tab-group:not([split-view-group])) .tabbrowser-tab:not([zen-essential]) > .tab-stack > .tab-background {
   margin-inline-end: calc(var(--zia-folder-right-fix, 0px) + 2 * var(--zia-folder-inner-gap, 5px)) !important;
 }
 
-:root[zen-sidebar-expanded="true"] zen-folder zen-folder zen-folder .tabbrowser-tab:not([zen-essential]) > .tab-stack > .tab-background {
+:root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group])) :is(zen-folder, tab-group:not([split-view-group])) :is(zen-folder, tab-group:not([split-view-group])) .tabbrowser-tab:not([zen-essential]) > .tab-stack > .tab-background {
   margin-inline-end: calc(var(--zia-folder-right-fix, 0px) + 3 * var(--zia-folder-inner-gap, 5px)) !important;
 }
 
