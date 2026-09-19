@@ -3243,19 +3243,26 @@
     watcher.observe(navBar, { childList: true });
 
     const toolbox = document.getElementById("navigator-toolbox");
-    if (toolbox) {
-      toolbox.addEventListener("mouseenter", () => {
-        if (inCompactMode()) {
-          root.setAttribute("zia-panel-open", "true");
-        }
-      });
-      toolbox.addEventListener("mouseleave", () => root.removeAttribute("zia-panel-open"));
+    const SIDEBAR_SHOWN_ATTRS = ["zen-has-hover", "zen-user-show", "zen-has-empty-tab", "flash-popup", "has-popup-menu", "movingtab", "zen-compact-mode-active"];
+
+    function syncPanelOpen() {
+      const shown = inCompactMode() && !!toolbox && SIDEBAR_SHOWN_ATTRS.some((name) => toolbox.hasAttribute(name));
+      setFlag("zia-panel-open", shown);
     }
 
-    const modeWatcher = new MutationObserver(() => moveTopRow());
+    if (toolbox) {
+      const panelWatcher = new MutationObserver(syncPanelOpen);
+      panelWatcher.observe(toolbox, { attributes: true, attributeFilter: SIDEBAR_SHOWN_ATTRS });
+    }
+
+    const modeWatcher = new MutationObserver(() => {
+      moveTopRow();
+      syncPanelOpen();
+    });
     modeWatcher.observe(root, { attributes: true, attributeFilter: ["zen-compact-mode"] });
 
     moveTopRow();
+    syncPanelOpen();
   }
 
   const ICON_SYNONYMS = {
