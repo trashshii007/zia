@@ -8,6 +8,8 @@ A [Sine](https://github.com/CosmoCreeper/Sine) mod that reworks Zen's frame, tak
 ![Platform](https://img.shields.io/badge/tested%20on-macOS%20%C2%B7%20dark%20mode-informational)
 ![Licence](https://img.shields.io/badge/licence-MIT-blue)
 
+What's changed in each release: [CHANGELOG.md](CHANGELOG.md).
+
 > **Alpha.** Built and tested on macOS, dark mode, **Sidebar and Top Toolbar** layout. Light mode, the other layouts, Windows and Linux are untested and will likely need work. Feedback on those is exactly what's wanted.
 
 ---
@@ -54,7 +56,7 @@ Opened, the panel follows Dia's shape: short rows with air around them, one size
 
 ### The sidebar
 
-Essentials sit as tiles, four to a row and six when the sidebar is wide. Folders get hover boxes, a bounce when they open, and icon or emoji covers. Plain tab groups, like the ones [Advanced Tab Groups](https://github.com/Vertex-Mods/Advanced-Tab-Groups) makes, get the same folder treatment. Downloads live next to the space name with a progress ring around them. Closing a tab by accident is undone with Cmd/Ctrl+Z for ten seconds afterwards.
+Essentials sit as tiles, four to a row and six when the sidebar is wide. Folders get hover boxes, a bounce when they open, icon or emoji covers, a colour of their own from the right-click menu, and an × to delete them. Plain tab groups, like the ones [Advanced Tab Groups](https://github.com/Vertex-Mods/Advanced-Tab-Groups) makes, get the same folder treatment. Downloads live next to the space name with a progress ring around them. Closing a tab by accident is undone with Cmd/Ctrl+Z for ten seconds afterwards.
 
 ![Essentials and folders in the sidebar](https://github.com/user-attachments/assets/0c439e9d-651e-414c-8b85-d5bc8308aef4)
 

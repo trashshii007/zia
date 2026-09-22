@@ -23,7 +23,7 @@
   --zia-tab-shine-layers:
     linear-gradient(to bottom right, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.09) 28%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.09) 72%, rgba(255, 255, 255, 0.32));
   --zia-essential-min-width: 54px;
-  --zia-essential-height: 41px;
+  --zia-essential-height: 42px;
   --zia-essential-inner-tighten: 1;
   --zia-essential-radius: 12px;
   --zia-essential-gap: 3px;
@@ -33,8 +33,27 @@
   --zia-tab-gap: 2px;
   --zia-tab-radius: 9.5px;
   --zia-close-size: 22px;
-  --zia-close-radius: 3px;
+
+  --zia-close-radius: 6px;
+  --zia-close-corner: squircle;
+
+  --zia-close-hover-bg: rgba(255, 255, 255, 0.1);
+
+  --zia-folder-mark-opacity: 0.55;
   --zia-folder-hover-bg: rgba(255, 255, 255, 0.1);
+
+  --zia-fc-white: #fbfbfb;
+  --zia-fc-green: #008b5d;
+  --zia-fc-blue: #007fbd;
+  --zia-fc-purple: #625da5;
+  --zia-fc-amber: #c98400;
+  --zia-fc-pink: #bd556b;
+  --zia-fc-red: #cc4a55;
+  --zia-fc-orange: #c95125;
+
+  --zia-folder-wash: 20%;
+  --zia-folder-tint: 55%;
+  --zia-folder-name-tint: 42%;
   --zia-tab-hover-bg: rgba(255, 255, 255, 0.115);
   --zia-active-glow-blur: 20px;
   --zia-active-glow-spread: 4px;
@@ -44,6 +63,8 @@
   --zia-bottom-row-space: 6px;
   --zia-tab-weight: 400;
   --zia-folder-weight: 500;
+
+  --zia-media-card-base: light-dark(rgb(235, 235, 235), #1b1b1b);
   --zia-media-bg: rgba(0, 0, 0, 0.225);
   --zia-media-card-height: 64px;
   --zia-media-card-height-open: 124px;
@@ -55,6 +76,7 @@
   --zia-space-name-offset: 1.5px;
   --zia-space-pill-height: 34px;
   --zia-space-pill-bg: rgba(255, 255, 255, 0.16);
+  --zia-space-icon-gap: 8px;
   --zia-folder-icon-offset: 0px;
   --zia-folder-mark-color: rgba(0, 0, 0, 0.75);
   --zia-text-size: calc(1.22rem - 0.3px);
@@ -98,6 +120,10 @@
   }
 
   &[zen-compact-mode="true"] #zen-appcontent-wrapper {
+    margin-left: var(--zia-card-gap) !important;
+  }
+
+  &[zen-right-side="true"] #zen-appcontent-wrapper {
     margin-left: var(--zia-card-gap) !important;
   }
 
@@ -175,7 +201,7 @@
   outline: none !important;
 }
 
-#urlbar[breakout-extend] {
+#urlbar[breakout-extend]:not([zen-floating-urlbar="true"]) {
   border-radius: 16.5px !important;
   translate: var(--zia-urlbar-open-offset-x, 0px) var(--zia-urlbar-open-offset) !important;
   --urlbarview-separator-color: transparent !important;
@@ -465,8 +491,6 @@
   list-style-image: url("chrome://sine/content/zia/icons/stop.svg") !important;
 }
 
-/* The fallback and non-light site colours need light controls even when Zen
-   itself uses a light theme. The site-light rule below overrides this baseline. */
 :root #zen-appcontent-navbar-wrapper {
   color-scheme: dark !important;
   color: rgb(251, 251, 254) !important;
@@ -487,8 +511,6 @@
   --zen-toolbar-element-bg-hover: rgba(0, 0, 0, 0.1) !important;
 }
 
-
-/* Dark baseline for the expanded panel; the appearance override below supplies light colours. */
 :root #urlbar[breakout-extend] {
   color-scheme: dark !important;
   color: rgb(251, 251, 254) !important;
@@ -507,18 +529,21 @@
 
 #zia-workspace-slot {
   display: flex;
+
   flex: 1;
-  min-width: 0;
+
+  min-width: min(max-content, 100%);
   align-items: center;
   -moz-window-dragging: drag;
 
   & > .zen-current-workspace-indicator {
-    width: auto !important;
     max-width: 100% !important;
     min-height: var(--zia-space-pill-height) !important;
     max-height: var(--zia-space-pill-height) !important;
 
-    padding: 0 8px 0 8px !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    background-color: transparent !important;
     margin-inline-start: var(--zia-space-name-nudge) !important;
     translate: 0 var(--zia-space-name-offset);
 
@@ -531,37 +556,43 @@
     }
 
     flex: 0 0 auto !important;
-    width: fit-content !important;
 
-    min-width: 0 !important;
+    width: max-content !important;
+
+    min-width: max-content !important;
+
+    &:hover > #zia-space-label {
+      background-color: var(--zia-space-pill-bg) !important;
+    }
 
     &::before {
-      top: 0 !important;
-      left: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
       background-color: transparent !important;
       background-image: none !important;
-      corner-shape: round;
+    }
+
+    &:has(#zia-space-label) > .zen-current-workspace-indicator-name {
+      display: none !important;
+    }
+
+    &:has(#zia-space-label) .zen-current-workspace-indicator-stack {
+      position: absolute !important;
+      inset-inline-start: 8px !important;
+      top: 50% !important;
+      translate: 0 -50% !important;
+      margin: 0 !important;
+      width: 16px !important;
+      height: 16px !important;
+      opacity: 0 !important;
+      background: transparent !important;
     }
 
     .zen-current-workspace-indicator-name {
       flex: 0 0 auto !important;
     }
-
-    &:hover .zen-current-workspace-indicator-name {
-      background-color: var(--zia-space-pill-bg) !important;
-
-      border-radius: 1px !important;
-      corner-shape: round !important;
-
-      outline: 9px solid var(--zia-space-pill-bg) !important;
-      outline-offset: 0 !important;
-    }
   }
 }
 
-:root[zen-sidebar-expanded] :is(#zia-workspace-slot[haspinnedtabs] > .zen-current-workspace-indicator:hover, #zia-workspace-slot[collapsedpinnedtabs] > .zen-current-workspace-indicator) {
+:root[zen-sidebar-expanded] #zia-workspace-slot[collapsedpinnedtabs] > .zen-current-workspace-indicator {
   .zen-current-workspace-indicator-stack:not([zen-emoji-open="true"]) {
     .zen-current-workspace-indicator-chevron {
       display: flex;
@@ -686,11 +717,13 @@
   --zen-active-tab-scale: 1 !important;
 }
 
-#zia-workspace-slot .zen-current-workspace-indicator-name {
+#zia-workspace-slot .zen-current-workspace-indicator-name,
+#zia-space-label {
   color: rgb(255, 255, 255) !important;
 }
 
-:root[zia-space-colored="true"] #zia-workspace-slot .zen-current-workspace-indicator-name {
+:root[zia-space-colored="true"] #zia-workspace-slot .zen-current-workspace-indicator-name,
+:root[zia-space-colored="true"] #zia-space-label {
   color: color-mix(in srgb, var(--zen-primary-color, white) var(--zia-space-name-tint), white) !important;
 }
 
@@ -820,7 +853,7 @@
         margin-inline-start: 4px;
         vertical-align: -2px;
         background-color: currentColor;
-        opacity: 0.55;
+        opacity: var(--zia-folder-mark-opacity);
         mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
 
         transform-origin: center;
@@ -860,6 +893,7 @@
 #zen-sidebar-top-buttons .titlebar-buttonbox-container {
   margin-inline-start: 5px !important;
   margin-top: 3px !important;
+  margin-bottom: 0 !important;
 }
 
 :root[zen-sidebar-expanded="true"] #tabbrowser-tabs {
@@ -985,6 +1019,88 @@
   margin-block: var(--zia-bottom-row-space) calc(var(--zia-bottom-row-space) - 4.5px) !important;
 }
 
+:root[zen-sidebar-expanded="true"] zen-folder {
+  &[zia-folder-color="green"] { --zia-folder-swatch: var(--zia-fc-green); }
+  &[zia-folder-color="blue"] { --zia-folder-swatch: var(--zia-fc-blue); }
+  &[zia-folder-color="purple"] { --zia-folder-swatch: var(--zia-fc-purple); }
+  &[zia-folder-color="amber"] { --zia-folder-swatch: var(--zia-fc-amber); }
+  &[zia-folder-color="pink"] { --zia-folder-swatch: var(--zia-fc-pink); }
+  &[zia-folder-color="red"] { --zia-folder-swatch: var(--zia-fc-red); }
+  &[zia-folder-color="orange"] { --zia-folder-swatch: var(--zia-fc-orange); }
+
+  &[zia-folder-color]::after {
+    opacity: 1;
+  }
+
+  &[zia-folder-color]::before {
+    background-color: color-mix(in srgb, var(--zia-folder-swatch) var(--zia-folder-wash), transparent);
+  }
+
+  &[zia-folder-color]:hover::before {
+    background-color: color-mix(in srgb, var(--zia-folder-swatch) var(--zia-folder-tint), transparent);
+  }
+}
+
+#zia-space-label {
+  display: flex;
+  align-items: center;
+
+  flex: 0 0 auto;
+  width: max-content;
+  max-width: 100%;
+
+  padding: 0 8px;
+  height: var(--zia-space-pill-height);
+  border-radius: 10px;
+  corner-shape: round;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -moz-window-dragging: no-drag;
+}
+
+#zia-space-label[zia-has-icon]::before {
+  content: attr(zia-icon);
+  font-size: 16px;
+  line-height: 1;
+  margin-inline-end: var(--zia-space-icon-gap);
+}
+
+#zia-space-label > img {
+  width: 16px;
+  height: 16px;
+  margin-inline-end: var(--zia-space-icon-gap);
+}
+
+zen-folder > .tab-group-label-container > .zia-folder-close {
+  display: none;
+  list-style-image: url("chrome://browser/skin/zen-icons/close.svg");
+
+  -moz-context-properties: fill, fill-opacity !important;
+  fill: rgb(255, 255, 255) !important;
+  fill-opacity: var(--zia-folder-mark-opacity) !important;
+  color: rgb(255, 255, 255) !important;
+  opacity: 1 !important;
+  width: var(--zia-close-size);
+  height: var(--zia-close-size);
+  min-width: var(--zia-close-size);
+  padding: 4px;
+  border-radius: var(--zia-close-radius);
+  corner-shape: var(--zia-close-corner);
+  flex-shrink: 0;
+
+  margin-inline-start: auto;
+}
+
+zen-folder > .tab-group-label-container:hover > .zia-folder-close {
+  display: flex;
+}
+
+zen-folder > .tab-group-label-container > .zia-folder-close:hover {
+  background-color: var(--zia-close-hover-bg);
+}
+
 .tabbrowser-tab .tab-content > :is(.tab-close-button, .tab-reset-button):active {
   scale: 1 !important;
 }
@@ -998,6 +1114,8 @@
   height: var(--zia-close-size) !important;
   min-width: var(--zia-close-size) !important;
   border-radius: var(--zia-close-radius) !important;
+
+  corner-shape: var(--zia-close-corner) !important;
   margin-inline-end: 0 !important;
   padding: 4px !important;
 }
@@ -1028,6 +1146,11 @@
 :is(zen-folder, tab-group:not([split-view-group]))[collapsed] > .tab-group-label-container > label {
   color: rgb(255, 255, 255) !important;
   opacity: 1 !important;
+}
+
+:root zen-folder[zia-folder-color] > .tab-group-label-container > label,
+:root zen-folder[zia-folder-color][collapsed] > .tab-group-label-container > label {
+  color: color-mix(in srgb, var(--zia-folder-swatch, white) var(--zia-folder-name-tint), white) !important;
 }
 
 #zen-workspaces-button {
@@ -1158,7 +1281,8 @@
 
     --zen-sidebar-notification-bg: rgb(0, 0, 0);
 
-    background: var(--zia-media-bg) !important;
+    background-color: var(--zia-media-rest, var(--zia-media-bg)) !important;
+    background-image: none !important;
     isolation: isolate;
 
     & .zen-media-info-vbox::before {
@@ -1194,7 +1318,8 @@
       transform 0.35s var(--zia-media-ease),
       opacity 0.3s var(--zia-media-ease),
       filter 0.3s var(--zia-media-ease),
-      height 0.3s var(--zia-media-ease) !important;
+      height 0.3s var(--zia-media-ease),
+      background-color 0.3s var(--zia-media-ease) !important;
 
     &[zen-reindexing] {
       transition: none !important;
@@ -1494,6 +1619,8 @@
   &:hover {
     .zen-media-card {
       height: var(--zia-media-card-height-open) !important;
+
+      background-color: var(--zia-media-solid, var(--zia-media-card-base)) !important;
     }
 
     .zen-media-progress-hbox {
@@ -2519,7 +2646,6 @@ tooltip[default="true"] {
 :root[zen-compact-mode="true"] #titlebar > #zen-sidebar-top-buttons {
   margin-block-start: calc(var(--zia-top-row-space) - 8px) !important;
 }
-
 @media (-moz-platform: windows) {
   :root[zen-compact-mode="true"] #zen-sidebar-top-buttons .titlebar-buttonbox-container {
     display: none !important;
@@ -2548,7 +2674,11 @@ zen-folder .tab-reset-button {
   fill-opacity: 1 !important;
   color: rgb(255, 255, 255) !important;
   border-radius: var(--zia-close-radius) !important;
-  corner-shape: round !important;
+  corner-shape: var(--zia-close-corner) !important;
+  width: var(--zia-close-size) !important;
+  height: var(--zia-close-size) !important;
+  min-width: var(--zia-close-size) !important;
+  padding: 4px !important;
 }
 
 #urlbar #identity-icon-label,
@@ -2580,8 +2710,6 @@ zen-folder .tab-reset-button {
   }
 }
 
-/* Follow the Appearance > Website appearance selector used for this local experiment.
-   0 = dark, 1 = light, 2 = automatic (system). */
 @media -moz-pref("layout.css.prefers-color-scheme.content-override", 1),
        (-moz-pref("layout.css.prefers-color-scheme.content-override", 2)) and (not (-moz-system-dark-theme)) {
   :root:not([privatebrowsingmode="temporary"]) #urlbar[breakout-extend],
@@ -2630,4 +2758,10 @@ zen-folder .tab-reset-button {
       background-color: rgba(28, 28, 30, 0.09) !important;
     }
   }
+}
+
+#urlbar[breakout-extend][zen-floating-urlbar="true"] {
+  border-radius: 16.5px !important;
+  --urlbarview-separator-color: transparent !important;
+  --urlbarView-separator-color: transparent !important;
 }

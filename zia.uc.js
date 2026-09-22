@@ -98,8 +98,8 @@
     if (!windowGlobal || !width) {
       return null;
     }
-
     const backing = browser.getAttribute("transparent") === "true" ? "transparent" : "rgb(255, 255, 255)";
+
     const pos = scrollPositions.get(browser);
     const bitmap = pos
       ? await windowGlobal.drawSnapshot(new DOMRect(pos.x, pos.y, width, STRIP_HEIGHT), STRIP_SCALE, backing)
@@ -144,7 +144,6 @@
       share: best.count / (data.length / 4),
     };
   }
-
   function parseColor(text) {
     const parts = text.match(/[\d.]+/g)?.map(Number) || [];
     return parts.length >= 3 ? [parts[0], parts[1], parts[2], Math.round((parts[3] ?? 1) * 255)] : [0, 0, 0, 0];
@@ -591,6 +590,44 @@
     urlbar.setAttribute("zia-has-title", "true");
   }
 
+  function keepWholeUrlSelected(urlbar) {
+    const input = urlbar.querySelector(".urlbar-input") || gURLBar.inputField;
+    if (!input) {
+      return;
+    }
+    let closedLength = -1;
+    urlbar.addEventListener(
+      "mousedown",
+      () => {
+        closedLength = urlbar.hasAttribute("breakout-extend") ? -1 : input.value.length;
+      },
+      true
+    );
+    const fix = () => {
+      if (closedLength < 0) {
+        return;
+      }
+      const { selectionStart, selectionEnd, value } = input;
+      if (selectionStart === 0 && selectionEnd === closedLength && closedLength < value.length) {
+        input.select();
+        closedLength = -1;
+      }
+    };
+    new MutationObserver(() => {
+      if (!urlbar.hasAttribute("breakout-extend")) {
+        closedLength = -1;
+        return;
+      }
+      requestAnimationFrame(fix);
+      for (const ms of [30, 100, 200]) {
+        setTimeout(fix, ms);
+      }
+      setTimeout(() => {
+        closedLength = -1;
+      }, 400);
+    }).observe(urlbar, { attributes: true, attributeFilter: ["breakout-extend"] });
+  }
+
   let openOffset = 0;
 
   function desiredOpenTop() {
@@ -618,6 +655,12 @@
 
   function alignOpenedUrlbar() {
     const urlbar = gURLBar.textbox || document.getElementById("urlbar");
+
+    if (urlbar?.getAttribute("zen-floating-urlbar") === "true") {
+      root.style.setProperty("--zia-urlbar-open-offset", "0px");
+      root.style.setProperty("--zia-urlbar-open-offset-x", "0px");
+      return;
+    }
     if (!urlbar?.hasAttribute("breakout-extend")) {
       return;
     }
@@ -694,6 +737,57 @@
     setTimeout(placeWorkspaceIndicator, 2000);
   }
 
+  const XHTML_NS = "http://www.w3.org/1999/xhtml";
+
+  function syncSpaceLabel(indicator) {
+    if (!indicator) {
+      return;
+    }
+    let workspace = null;
+    try {
+      workspace = gZenWorkspaces.getActiveWorkspace();
+    } catch (err) {
+      return;
+    }
+    if (!workspace) {
+      return;
+    }
+
+    let label = indicator.querySelector("#zia-space-label");
+    if (!label) {
+      label = document.createElementNS(XHTML_NS, "div");
+      label.id = "zia-space-label";
+      indicator.prepend(label);
+    }
+
+    const rawIcon = typeof workspace.icon === "string" ? workspace.icon : "";
+
+    const visibleIcon = rawIcon.replace(/[\s\u200b-\u200f\u2060\ufe00-\ufe0f\p{Cf}]/gu, "");
+    const hasIcon = visibleIcon !== "";
+    const icon = hasIcon ? rawIcon.trim() : "";
+
+    const blank = /^[\s\u200b-\u200f\u2060\ufe00-\ufe0f]+|[\s\u200b-\u200f\u2060\ufe00-\ufe0f]+$/gu;
+    label.textContent = (workspace.name || "").replace(blank, "");
+
+    if (!hasIcon) {
+      label.removeAttribute("zia-icon");
+      label.removeAttribute("zia-has-icon");
+    } else if (icon.endsWith(".svg")) {
+      label.removeAttribute("zia-icon");
+      label.removeAttribute("zia-has-icon");
+      const img = document.createElementNS(XHTML_NS, "img");
+      img.src = icon;
+      label.prepend(img);
+    } else {
+      label.setAttribute("zia-icon", icon);
+      label.setAttribute("zia-has-icon", "true");
+    }
+  }
+
+  function removeSpaceLabel(indicator) {
+    indicator?.querySelector("#zia-space-label")?.remove();
+  }
+
   function mirrorSpaceAttributes(space) {
     for (const name of MIRRORED_SPACE_ATTRS) {
       if (space?.hasAttribute(name)) {
@@ -718,6 +812,7 @@
     }
 
     if (movedIndicator && movedIndicator !== indicator && movedFromSpace?.isConnected) {
+      removeSpaceLabel(movedIndicator);
       movedFromSpace.prepend(movedIndicator);
       movedIndicator = null;
       movedFromSpace = null;
@@ -728,6 +823,8 @@
       movedIndicator = indicator;
       movedFromSpace = space;
     }
+
+    syncSpaceLabel(indicator);
 
     spaceAttrObserver?.disconnect();
     mirrorSpaceAttributes(space);
@@ -2968,12 +3065,15 @@
     ring.setAttribute("viewBox", "0 0 100 100");
     const track = document.createElementNS(NS, "circle");
     const arc = document.createElementNS(NS, "circle");
+
+    const RADIUS = 46;
+    const STROKE = 7;
     for (const circle of [track, arc]) {
       circle.setAttribute("cx", "50");
       circle.setAttribute("cy", "50");
-      circle.setAttribute("r", "45");
+      circle.setAttribute("r", `${RADIUS}`);
       circle.setAttribute("fill", "none");
-      circle.setAttribute("stroke-width", "9");
+      circle.setAttribute("stroke-width", `${STROKE}`);
       ring.appendChild(circle);
     }
     track.setAttribute("class", "zia-download-ring-track");
@@ -2981,7 +3081,7 @@
     arc.setAttribute("stroke-linecap", "round");
 
     arc.setAttribute("transform", "rotate(-90 50 50)");
-    const circumference = 2 * Math.PI * 45;
+    const circumference = 2 * Math.PI * RADIUS;
     arc.setAttribute("stroke-dasharray", `${circumference}`);
     arc.setAttribute("stroke-dashoffset", `${circumference}`);
     button.appendChild(ring);
@@ -3862,7 +3962,6 @@
     container.removeAttribute("zia-skeleton-on");
     container.style.removeProperty("position");
   }
-
   const isDefaultName = (name) => !name || DEFAULT_FOLDER_NAMES.test(name);
 
   function currentFolderName(folder) {
@@ -3941,9 +4040,330 @@
 
   function watchNewFolders() {
     gBrowser.tabContainer.addEventListener("TabGroupCreate", (event) => {
-      // Other mods build the group's label row on this same event; measure the skeleton after they have
       requestAnimationFrame(() => requestAnimationFrame(() => applySuggestedFolderIcon(event.target)));
     });
+  }
+
+  const FOLDER_DEFAULT_COLOR = "white";
+
+  const FOLDER_COLORS = [
+    ["white", "#fbfbfb"],
+    ["green", "#008b5d"],
+    ["blue", "#007fbd"],
+    ["purple", "#625da5"],
+    ["amber", "#c98400"],
+    ["pink", "#bd556b"],
+    ["red", "#cc4a55"],
+    ["orange", "#c95125"],
+  ];
+
+  const FOLDER_COLOR_PREF = "zia.folder-colors";
+
+  function readFolderColors() {
+    try {
+      return JSON.parse(Services.prefs.getStringPref(FOLDER_COLOR_PREF, "{}")) || {};
+    } catch (err) {
+      return {};
+    }
+  }
+
+  function writeFolderColors(map) {
+    try {
+      Services.prefs.setStringPref(FOLDER_COLOR_PREF, JSON.stringify(map));
+    } catch (err) {
+      console.error("[Zia] Could not save the folder colours:", err);
+    }
+  }
+
+  function folderColorOf(value) {
+    if (!value) {
+      return null;
+    }
+    if (typeof value === "string") {
+      return value;
+    }
+    return value.color || null;
+  }
+
+  function paintFolder(folder, value) {
+    if (!folder) {
+      return;
+    }
+    const color = folderColorOf(value);
+    if (color) {
+      folder.setAttribute("zia-folder-color", color);
+    } else {
+      folder.removeAttribute("zia-folder-color");
+    }
+  }
+
+  function setFolderColor(folder, color) {
+    if (!folder?.id) {
+      return;
+    }
+    const map = readFolderColors();
+    if (color) {
+      map[folder.id] = color;
+    } else {
+      delete map[folder.id];
+    }
+    writeFolderColors(map);
+    paintFolder(folder, color);
+  }
+
+  function restoreFolderColors() {
+    const map = readFolderColors();
+    for (const folder of document.querySelectorAll("zen-folder")) {
+      if (map[folder.id]) {
+        paintFolder(folder, map[folder.id]);
+      }
+    }
+  }
+
+  function folderFromNode(node) {
+    if (!node) {
+      return null;
+    }
+    if (gBrowser.isTabGroupLabel?.(node)) {
+      return node.group;
+    }
+    if (gBrowser.isTabGroupLabel?.(node.parentElement)) {
+      return node.parentElement.group;
+    }
+    if (node.parentElement?.isZenFolder && node.classList?.contains("tab-group-label-container")) {
+      return node.parentElement;
+    }
+    return node.closest?.("zen-folder") || null;
+  }
+
+  function colorDotIcon(hex) {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="8" cy="8" r="7" fill="${hex}"/></svg>`;
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+  }
+
+  function buildFolderColorMenu() {
+    const submenu = document.createXULElement("menu");
+    submenu.id = "zia-folder-color-menu";
+    submenu.setAttribute("label", "Folder Color");
+    const popup = document.createXULElement("menupopup");
+    for (const [name, hex] of FOLDER_COLORS) {
+      const item = document.createXULElement("menuitem");
+      item.className = "menuitem-iconic";
+      item.setAttribute("type", "radio");
+      item.setAttribute("name", "zia-folder-color");
+      item.setAttribute("label", name[0].toUpperCase() + name.slice(1));
+      item.setAttribute("image", colorDotIcon(hex));
+      item.setAttribute("zia-color", name);
+      item.addEventListener("command", () => {
+        const folder = submenu.ziaFolder;
+
+        const same = folder?.getAttribute("zia-folder-color") === name;
+        const clear = name === FOLDER_DEFAULT_COLOR || same;
+        setFolderColor(folder, clear ? null : name);
+      });
+      popup.appendChild(item);
+    }
+    submenu.appendChild(popup);
+    return submenu;
+  }
+
+  function addFolderColorPicker() {
+    let submenu = null;
+
+    document.addEventListener(
+      "popupshowing",
+      (event) => {
+        const menu = event.target;
+        if (menu?.id !== "zenFolderActions") {
+          return;
+        }
+
+        const trigger = menu.triggerNode || event.explicitOriginalTarget;
+        const folder = folderFromNode(trigger);
+        if (!folder?.isZenFolder) {
+          if (submenu) {
+            submenu.hidden = true;
+          }
+          return;
+        }
+
+        if (!submenu) {
+          submenu = buildFolderColorMenu();
+
+          const rename = document.getElementById("context_zenFolderRename");
+          if (rename?.parentElement === menu) {
+            menu.insertBefore(submenu, rename);
+          } else {
+            menu.appendChild(submenu);
+          }
+        }
+
+        submenu.hidden = false;
+        submenu.ziaFolder = folder;
+
+        const current = folder.getAttribute("zia-folder-color") || FOLDER_DEFAULT_COLOR;
+        for (const item of submenu.querySelector("menupopup").children) {
+          item.toggleAttribute("checked", item.getAttribute("zia-color") === current);
+        }
+      },
+      true
+    );
+  }
+
+  function watchFolderColors() {
+    restoreFolderColors();
+
+    setTimeout(restoreFolderColors, 1500);
+    gBrowser.tabContainer.addEventListener("TabGroupCreate", (event) => {
+      const saved = readFolderColors()[event.target?.id];
+      if (saved) {
+        paintFolder(event.target, saved);
+      }
+    });
+  }
+
+  function addFolderCloseButton(folder) {
+    if (!folder?.isZenFolder) {
+      return;
+    }
+    const header = folder.querySelector(":scope > .tab-group-label-container");
+    if (!header || header.querySelector(":scope > .zia-folder-close")) {
+      return;
+    }
+    const button = document.createXULElement("image");
+    button.className = "zia-folder-close";
+    button.setAttribute("role", "button");
+    button.setAttribute("keyNav", "false");
+    button.setAttribute("tooltiptext", "Delete Folder");
+
+    button.addEventListener("mousedown", (event) => event.stopPropagation());
+    button.addEventListener("click", (event) => {
+      if (event.button !== 0) {
+        return;
+      }
+      event.stopPropagation();
+      event.preventDefault();
+
+      const removal =
+        typeof folder.delete === "function"
+          ? folder.delete()
+          : gBrowser.removeTabGroup(folder, { isUserTriggered: true });
+      Promise.resolve(removal).catch((err) => console.error("[Zia] Couldn't delete the folder:", err));
+    });
+
+    header.appendChild(button);
+  }
+
+  function watchFolderCloseButtons() {
+    const addAll = () => {
+      for (const folder of document.querySelectorAll("zen-folder")) {
+        addFolderCloseButton(folder);
+      }
+    };
+    addAll();
+
+    setTimeout(addAll, 1500);
+    gBrowser.tabContainer.addEventListener("TabGroupCreate", (event) => addFolderCloseButton(event.target));
+  }
+
+  function resolveColor(text) {
+    if (!text) {
+      return null;
+    }
+    let probe = document.getElementById("zia-color-probe");
+    if (!probe) {
+      probe = document.createElementNS(XHTML_NS, "div");
+      probe.id = "zia-color-probe";
+      probe.hidden = true;
+      root.appendChild(probe);
+    }
+    probe.style.color = "";
+    probe.style.color = text.trim();
+    if (!probe.style.color) {
+      return null;
+    }
+    return parseColor(getComputedStyle(probe).color);
+  }
+
+  const COLOR_TOKEN = /(?:rgba?|hsla?|color-mix|light-dark|oklch|oklab|lab|lch|color)\((?:[^()]|\([^()]*\))*\)|#[0-9a-fA-F]{3,8}\b|\btransparent\b/g;
+
+  function paintColor(value) {
+    if (!/gradient\(/.test(value)) {
+      return resolveColor(value);
+    }
+    const stops = (value.match(COLOR_TOKEN) || []).map(resolveColor).filter(Boolean);
+    if (!stops.length) {
+      return null;
+    }
+    return [0, 1, 2, 3].map((i) => Math.round(stops.reduce((sum, c) => sum + c[i], 0) / stops.length));
+  }
+
+  function syncSidebarPaint() {
+    const compact = root.getAttribute("zen-compact-mode") === "true";
+    const layer = document.getElementById(compact ? "zen-toolbar-background" : "zen-browser-background");
+    if (!layer) {
+      return;
+    }
+    const name = compact ? "--zen-main-browser-background-toolbar" : "--zen-main-browser-background";
+    const paint = paintColor(getComputedStyle(layer).getPropertyValue(name));
+    const rootStyle = getComputedStyle(root);
+    const tint = resolveColor(rootStyle.getPropertyValue("--zia-media-bg"));
+    const base = resolveColor(rootStyle.getPropertyValue("--zia-media-card-base"));
+    if (!paint || !tint || !base) {
+      root.style.removeProperty("--zia-media-rest");
+      root.style.removeProperty("--zia-media-solid");
+      return;
+    }
+
+    root.style.setProperty("--zia-media-rest", cssColor(colorOver(tint, paint)));
+
+    root.style.setProperty("--zia-media-solid", cssColor(colorOver(tint, colorOver(paint, base))));
+  }
+
+  function watchSidebarPaint() {
+    syncSidebarPaint();
+    const watcher = new MutationObserver(syncSidebarPaint);
+    for (const id of ["zen-browser-background", "zen-toolbar-background"]) {
+      const layer = document.getElementById(id);
+      if (layer) {
+        watcher.observe(layer, { attributes: true, attributeFilter: ["style"] });
+      }
+    }
+    watcher.observe(root, { attributes: true, attributeFilter: ["zen-compact-mode"] });
+  }
+
+  function keepWindowButtonsInSidebar() {
+    const manager = window.gZenVerticalTabsManager;
+    if (!manager || manager.isWindowsStyledButtons) {
+      return;
+    }
+    const wanted =
+      root.getAttribute("zen-right-side") === "true" &&
+      root.getAttribute("zen-compact-mode") !== "true" &&
+      root.hasAttribute("zen-sidebar-expanded");
+    if (!wanted) {
+      return;
+    }
+    const buttons = manager.actualWindowButtons;
+    const topButtons = document.getElementById("zen-sidebar-top-buttons");
+    if (buttons && topButtons && buttons.parentNode !== topButtons) {
+      topButtons.prepend(buttons);
+    }
+  }
+
+  function watchWindowButtonsSide() {
+    const soon = () => setTimeout(keepWindowButtonsInSidebar, 0);
+    soon();
+    setTimeout(keepWindowButtonsInSidebar, 1000);
+    const watcher = new MutationObserver(soon);
+    watcher.observe(root, {
+      attributes: true,
+      attributeFilter: ["zen-right-side", "zen-compact-mode", "zen-sidebar-expanded", "zen-single-toolbar"],
+    });
+    const navBar = document.getElementById("nav-bar");
+    if (navBar) {
+      watcher.observe(navBar, { childList: true });
+    }
   }
 
   function safely(name, fn) {
@@ -3981,6 +4401,11 @@
     ifOn("icon-picker", "addIconPicker", addIconPicker);
     safely("watchCompactTopRow", watchCompactTopRow);
     safely("watchNewFolders", watchNewFolders);
+    safely("watchFolderColors", watchFolderColors);
+    safely("addFolderColorPicker", addFolderColorPicker);
+    safely("watchFolderCloseButtons", watchFolderCloseButtons);
+    safely("watchSidebarPaint", watchSidebarPaint);
+    safely("watchWindowButtonsSide", watchWindowButtonsSide);
 
     gBrowser.tabContainer.addEventListener("TabSelect", () => {
       const browser = gBrowser.selectedBrowser;
@@ -4090,6 +4515,8 @@
       attributeFilter: ["breakout-extend"],
     });
     window.addEventListener("resize", alignOpenedUrlbarSoon);
+
+    safely("keepWholeUrlSelected", () => keepWholeUrlSelected(urlbar));
 
     updateColor();
     updateTitle();
