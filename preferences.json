@@ -29,6 +29,12 @@
   },
   {
     "type": "checkbox",
+    "label": "Tab hover cards",
+    "property": "zia.features.tab-hover-cards",
+    "defaultValue": true
+  },
+  {
+    "type": "checkbox",
     "label": "Suggest a folder's icon with a local model (downloads ~25MB the first time)",
     "property": "zia.features.folder-icon-suggest",
     "defaultValue": false

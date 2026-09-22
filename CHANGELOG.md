@@ -4,6 +4,63 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.27.0] — 2026-09-23
+
+Everything since 2.23.0. The 2.23.1 through 2.26.x versions were local test
+builds and were never published; what they changed is folded in here as it
+finally stands.
+
+### Added
+
+- **Tab hover cards, like Dia's.** Hovering a tab shows a card with its title
+  and address after 0.6s, growing in from 70%. It carries add to Essentials,
+  bookmark, and add to split, and a pinned tab or an essential shows unpin
+  where the pin would be. Essentials is hidden when the tab is already one,
+  split is hidden for the tab you're on, and a new tab or internal page shows
+  just its title. Zia draws the card itself. There's an option to turn the
+  cards off in Sine's settings for Zia, on by default, and switching it takes
+  effect straight away.
+- **Extensions in split view, like Dia.** In a split, your pinned extension
+  buttons sit in the focused pane's toolbar, just left of its own buttons, and
+  move with the focus. They're Firefox's own buttons, moved rather than
+  copied, so badges, popups and clicks work as usual, and they go back to the
+  main toolbar when the split ends.
+
+### Changed
+
+- **Address bar ink follows the page, like Dia.** On a dark page such as
+  YouTube or Duelbits, the domain, path and toolbar icons are a dull grey
+  rather than white. A literally black page stays white. The hover highlight
+  darkens the bar, or lightens it when the bar is black.
+- **The address never shows `https://`, `http://`, or a leading `www.`**,
+  including once the bar is open. `www.twitch.tv/xqc` shows as `twitch.tv/xqc`.
+- **Split view spacing like Dia's:** 10px between panes, a frame round them,
+  on a slightly darker backdrop.
+- **The hover card's border matches the essentials':** 1px and a little
+  dimmer, brightest along the sides, soft at the corners. The card grows in a
+  little more slowly.
+- **Tab names, folder names and address bar text are 0.1px smaller.** They
+  share one size, so they all moved together.
+
+### Fixed
+
+- An essential's hover card sits just off the tile's bottom-right corner, the
+  way Dia's does, instead of covering the tile. A clear patch at that corner
+  still lets the pointer move onto the card. With the sidebar on the right it
+  hangs off the bottom-left.
+- The hover card's action buttons show their icons.
+- The dragged tab's image is just the tab, without the active tab's glow
+  around it or any of Zia's motion on it.
+- Swiping between spaces no longer lets the sliding tabs run past the sidebar
+  and over the page.
+- The space name highlights over its whole width, and only when the pointer is
+  actually over it. The first letters were missed, and empty space beside the
+  name was lighting it up.
+- The unload (–) button on a folder's header is the same dimmed colour as the
+  × next to it.
+- Pinned extension buttons no longer fade their background in and out. The
+  hover is instant.
+
 ## [2.23.0] — 2026-09-22
 
 Everything since 2.13.0, including four community pull requests. The 2.22.x
@@ -132,6 +189,7 @@ is folded in here as it finally stands.
 
 First tracked release.
 
+[2.27.0]: https://github.com/z1n-k/zia/compare/v2.23.0...v2.27.0
 [2.23.0]: https://github.com/z1n-k/zia/compare/df4a06f...v2.23.0
 [2.13.0]: https://github.com/z1n-k/zia/commit/df4a06f
 [2.9.2]: https://github.com/z1n-k/zia/commit/92b50b8

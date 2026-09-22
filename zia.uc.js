@@ -23,7 +23,7 @@
   const SCROLL_SAMPLE_INTERVAL = 50;
   const scrollPositions = new WeakMap();
   const LIGHT_THRESHOLD = 150;
-  const DARK_THRESHOLD = 30;
+  const INK_MAX = 90;
   const ERROR_PAGE_COLOR = [0, 0, 0];
   const ERROR_PAGES = /^about:(neterror|certerror|httpsonlyerror|blocked|tabcrashed)/;
   const errorBrowsers = new WeakSet();
@@ -46,12 +46,29 @@
       root.style.removeProperty("--zia-site-bg");
       setFlag("zia-site-light", false);
       setFlag("zia-site-dark", true);
+      updateDarkSiteInk(null);
       return;
     }
     root.style.setProperty("--zia-site-bg", cssColor(rgb));
     const brightness = brightnessOf(rgb);
     setFlag("zia-site-light", brightness > LIGHT_THRESHOLD);
-    setFlag("zia-site-dark", brightness < DARK_THRESHOLD);
+    setFlag("zia-site-dark", brightness < INK_MAX);
+    updateDarkSiteInk(rgb, brightness);
+  }
+
+  function updateDarkSiteInk(rgb, brightness) {
+    if (!rgb || brightness >= INK_MAX) {
+      root.style.removeProperty("--zia-dark-ink");
+      root.style.removeProperty("--zia-urlbar-hover-bg");
+      return;
+    }
+    const base = rgb.slice(0, 3);
+    const t = brightness <= 1 ? 0 : Math.min(1, (brightness - 1) / 46);
+    const level = brightness <= 1 ? 251 : Math.round(150 + t * 26);
+    root.style.setProperty("--zia-dark-ink", `rgb(${level}, ${level}, ${level})`);
+    const hover =
+      brightness >= 10 ? base.map((c) => Math.round(c * 0.35)) : base.map((c) => Math.round(c + (255 - c) * 0.1));
+    root.style.setProperty("--zia-urlbar-hover-bg", `rgb(${hover.join(", ")})`);
   }
 
   function showFallbackColor() {
@@ -590,6 +607,40 @@
     urlbar.setAttribute("zia-has-title", "true");
   }
 
+  function plainAddress(value) {
+    return typeof value === "string" ? value.replace(/^https?:\/\//i, "").replace(/^www\./i, "") : value;
+  }
+
+  function neverShowScheme() {
+    const ui = window.gZenUIManager;
+    if (ui && typeof ui.urlbarTrim === "function" && !ui.urlbarTrim.ziaWrapped) {
+      const original = ui.urlbarTrim.bind(ui);
+      const trimmed = (url) => plainAddress(original(url));
+      trimmed.ziaWrapped = true;
+      ui.urlbarTrim = trimmed;
+    }
+
+    const input = gURLBar?.inputField || document.querySelector("#urlbar .urlbar-input");
+    if (!input || input.ziaSchemeStripped) {
+      return;
+    }
+    const desc = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), "value");
+    if (!desc?.get || !desc?.set) {
+      return;
+    }
+    input.ziaSchemeStripped = true;
+    Object.defineProperty(input, "value", {
+      configurable: true,
+      enumerable: desc.enumerable,
+      get() {
+        return desc.get.call(this);
+      },
+      set(next) {
+        desc.set.call(this, plainAddress(next));
+      },
+    });
+  }
+
   function keepWholeUrlSelected(urlbar) {
     const input = urlbar.querySelector(".urlbar-input") || gURLBar.inputField;
     if (!input) {
@@ -1052,11 +1103,15 @@
       return;
     }
     const wrapped = function (url) {
-      const trimmed = original.call(this, url);
-      if (typeof trimmed !== "string" || gURLBar.hasAttribute("breakout-extend")) {
+      let trimmed = original.call(this, url);
+      if (typeof trimmed !== "string") {
         return trimmed;
       }
-      return trimmed.replace(/^((?:https?:\/\/)?)www\./i, "$1");
+      trimmed = plainAddress(trimmed);
+      if (gURLBar.hasAttribute("breakout-extend")) {
+        return trimmed;
+      }
+      return trimmed;
     };
     wrapped.__zia = true;
     gURLBar._zenTrimURL = wrapped;
@@ -2388,6 +2443,10 @@
     });
     bar.appendChild(address);
 
+    const extensions = document.createElementNS(HTML_NS, "div");
+    extensions.className = "zia-pane-extensions";
+    bar.appendChild(extensions);
+
     bar.appendChild(
       paneButton("site-settings", "Site settings and extensions", () => {
         const tab = tabOf();
@@ -2556,6 +2615,7 @@
       }
     }
     if (containers.length < 2) {
+      restorePaneExtensions();
       return;
     }
 
@@ -2575,6 +2635,44 @@
       container.querySelector(".zia-pane-bar")?.toggleAttribute("first", container === leftmost?.container);
     }
     placeOpenedAddressBar(containers);
+    placePaneExtensions(containers);
+  }
+
+  const PANE_EXTENSION_ITEMS = "#nav-bar-customization-target > .unified-extensions-item";
+  let movedExtensions = [];
+  const extensionHomes = new Map();
+
+  function placePaneExtensions(containers) {
+    const focused = containers.find((c) => c.classList.contains("deck-selected")) || containers[0];
+    const slot = focused?.querySelector(".zia-pane-extensions");
+    if (!slot) {
+      return;
+    }
+
+    for (const node of document.querySelectorAll(PANE_EXTENSION_ITEMS)) {
+      if (!extensionHomes.has(node)) {
+        extensionHomes.set(node, { parent: node.parentNode, next: node.nextSibling });
+        movedExtensions.push(node);
+      }
+    }
+    for (const node of movedExtensions) {
+      if (node.parentNode !== slot) {
+        slot.appendChild(node);
+      }
+    }
+  }
+
+  function restorePaneExtensions() {
+    for (const node of [...movedExtensions].reverse()) {
+      const home = extensionHomes.get(node);
+      if (!home?.parent?.isConnected) {
+        continue;
+      }
+      const next = home.next?.parentNode === home.parent ? home.next : null;
+      home.parent.insertBefore(node, next);
+    }
+    movedExtensions = [];
+    extensionHomes.clear();
   }
 
   function placeOpenedAddressBar(containers = splitContainers()) {
@@ -2606,6 +2704,8 @@
       attributeFilter: ["zen-split-view", "zen-split"],
     });
     gBrowser.tabContainer.addEventListener("TabSelect", schedulePanes);
+    window.addEventListener("beforecustomization", restorePaneExtensions);
+    window.addEventListener("aftercustomization", schedulePanes);
     gBrowser.tabContainer.addEventListener("TabAttrModified", (event) => {
       const container = paneOfBrowser(event.target.linkedBrowser);
       if (container) {
@@ -3028,6 +3128,8 @@
     set("zen.widget.mac.mono-window-controls", false);
     set("zen.urlbar.replace-newtab", false);
     set("zen.splitView.enable-tab-drop", false);
+    set("browser.urlbar.trimHttps", true);
+    set("browser.urlbar.untrimOnUserInteraction.featureGate", false);
 
     for (const feature of FEATURES) {
       set(`zia.features.${feature}`, true);
@@ -3036,7 +3138,7 @@
     set("zia.features.folder-icon-suggest", false);
   }
 
-  const FEATURES = ["media-player", "find-bar", "icon-picker", "undo-close", "folder-icon-suggest"];
+  const FEATURES = ["media-player", "find-bar", "icon-picker", "undo-close", "folder-icon-suggest", "tab-hover-cards"];
 
   function featureOn(name) {
     try {
@@ -4366,6 +4468,256 @@
     }
   }
 
+  const TAB_CARD_DELAY = 600;
+  const TAB_CARD_GRACE = 120;
+  const TAB_CARD_GAP = 8;
+  const ESSENTIAL_CARD_OVERLAP = 2;
+
+  const TAB_CARD_ACTIONS = [
+    {
+      name: "essential",
+      icon: "push-pin",
+      label: "Add to Essentials",
+
+      run: (tab) => gZenPinnedTabManager?.addToEssentials(tab),
+      hidden: (tab) => tab.hasAttribute("zen-essential") || tab.pinned,
+    },
+    {
+      name: "unpin",
+      icon: "push-pin-slash",
+      label: "Unpin",
+      run: (tab) => {
+        if (tab.hasAttribute("zen-essential")) {
+          gZenPinnedTabManager?.removeEssentials(tab);
+        } else {
+          gBrowser.unpinTab(tab);
+        }
+      },
+      hidden: (tab) => !tab.hasAttribute("zen-essential") && !tab.pinned,
+    },
+    {
+      name: "bookmark",
+      icon: "bookmark-simple",
+      label: "Bookmark",
+      run: (tab) => bookmarkTab(tab),
+    },
+    {
+      name: "split",
+      icon: "square-split-horizontal",
+      label: "Add to Split",
+
+      run: (tab) => gZenViewSplitter?.splitTabs([gBrowser.selectedTab, tab]),
+      hidden: (tab) => tab === gBrowser.selectedTab,
+    },
+  ];
+
+  async function bookmarkTab(tab) {
+    const url = tab.linkedBrowser?.currentURI?.spec;
+    if (!url || !/^https?:/.test(url)) {
+      return;
+    }
+    const existing = await PlacesUtils.bookmarks.fetch({ url });
+    if (existing) {
+      return;
+    }
+    const parentGuid = await PlacesUIUtils.defaultParentGuid;
+    await PlacesUtils.bookmarks.insert({ parentGuid, url, title: tab.label || url });
+  }
+
+  function tabCardDomain(tab) {
+    try {
+      const uri = tab.linkedBrowser?.currentURI;
+      if (!uri || !/^https?$/.test(uri.scheme)) {
+        return "";
+      }
+      return uri.host.replace(/^www\./, "");
+    } catch (err) {
+      return "";
+    }
+  }
+
+  function buildTabCard(onAction) {
+    const card = document.createElementNS(XHTML_NS, "div");
+    card.id = "zia-tab-card";
+    card.hidden = true;
+    const title = document.createElementNS(XHTML_NS, "div");
+    title.className = "zia-tab-card-title";
+    const sub = document.createElementNS(XHTML_NS, "div");
+    sub.className = "zia-tab-card-sub";
+    const row = document.createElementNS(XHTML_NS, "div");
+    row.id = "zia-tab-card-actions";
+    for (const action of TAB_CARD_ACTIONS) {
+      const button = document.createElementNS(XHTML_NS, "button");
+      button.className = "zia-tab-card-action";
+      button.setAttribute("zia-action", action.name);
+      button.title = action.label;
+
+      const icon = document.createElementNS(XHTML_NS, "img");
+      icon.setAttribute("src", `chrome://sine/content/zia/icons/phosphor/${action.icon}.svg`);
+      icon.setAttribute("alt", "");
+      button.appendChild(icon);
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        onAction(action);
+      });
+      row.appendChild(button);
+    }
+    card.append(title, sub, row);
+    root.appendChild(card);
+    return card;
+  }
+
+  function fillTabCard(card, tab) {
+    const web = /^https?:/.test(tab.linkedBrowser?.currentURI?.spec || "");
+    card.querySelector(".zia-tab-card-title").textContent = tab.label || "New Tab";
+    const sub = card.querySelector(".zia-tab-card-sub");
+    sub.textContent = tabCardDomain(tab);
+    sub.hidden = !sub.textContent;
+
+    const row = card.querySelector("#zia-tab-card-actions");
+    row.hidden = !web;
+    for (const button of row.children) {
+      const action = TAB_CARD_ACTIONS.find((a) => a.name === button.getAttribute("zia-action"));
+      button.hidden = !!action?.hidden?.(tab);
+    }
+  }
+
+  function placeTabCard(card, tab) {
+    const tile = tab.querySelector(":scope > .tab-stack > .tab-background");
+    const tileBox = tile?.getBoundingClientRect();
+    const tabBox = tileBox && tileBox.width > 0 && tileBox.height > 0 ? tileBox : tab.getBoundingClientRect();
+    const sidebar = document.getElementById("navigator-toolbox")?.getBoundingClientRect() || tabBox;
+    const onRight = root.getAttribute("zen-right-side") === "true";
+    const width = card.offsetWidth;
+    const height = card.offsetHeight;
+    let x;
+    let y;
+    let origin;
+    if (tab.hasAttribute("zen-essential")) {
+      card.setAttribute("zia-anchor", "essential");
+      if (onRight) {
+        card.setAttribute("zia-side", "right");
+        x = tabBox.left - width + ESSENTIAL_CARD_OVERLAP;
+        y = tabBox.bottom - ESSENTIAL_CARD_OVERLAP;
+        origin = "top right";
+      } else {
+        card.removeAttribute("zia-side");
+        x = tabBox.right - ESSENTIAL_CARD_OVERLAP;
+        y = tabBox.bottom - ESSENTIAL_CARD_OVERLAP;
+        origin = "top left";
+      }
+    } else {
+      card.setAttribute("zia-anchor", "tab");
+      card.removeAttribute("zia-side");
+      x = onRight ? sidebar.left - width - TAB_CARD_GAP : sidebar.right + TAB_CARD_GAP;
+      y = tabBox.top + tabBox.height / 2 - height / 2;
+      origin = onRight ? "right center" : "left center";
+    }
+    x = Math.max(TAB_CARD_GAP, Math.min(x, window.innerWidth - width - TAB_CARD_GAP));
+    y = Math.max(TAB_CARD_GAP, Math.min(y, window.innerHeight - height - TAB_CARD_GAP));
+    card.style.left = `${Math.round(x)}px`;
+    card.style.top = `${Math.round(y)}px`;
+    card.style.transformOrigin = origin;
+  }
+
+  function addTabHoverCards() {
+    const toolbox = document.getElementById("navigator-toolbox");
+    if (!toolbox) {
+      return;
+    }
+    let card = null;
+    let current = null;
+    let showTimer = 0;
+    let hideTimer = 0;
+
+    const hide = () => {
+      clearTimeout(showTimer);
+      clearTimeout(hideTimer);
+      current = null;
+      if (card) {
+        card.hidden = true;
+        card.removeAttribute("zia-open");
+      }
+    };
+    const hideSoon = () => {
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(hide, TAB_CARD_GRACE);
+    };
+    const show = (tab) => {
+      if (!card) {
+        card = buildTabCard((action) => {
+          const tab = current;
+          hide();
+          if (!tab?.isConnected) {
+            return;
+          }
+          try {
+            Promise.resolve(action.run(tab)).catch((err) =>
+              console.error(`[Zia] ${action.label} failed:`, err)
+            );
+          } catch (err) {
+            console.error(`[Zia] ${action.label} failed:`, err);
+          }
+        });
+        card.addEventListener("mouseenter", () => clearTimeout(hideTimer));
+        card.addEventListener("mouseleave", hideSoon);
+      }
+      current = tab;
+      fillTabCard(card, tab);
+      card.hidden = false;
+      placeTabCard(card, tab);
+
+      card.removeAttribute("zia-open");
+      void card.offsetWidth;
+      card.setAttribute("zia-open", "true");
+    };
+
+    toolbox.addEventListener("mouseover", (event) => {
+      if (!featureOn("tab-hover-cards")) {
+        return;
+      }
+      const tab = event.target?.closest?.(".tabbrowser-tab");
+      if (!tab || tab.hasAttribute("pending-drag")) {
+        return;
+      }
+      clearTimeout(hideTimer);
+      if (tab === current) {
+        return;
+      }
+      clearTimeout(showTimer);
+      if (current) {
+        show(tab);
+        return;
+      }
+      showTimer = setTimeout(() => {
+        if (tab.isConnected && tab.matches(":hover")) {
+          show(tab);
+        }
+      }, TAB_CARD_DELAY);
+    });
+
+    toolbox.addEventListener("mouseout", (event) => {
+      const tab = event.target?.closest?.(".tabbrowser-tab");
+      if (!tab) {
+        return;
+      }
+      const to = event.relatedTarget;
+      if (to && (tab.contains(to) || card?.contains(to))) {
+        return;
+      }
+      clearTimeout(showTimer);
+      hideSoon();
+    });
+
+    toolbox.addEventListener("mousedown", hide, true);
+    toolbox.addEventListener("dragstart", hide, true);
+    toolbox.addEventListener("wheel", hide, { passive: true, capture: true });
+    for (const type of ["TabSelect", "TabClose"]) {
+      gBrowser.tabContainer.addEventListener(type, hide);
+    }
+    window.addEventListener("blur", hide);
+  }
+
   function safely(name, fn) {
     try {
       fn();
@@ -4406,6 +4758,7 @@
     safely("watchFolderCloseButtons", watchFolderCloseButtons);
     safely("watchSidebarPaint", watchSidebarPaint);
     safely("watchWindowButtonsSide", watchWindowButtonsSide);
+    safely("addTabHoverCards", addTabHoverCards);
 
     gBrowser.tabContainer.addEventListener("TabSelect", () => {
       const browser = gBrowser.selectedBrowser;
@@ -4517,6 +4870,7 @@
     window.addEventListener("resize", alignOpenedUrlbarSoon);
 
     safely("keepWholeUrlSelected", () => keepWholeUrlSelected(urlbar));
+    safely("neverShowScheme", neverShowScheme);
 
     updateColor();
     updateTitle();
