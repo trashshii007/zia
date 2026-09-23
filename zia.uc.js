@@ -73,7 +73,8 @@
       return;
     }
     const hover =
-      brightness >= 10 ? base.map((c) => Math.round(c * 0.35)) : base.map((c) => Math.round(c + (255 - c) * 0.1));
+
+      brightness >= 10 ? base.map((c) => Math.round(c * 0.45)) : base.map((c) => Math.round(c + (255 - c) * 0.1));
     root.style.setProperty("--zia-urlbar-hover-bg", `rgb(${hover.join(", ")})`);
   }
 
@@ -3103,15 +3104,47 @@
     }
   }
 
+  let typedIconAsk = 0;
+
+  async function knownIconPage(candidates) {
+    const favicons = PlacesUtils?.favicons;
+    if (typeof favicons?.getFaviconForPage !== "function") {
+      return null;
+    }
+    for (const spec of candidates) {
+      try {
+        const icon = await favicons.getFaviconForPage(Services.io.newURI(spec));
+        if (icon) {
+          return spec;
+        }
+      } catch (err) {}
+    }
+    return null;
+  }
+
   function updateTypedIcon() {
     const urlbar = gURLBar.textbox || document.getElementById("urlbar");
     const value = (gURLBar.value || "").trim();
-    const host = value.match(/^(?:https?:\/\/)?([\w-]+(?:\.[\w-]+)+)/i)?.[1];
-    if (host) {
-      urlbar.style.setProperty("--zia-typed-icon", `url("page-icon:https://${host}/")`);
-    } else {
+    const match = value.match(/^(?:https?:\/\/)?([\w-]+(?:\.[\w-]+)+)(\/[^\s]*)?/i);
+    const host = match?.[1];
+    const ask = ++typedIconAsk;
+    if (!host) {
       urlbar.style.removeProperty("--zia-typed-icon");
+      return;
     }
+    urlbar.style.setProperty("--zia-typed-icon", `url("page-icon:https://${host}/")`);
+    const path = match[2] || "/";
+    const bare = host.replace(/^www\./i, "");
+    const hosts = [host, host === bare ? `www.${bare}` : bare];
+    const candidates = [];
+    for (const h of hosts) {
+      candidates.push(`https://${h}${path}`, `https://${h}/`);
+    }
+    knownIconPage([...new Set(candidates)]).then((spec) => {
+      if (spec && ask === typedIconAsk) {
+        urlbar.style.setProperty("--zia-typed-icon", `url("page-icon:${spec}")`);
+      }
+    });
   }
 
   function shortenEngineActions(results) {
@@ -3207,6 +3240,7 @@
   }
 
   const POP_BOTTOM_WANT = 8;
+  const POP_SCROLL_TRIM = 4;
   let popBottomTrim = null;
 
   function fitPopoverBottom(passesLeft = 8) {
@@ -3228,8 +3262,8 @@
     const scrolls = [view, ...view.querySelectorAll("*")].some((el) => el.scrollHeight > el.clientHeight + 1);
     if (scrolls) {
       root.setAttribute("zia-pop-scrolls", "true");
-      popBottomTrim = 0;
-      urlbar.style.setProperty("--zia-pop-bottom-trim", "0px");
+      popBottomTrim = POP_SCROLL_TRIM;
+      urlbar.style.setProperty("--zia-pop-bottom-trim", `${POP_SCROLL_TRIM}px`);
       return;
     }
     root.removeAttribute("zia-pop-scrolls");
@@ -4840,8 +4874,17 @@
     if (pinned && !tab.pinned) {
       gBrowser.pinTab(tab);
     }
+
+    const collapsed = folder.collapsed || folder.hasAttribute("collapsed");
+    if (collapsed && !folder.hasAttribute("has-active")) {
+      folder.setAttribute("has-active", "true");
+      folder.activeTabs = [];
+    }
     folder.addTabs([tab]);
     gBrowser.selectedTab = tab;
+    if (collapsed && !folder.collapsed) {
+      folder.collapsed = true;
+    }
   }
 
   function buildFolderCard(onPick) {
@@ -4941,7 +4984,13 @@
     addLabel.textContent = "New Tab";
     add.append(addLabel);
     rows.push(add);
-    card.replaceChildren(...rows);
+
+    const list = document.createElementNS(XHTML_NS, "div");
+    list.className = "zia-folder-card-list";
+    const scrolled = card.querySelector(".zia-folder-card-list")?.scrollTop || 0;
+    list.append(...rows);
+    card.replaceChildren(list);
+    list.scrollTop = scrolled;
   }
 
   function newTabButtonIcon() {
@@ -5483,6 +5532,9 @@
     const bgOf = (tab) => tab?.querySelector?.(":scope > .tab-stack > .tab-background");
     const contentOf = (tab) => tab?.querySelector?.(":scope > .tab-stack > .tab-content");
     const showing = (tab) => {
+      if (tab?.visible === false || tab?.checkVisibility?.({ opacityProperty: true, visibilityProperty: true }) === false) {
+        return null;
+      }
       const bg = bgOf(tab);
       const box = bg?.getBoundingClientRect();
       return box && box.width > 20 && box.height > 8 ? box : null;
@@ -5534,8 +5586,13 @@
       }
       drag.widthKey = key;
       const want = widthFor(folder);
-      const start = want ? want.left - drag.bgBox.left : 0;
-      const end = want ? drag.bgBox.right - want.right : 0;
+      let start = want ? want.left - drag.bgBox.left : 0;
+      let end = want ? drag.bgBox.right - want.right : 0;
+
+      if (Math.abs(start) > 40 || Math.abs(end) > 40) {
+        start = 0;
+        end = 0;
+      }
       const set = (node, base, dStart, dEnd) => {
         if (!node) {
           return;
@@ -5561,11 +5618,20 @@
       }
     };
 
+    const newTabButton = () =>
+      window.gZenWorkspaces?.activeWorkspaceElement?.newTabButton ||
+      document.querySelector("#tabs-newtab-button, #vertical-tabs-newtab-button");
     const placeSep = (sepDelta) => {
-      const sep = document.querySelector(".pinned-tabs-container-separator");
+      const sep = currentSeparator();
       if (sep && drag.sepDelta !== sepDelta) {
         drag.sepDelta = sepDelta;
         place(sep, sepDelta, false);
+
+        const onTop = Services.prefs.getBoolPref("zen.view.show-newtab-button-top", false);
+        const button = onTop ? newTabButton() : null;
+        if (button) {
+          place(button, sepDelta, false);
+        }
       }
     };
 
@@ -5667,7 +5733,7 @@
       if (drag.folder) {
         drag.pitch = box.height;
       }
-      const sep = document.querySelector(".pinned-tabs-container-separator");
+      const sep = currentSeparator();
       if (sep) {
         drag.sepTop = sep.getBoundingClientRect().top - (drag.sepDelta || 0);
       }
@@ -5746,7 +5812,7 @@
         return;
       }
       if (!target.below) {
-        const sep = document.querySelector(".pinned-tabs-container-separator");
+        const sep = currentSeparator();
         if (sep) {
           placeBefore(tab, sep);
         }
@@ -5792,6 +5858,19 @@
     let landingTab = null;
     const PROXY_MS = 140;
 
+    let roomFor = null;
+    const makeRoom = (container) => {
+      if (roomFor === container) {
+        return;
+      }
+      roomFor?.removeAttribute("zia-make-room");
+      roomFor = container || null;
+      if (roomFor) {
+        roomFor.style.setProperty("--zia-room", `${Math.round(tileSize().height + 8)}px`);
+        roomFor.setAttribute("zia-make-room", "true");
+      }
+    };
+
     const canBeEssential = (tab) => {
       try {
         return window.gZenPinnedTabManager?.canEssentialBeAdded?.(tab) ?? true;
@@ -5805,13 +5884,33 @@
         const box = el?.isConnected ? window.windowUtils.getBoundsWithoutFlushing(el) : null;
         return box && box.width > 8 && box.height > 8 ? box : null;
       };
-      const box =
-        usable(gBrowser.tabContainer.tabDragAndDrop?._fakeEssentialTab) ||
-        usable(document.querySelector("#zen-essentials .tabbrowser-tab[zen-essential]:not([zia-essential-proxy])"));
-      return box ? { width: box.width, height: box.height } : { width: 56, height: 44 };
+
+      const ownGrid = window.gZenWorkspaces?.getCurrentEssentialsContainer?.();
+      const real = [...(ownGrid || document).querySelectorAll(".tabbrowser-tab[zen-essential]:not([zia-essential-proxy])")].find(
+        (tile) => usable(tile)
+      );
+      const realBox = usable(real);
+      if (realBox) {
+        return { width: realBox.width, height: realBox.height };
+      }
+      const box = usable(gBrowser.tabContainer.tabDragAndDrop?._fakeEssentialTab);
+      if (box) {
+        return { width: box.width, height: box.height };
+      }
+
+      const grid = window.gZenWorkspaces?.getCurrentEssentialsContainer?.() || document.getElementById("zen-essentials");
+      const width = grid?.clientWidth ? (grid.clientWidth - 3 * 8) / 4 : 56;
+      return { width, height: Math.round(width * 0.75) };
     };
 
+    const mirrorOf = (node) => node?.ziaView || null;
+
     const sizeProxy = (node, width, height) => {
+      const view = mirrorOf(node);
+      if (view) {
+        view.style.width = `${Math.round(width)}px`;
+        view.style.height = `${Math.round(height)}px`;
+      }
       for (const [name, value] of [
         ["width", width],
         ["height", height],
@@ -5825,6 +5924,15 @@
     };
 
     const moveProxy = (x, y) => {
+      const view = mirrorOf(proxy);
+      if (view) {
+        view.style.left = `${Math.round(x)}px`;
+        view.style.top = `${Math.round(y)}px`;
+
+        proxy.style.setProperty("left", "-10000px", "important");
+        proxy.style.setProperty("top", "-10000px", "important");
+        return;
+      }
       const off = proxy.ziaOffset || { x: 0, y: 0 };
       proxy.style.setProperty("left", `${Math.round(x - off.x)}px`, "important");
       proxy.style.setProperty("top", `${Math.round(y - off.y)}px`, "important");
@@ -5833,21 +5941,23 @@
     const showProxy = (x, y) => {
       clearTimeout(proxyLeaveTimer);
       if (!proxy) {
-        const host =
-          document.getElementById("zen-essentials") ||
-          window.gZenWorkspaces?.getCurrentEssentialsContainer?.() ||
-          document.querySelector(".zen-essentials-container");
+        const host = root;
         if (!host || !drag?.tab) {
           return;
         }
         proxy = drag.tab.cloneNode(true);
         proxy.removeAttribute("id");
-        for (const name of ["zia-dragging", "zia-shift", "zia-drop-lock", "zia-to-essential", "multiselected", "dragtarget", "pending-drag"]) {
+        for (const name of [
+          "zia-dragging", "zia-shift", "zia-drop-lock", "zia-to-essential", "multiselected", "dragtarget", "pending-drag",
+
+          "zen-pinned-changed", "folder-active", "zen-folder-active",
+        ]) {
           proxy.removeAttribute(name);
         }
         proxy.setAttribute("zen-essential", "true");
         proxy.setAttribute("pinned", "true");
         proxy.setAttribute("zia-essential-proxy", "true");
+        proxy.id = "zia-essential-proxy";
         proxy.style.cssText = "";
         for (const [name, value] of [
           ["position", "fixed"],
@@ -5873,9 +5983,13 @@
       proxy.ziaLeaving = false;
       const props = ["width", "height", "min-width", "max-width", "min-height", "max-height"];
       proxy.style.setProperty("transition", props.map((name) => `${name} ${PROXY_MS}ms ease-out`).join(", "), "important");
+      if (proxy.ziaView) {
+        proxy.ziaView.style.transition = `width ${PROXY_MS}ms ease-out, height ${PROXY_MS}ms ease-out`;
+      }
       drag.moving.setAttribute("zia-to-essential", "true");
       const tile = tileSize();
-      sizeProxy(proxy, tile.width, tile.height);
+
+      sizeProxy(proxy, tile.bgWidth || tile.width, tile.bgHeight || tile.height);
       moveProxy(x, y);
     };
 
@@ -5886,12 +6000,16 @@
       proxy.ziaLeaving = true;
       const row = drag.moving.getBoundingClientRect();
       proxy.style.setProperty("transition", `all ${PROXY_MS}ms ease-out`, "important");
+      if (proxy.ziaView) {
+        proxy.ziaView.style.transition = `all ${PROXY_MS}ms ease-out`;
+      }
       sizeProxy(proxy, row.width, row.height);
       moveProxy(row.left + row.width / 2, row.top + row.height / 2);
       const leaving = proxy;
       const moving = drag.moving;
       proxyLeaveTimer = setTimeout(() => {
         if (proxy === leaving && leaving.ziaLeaving) {
+          leaving.ziaView?.remove();
           leaving.remove();
           proxy = null;
           moving.removeAttribute("zia-to-essential");
@@ -5908,6 +6026,7 @@
       }
       landingTab = tab;
       const done = () => {
+        tile.ziaView?.remove();
         tile.remove();
         tab.removeAttribute("zia-to-essential");
         if (landingTab === tab) {
@@ -5926,6 +6045,12 @@
             tile.style.setProperty("transition", `all ${PROXY_MS}ms ease-out`, "important");
             tile.style.setProperty("left", `${Math.round(box.left + box.width / 2 - off.x)}px`, "important");
             tile.style.setProperty("top", `${Math.round(box.top + box.height / 2 - off.y)}px`, "important");
+            if (tile.ziaView) {
+              tile.ziaView.style.transition = `all ${PROXY_MS}ms ease-out`;
+              sizeProxy(tile, box.width, box.height);
+              tile.ziaView.style.left = `${Math.round(box.left + box.width / 2)}px`;
+              tile.ziaView.style.top = `${Math.round(box.top + box.height / 2)}px`;
+            }
             sizeProxy(tile, box.width, box.height);
             setTimeout(done, PROXY_MS + 20);
           }),
@@ -5933,8 +6058,39 @@
       );
     };
 
+    const fitZenSlot = () => {
+      const slot = gBrowser.tabContainer.tabDragAndDrop?._fakeEssentialTab;
+      if (!slot?.isConnected || slot.ziaFitted) {
+        return;
+      }
+      const grid = window.gZenWorkspaces?.getCurrentEssentialsContainer?.();
+      const tiles = [...(grid || document).querySelectorAll(".tabbrowser-tab[zen-essential]:not([zia-essential-proxy])")]
+        .map((tile) => tile.getBoundingClientRect())
+        .filter((box) => box.width > 8);
+      if (!tiles.length) {
+        return;
+      }
+      const first = tiles[0];
+      const across = tiles.find((box) => Math.abs(box.top - first.top) < 2 && box.left > first.left + 2);
+      const down = tiles.find((box) => box.top > first.top + 2);
+      const stepX = across ? across.left - first.left : first.width + 7;
+      const stepY = down ? down.top - first.top : first.height + (stepX - first.width);
+      const own = slot.getBoundingClientRect();
+      const width = stepX - 4;
+      const height = stepY - 4;
+      slot.style.setProperty("width", `${width}px`, "important");
+      slot.style.setProperty("min-width", `${width}px`, "important");
+      slot.style.setProperty("max-width", `${width}px`, "important");
+      slot.style.setProperty("height", `${height}px`, "important");
+      slot.style.setProperty("min-height", `${height}px`, "important");
+      slot.style.setProperty("margin-inline-end", `${Math.min(0, (own.width || first.width) - width)}px`, "important");
+      slot.style.setProperty("margin-block-end", `${Math.min(0, first.height - height)}px`, "important");
+      slot.ziaFitted = true;
+    };
+
     const dropProxy = () => {
       clearTimeout(proxyLeaveTimer);
+      proxy?.ziaView?.remove();
       proxy?.remove();
       proxy = null;
       document.querySelectorAll("[zia-to-essential]").forEach((node) => {
@@ -5955,25 +6111,40 @@
       const rows = measureRows(folder ? null : target);
       const mine = rows.find((row) => row.item === target || row.node === moving || (folder && folder.contains(row.node)));
       const box = layoutTop(moving);
+      const sep = currentSeparator();
+
+      if (sep && !folder && (sep.hidden || sep.closest?.("[hide-separator]") || !sep.getBoundingClientRect().height)) {
+        sep.setAttribute("zia-sep-open", "true");
+      }
+      const sepTop = sep ? sep.getBoundingClientRect().top : null;
+      const side = (top) => (sepTop == null ? 0 : top > sepTop ? 1 : -1);
       let pitch = box.height;
 
       if (!folder && mine) {
+        const fits = (gap) => gap > 8 && gap < box.height * 1.6;
         let best = Infinity;
         for (const row of rows) {
-          if (Math.abs(row.index - mine.index) !== 1) {
+          if (Math.abs(row.index - mine.index) !== 1 || side(row.top) !== side(mine.top)) {
             continue;
           }
           const gap = Math.abs(row.top - mine.top);
-          if (gap > 8 && gap < best && gap < box.height * 1.6) {
+          if (fits(gap) && gap < best) {
             best = gap;
+          }
+        }
+        if (best === Infinity) {
+          const sorted = [...rows].sort((a, b) => a.top - b.top);
+          for (let i = 1; i < sorted.length; i++) {
+            const gap = sorted[i].top - sorted[i - 1].top;
+            if (side(sorted[i].top) === side(sorted[i - 1].top) && fits(gap) && gap < best) {
+              best = gap;
+            }
           }
         }
         if (best < Infinity) {
           pitch = best;
         }
       }
-      const sep = document.querySelector(".pinned-tabs-container-separator");
-      const sepTop = sep ? sep.getBoundingClientRect().top : null;
       document.documentElement.setAttribute("zia-dragging-tab", "true");
       const bg = folder || split ? null : bgOf(target);
       const content = folder || split ? null : contentOf(target);
@@ -6061,11 +6232,12 @@
         const b = el?.getBoundingClientRect?.();
         return b ? `${Math.round(b.left)},${Math.round(b.top)} ${Math.round(b.width)}x${Math.round(b.height)}` : "none";
       };
-      const line = `over ${name(target)} | away ${!!drag.away} | essentials ${!!drag.essentials} | can ${canBeEssential(drag.tab)}`;
+      const sep = currentSeparator();
+      const line = `over ${name(target)} | away ${!!drag.away} | essentials ${!!drag.essentials} | can ${canBeEssential(drag.tab)} | tiles ${drag.hasTiles} | sep ${sep ? name(sep.parentElement) : "none"} ${drag.sepTop == null ? "-" : Math.round(drag.sepTop)} moved ${drag.sepDelta || 0}`;
       if (line !== debugLast) {
         debugLast = line;
         console.log(
-          `[Zia drag] ${line} | client ${event.clientX},${event.clientY} screen ${event.screenX},${event.screenY} point ${Math.round(point.x)},${Math.round(point.y)} | sidebar ${box(sidebar)} | essentials ${name(essentials)} ${box(essentials)} | proxy ${!!proxy}`
+          `[Zia drag] ${line} | firstTop ${drag.firstTop == null ? "-" : Math.round(drag.firstTop)} pitch ${Math.round(drag.pitch || 0)} | client ${event.clientX},${event.clientY} screen ${event.screenX},${event.screenY} point ${Math.round(point.x)},${Math.round(point.y)} | sidebar ${box(sidebar)} | essentials ${name(essentials)} ${box(essentials)} | proxy ${!!proxy}`
         );
       }
     };
@@ -6089,7 +6261,11 @@
         const over = event.target;
         const point = pointerOf(event);
         const sidebar = document.getElementById("navigator-toolbox");
-        drag.away = !drag.folder && !!point.x && !over?.closest?.("#navigator-toolbox") && !inBox(sidebar, point);
+
+        const sideBox = sidebar?.getBoundingClientRect();
+        drag.away =
+          !drag.folder && !!point.x && !over?.closest?.("#navigator-toolbox") && !!sideBox?.width &&
+          (point.x < sideBox.left || point.x > sideBox.right);
 
         if (drag.away) {
           debugDrag(event, point, sidebar, null);
@@ -6101,13 +6277,24 @@
           document.getElementById("zen-essentials") ||
           window.gZenWorkspaces?.getCurrentEssentialsContainer?.() ||
           document.querySelector(".zen-essentials-container");
-        drag.essentials =
-          !drag.folder &&
-          !drag.split &&
-          !over?.closest?.("zen-essentials-promo") &&
-          (!!over?.closest?.("#zen-essentials") || inBox(essentials, point)) &&
-          canBeEssential(drag.tab);
+        const grid = window.gZenWorkspaces?.getCurrentEssentialsContainer?.() || document.querySelector(".zen-essentials-container");
+        const hasTiles = !!grid?.querySelector(".tabbrowser-tab[zen-essential]:not([zia-essential-proxy])");
+        const promo = over?.closest?.("zen-essentials-promo") || null;
+
+        let overEssentials = !!promo || !!over?.closest?.("#zen-essentials") || inBox(essentials, point);
+
+        drag.firstTop = drag.rows?.length ? Math.min(...drag.rows.map((row) => row.top)) : null;
+        if (!overEssentials && !hasTiles && drag.firstTop != null) {
+          overEssentials = point.y < drag.firstTop + 4;
+        }
+        drag.hasTiles = hasTiles;
         debugDrag(event, point, sidebar, essentials);
+        drag.essentials = !drag.folder && !drag.split && overEssentials && canBeEssential(drag.tab);
+        drag.noTiles = drag.essentials && !hasTiles && !promo;
+        makeRoom(drag.noTiles ? document.getElementById("zen-essentials") || grid : null);
+        if (drag.essentials) {
+          fitZenSlot();
+        }
         if (drag.essentials && point.x) {
           showProxy(point.x, point.y);
         } else if (!drag.essentials) {
@@ -6129,6 +6316,12 @@
     const fixDrop = (event) => {
       const tab = drag?.tab;
       const data = tab?._dragData;
+
+      if (data && drag.essentials && drag.noTiles) {
+        data.dropElement = tab;
+        data.dropBefore = true;
+        return;
+      }
       if (!data || !event.clientY || drag.folder || drag.essentials || drag.away) {
         return;
       }
@@ -6188,6 +6381,15 @@
       (event) => {
         const tab = drag?.tab;
         if (tab && drag.essentials) {
+          if (drag.noTiles) {
+            setTimeout(() => {
+              try {
+                window.gZenPinnedTabManager?.addToEssentials?.(tab);
+              } catch (err) {
+                console.error("[Zia] Could not add the first essential:", err);
+              }
+            }, 0);
+          }
           landProxy(tab);
         } else if (tab && !drag.folder && !drag.away && drag.target?.hand) {
           const target = drag.target;
@@ -6253,6 +6455,8 @@
       document.querySelectorAll("[zia-drop-slot]").forEach((folder) => folder.removeAttribute("zia-drop-slot"));
       clearFolderPaint();
       dropProxy();
+      makeRoom(null);
+      document.querySelectorAll("[zia-sep-open]").forEach((node) => node.removeAttribute("zia-sep-open"));
 
       if (raf) {
         cancelAnimationFrame(raf);
@@ -6330,6 +6534,54 @@
     if (shape) {
       root.style.setProperty("--zia-tab-corner", shape);
     }
+  }
+
+  function currentSeparator() {
+    const own = window.gZenWorkspaces?.pinnedTabsContainer?.querySelector?.(".pinned-tabs-container-separator");
+    if (own) {
+      return own;
+    }
+    const all = document.querySelectorAll(".pinned-tabs-container-separator");
+    for (const sep of all) {
+      const box = sep.getBoundingClientRect();
+      if (box.width > 0 && sep.checkVisibility?.({ visibilityProperty: true }) !== false) {
+        return sep;
+      }
+    }
+    return all[0] || null;
+  }
+
+  function watchEdgeGlow() {
+    let pending = 0;
+    const update = () => {
+      pending = 0;
+      for (const tab of document.querySelectorAll(".tabbrowser-tab[zia-no-glow]")) {
+        tab.removeAttribute("zia-no-glow");
+      }
+      const tab = gBrowser.selectedTab;
+      if (!tab || tab.hasAttribute("zen-essential")) {
+        return;
+      }
+      const rows = [...(gBrowser.tabContainer.ariaFocusableItems || [])].filter(
+        (el) => !el.hasAttribute?.("zen-essential") && el.getBoundingClientRect().height > 0
+      );
+      if (tab === rows[0] || tab === rows[rows.length - 1]) {
+        tab.setAttribute("zia-no-glow", "true");
+      }
+    };
+    const soon = () => {
+      if (!pending) {
+        pending = requestAnimationFrame(update);
+      }
+    };
+    for (const type of [
+      "TabSelect", "TabOpen", "TabClose", "TabMove", "TabPinned", "TabUnpinned", "TabGrouped",
+      "TabUngrouped", "TabGroupCollapse", "TabGroupExpand", "TabShow", "TabHide",
+    ]) {
+      gBrowser.tabContainer.addEventListener(type, soon);
+    }
+    window.addEventListener("dragend", () => setTimeout(soon, 450), true);
+    soon();
   }
 
   function start() {
@@ -6478,6 +6730,7 @@
 
     safely("keepWholeUrlSelected", () => keepWholeUrlSelected(urlbar));
     safely("matchTabCorners", matchTabCorners);
+    safely("watchEdgeGlow", watchEdgeGlow);
     safely("revertTypedTextOnLeave", () => revertTypedTextOnLeave(urlbar));
     safely("neverShowScheme", neverShowScheme);
 

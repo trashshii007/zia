@@ -51,9 +51,10 @@
   --zia-fc-red: #cc4a55;
   --zia-fc-orange: #c95125;
 
-  --zia-folder-wash: 20%;
-  --zia-folder-tint: 55%;
-  --zia-folder-name-tint: 42%;
+  --zia-folder-wash: 31%;
+  --zia-folder-tint: 53%;
+  --zia-folder-name-tint: 77%;
+  --zia-folder-name-tint-hover: 38%;
   --zia-tab-hover-bg: rgba(255, 255, 255, 0.115);
   --zia-active-glow-blur: 20px;
   --zia-active-glow-spread: 4px;
@@ -257,6 +258,10 @@
   & .urlbarView-row[selected] {
     background-color: rgba(255, 255, 255, 0.08) !important;
 
+    :root[zia-space-colored="true"] & {
+      background-color: color-mix(in srgb, var(--zen-primary-color, white) 12%, rgb(61, 61, 61)) !important;
+    }
+
     & .urlbarView-shortcutContent {
       background-color: transparent !important;
       fill: rgba(255, 255, 255, 0.9) !important;
@@ -299,6 +304,10 @@
 
   & .urlbarView-row :is(.urlbarView-url, .urlbarView-action, .urlbarView-title-separator) {
     color: rgba(255, 255, 255, 0.55) !important;
+  }
+
+  & .urlbarView-row :is(.urlbarView-url, .urlbarView-action, .urlbarView-title-separator, .urlbarView-tags) strong {
+    color: inherit !important;
   }
 
   & :is(.urlbarView-button-result-menu, .urlbarView-result-menu-button, .urlbarView-button-menu) {
@@ -829,7 +838,62 @@ zen-folder[collapsed][has-active] > .tab-group-container {
 }
 
 :root[zia-dragging-tab] .tabbrowser-tab[zen-essential] {
+  visibility: inherit !important;
+}
+
+#zia-essential-proxy,
+#zia-essential-proxy > .tab-stack,
+#zia-essential-proxy > .tab-stack > .tab-background,
+#zia-essential-proxy > .tab-stack > .tab-content {
+  opacity: 1 !important;
+}
+
+.tabbrowser-tab[zia-essential-proxy] > .tab-stack,
+.tabbrowser-tab[zia-essential-proxy] > .tab-stack > .tab-background {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+}
+
+.tabbrowser-tab[zia-essential-proxy] :is(.tab-reset-pin-button, .tab-reset-pin-label, .tab-group-line) {
+  display: none !important;
+}
+
+zen-essentials-promo {
+  display: none !important;
+}
+
+:is(#tabs-newtab-button, #vertical-tabs-newtab-button)[zia-shift] {
+  position: relative !important;
+  transform: translateY(var(--zia-drag-y)) !important;
+  transition: transform 100ms ease-out !important;
+}
+
+.zen-essentials-container > vbox:not(.tabbrowser-tab) {
+  min-height: var(--zia-essential-height);
+  min-width: var(--zia-essential-min-width);
+  max-width: var(--zia-essential-max-width);
+}
+
+:root[zia-dragging-tab] :is(#zen-essentials, .zen-essentials-container) {
+  transition: min-height 140ms ease-out;
+}
+
+:is(#zen-essentials, .zen-essentials-container)[zia-make-room] {
+  min-height: var(--zia-room) !important;
+}
+
+.tabbrowser-tab[zia-no-glow] {
+  --zia-active-glow-color: transparent !important;
+}
+
+.pinned-tabs-container-separator[zia-sep-open] {
+  display: flex !important;
   visibility: visible !important;
+  height: 22px !important;
+  opacity: 1 !important;
 }
 
 .pinned-tabs-container-separator[zia-shift] {
@@ -1150,6 +1214,11 @@ zen-folder[collapsed][has-active] > .tab-group-container {
   background-color: var(--zia-tab-hover-bg) !important;
 }
 
+:is(#tabs-newtab-button, #vertical-tabs-newtab-button) {
+  border-radius: var(--zia-tab-radius) !important;
+  corner-shape: var(--zia-tab-corner, superellipse(var(--zen-squircle-value, 1))) !important;
+}
+
 :is(#tabs-newtab-button, #vertical-tabs-newtab-button):is(:active, [open]) {
   scale: 1 !important;
 }
@@ -1335,6 +1404,12 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
 
 #zia-folder-card {
   width: 222px;
+  padding: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.zia-folder-card-list {
   padding: 6px;
   max-height: calc(10 * 37px + 12px);
   box-sizing: border-box;
@@ -1555,6 +1630,10 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
 
 :root:not(#zia-none) zen-folder[zia-folder-color] > .tab-group-label-container > label {
   color: color-mix(in srgb, var(--zia-folder-swatch, white) var(--zia-folder-name-tint), white) !important;
+}
+
+:root:not(#zia-none) zen-folder[zia-folder-color]:hover > .tab-group-label-container > label {
+  color: color-mix(in srgb, var(--zia-folder-swatch, white) var(--zia-folder-name-tint-hover), white) !important;
 }
 
 #zen-workspaces-button {

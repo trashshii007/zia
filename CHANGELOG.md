@@ -4,6 +4,49 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.29.0] — 2026-09-23
+
+Everything since 2.28.0. The 2.28.1 through 2.28.37 versions were local test
+builds and were never published; what they changed is folded in here as it
+finally stands.
+
+### Added
+
+- **The first essential by dragging.** With no essentials in a space, dragging
+  a tab above the list opens a row and makes it the first one. Zen's dashed
+  "Add to Essentials" box no longer appears.
+
+### Changed
+
+- **Dragging onto the essentials.** The tile a tab turns into is the real
+  essential, favicon glow and rim included, at exactly the size of the tiles
+  beside it, drawn over everything so it's never cut off at the sidebar's
+  edge. Over a full row, the tiles make room properly: the last one moves
+  down to a new row, lined up with the rest.
+- Coloured folders use Dia's strengths: a deeper tint at rest that brightens
+  on hover, and a name that pales as the folder is hovered.
+- On a space with its own colour, the selected result in the address bar is
+  lightly tinted by it.
+- The reload icon matches Dia's more closely, and the address bar's hover box
+  on dark pages is a touch lighter.
+- The selected tab has no glow when it's the very first or last row.
+- A scrolling list of results leaves the panel 4px shorter.
+
+### Fixed
+
+- Dragging a tab no longer shows another space's essentials, and a tab
+  dragged into a folder no longer gets squeezed to a sliver.
+- The separator moves out of the way in every space, by exactly one row, with
+  + New Tab staying in view. With no normal tabs left, it shows again while
+  you drag, so a pinned tab can go back down.
+- A long folder card scrolls without cutting off its edge, and its
+  "+ New Tab" keeps a collapsed folder collapsed.
+- The icon beside a typed address finds sites whose favicon is kept under
+  their www. address (twitch.tv and others) instead of showing the globe.
+- The + New Tab button has exactly a tab's corners.
+- In the address bar's results, the part of an address that matches what
+  you typed stays grey.
+
 ## [2.28.0] — 2026-09-23
 
 Everything since 2.27.0. The 2.27.1 through 2.27.51 versions were local test
