@@ -4,6 +4,58 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.28.0] — 2026-09-23
+
+Everything since 2.27.0. The 2.27.1 through 2.27.51 versions were local test
+builds and were never published; what they changed is folded in here as it
+finally stands.
+
+### Added
+
+- **Tab dragging, like Dia's.** The tab itself follows the pointer and the
+  rows it passes slide aside; there's no ghost tab and no drop line, and a
+  dropped tab doesn't slide into place. Dragged over a folder, the folder
+  opens up by a row to take it, and the tab narrows to a folder tab's width;
+  dropped into a collapsed folder, the folder stays collapsed and shows the
+  tab under its header. Just below a folder, the upper half of the gap drops
+  into it and the lower half next to it, so the space between two folders
+  is reachable. Tabs cross the separator in either direction, a split drags
+  as one row, and over the essentials a tab turns into the tile it will
+  become.
+- **Folder cards.** Hovering a collapsed folder lists the tabs inside it,
+  each with its icon and name. The speaker mutes and unmutes, hovering a row
+  shows ✕ to close the tab or "−" to unload a pinned one, the tab you're on
+  is dark, and "+ New Tab" opens a tab in that folder. It replaces Zen's
+  folder search popup while hover cards are on; the option in Sine is now
+  "Tab and folder hover cards".
+
+### Changed
+
+- Hover cards for internal pages, such as Settings, show the page's name and
+  the action buttons; only a new tab keeps the title-only card. The tab
+  you're on offers Add to Split too, splitting with the tab you used before.
+- An essential's hover card sits right at the tile's corner.
+- The back and forward arrows are the height of the sidebar button beside
+  them, and the reload icon has Dia's shape.
+- Clicking away from the address bar puts the page's address back instead of
+  leaving half-typed text in it.
+- Tabs have the New Tab button's corner shape, and the active tab inside a
+  folder has the same dark background and glow as any active tab.
+- A Dia or Zen icon set on a space shows beside its name, in the name's
+  colour.
+
+### Fixed
+
+- Clicking the address bar no longer puts `https://` or `www.` back, selects
+  the whole address even while the page loads, and typing no longer loses a
+  letter when Firefox fills in an address starting with "www.".
+- A loading tab's address no longer shows bright white before dimming.
+- Hover cards no longer have a thin black line round them, and Add to Split
+  shows its full icon.
+- A coloured folder's name keeps its tint when the folder is open.
+- Hovering a collapsed folder no longer lights up a hidden tab under its
+  header, and the active tab's glow isn't cut off inside one.
+
 ## [2.27.0] — 2026-09-23
 
 Everything since 2.23.0. The 2.23.1 through 2.26.x versions were local test
@@ -189,6 +241,18 @@ is folded in here as it finally stands.
 
 First tracked release.
 
+[2.27.12]: https://github.com/z1n-k/zia/compare/v2.27.11...v2.27.12
+[2.27.11]: https://github.com/z1n-k/zia/compare/v2.27.10...v2.27.11
+[2.27.10]: https://github.com/z1n-k/zia/compare/v2.27.9...v2.27.10
+[2.27.9]: https://github.com/z1n-k/zia/compare/v2.27.8...v2.27.9
+[2.27.8]: https://github.com/z1n-k/zia/compare/v2.27.7...v2.27.8
+[2.27.7]: https://github.com/z1n-k/zia/compare/v2.27.6...v2.27.7
+[2.27.6]: https://github.com/z1n-k/zia/compare/v2.27.5...v2.27.6
+[2.27.5]: https://github.com/z1n-k/zia/compare/v2.27.4...v2.27.5
+[2.27.4]: https://github.com/z1n-k/zia/compare/v2.27.3...v2.27.4
+[2.27.3]: https://github.com/z1n-k/zia/compare/v2.27.2...v2.27.3
+[2.27.2]: https://github.com/z1n-k/zia/compare/v2.27.1...v2.27.2
+[2.27.1]: https://github.com/z1n-k/zia/compare/v2.27.0...v2.27.1
 [2.27.0]: https://github.com/z1n-k/zia/compare/v2.23.0...v2.27.0
 [2.23.0]: https://github.com/z1n-k/zia/compare/df4a06f...v2.23.0
 [2.13.0]: https://github.com/z1n-k/zia/commit/df4a06f

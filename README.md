@@ -58,6 +58,8 @@ Opened, the panel follows Dia's shape: short rows with air around them, one size
 
 Essentials sit as tiles, four to a row and six when the sidebar is wide. Folders get hover boxes, a bounce when they open, icon or emoji covers, a colour of their own from the right-click menu, and an × to delete them. Plain tab groups, like the ones [Advanced Tab Groups](https://github.com/Vertex-Mods/Advanced-Tab-Groups) makes, get the same folder treatment. Downloads live next to the space name with a progress ring around them. Closing a tab by accident is undone with Cmd/Ctrl+Z for ten seconds afterwards.
 
+Tabs drag the way they do in Dia: the tab itself follows the pointer and the rows it passes slide aside. A folder opens up by a row to take it, and over the essentials a tab turns into the tile it will become. Hovering a tab shows a card with its title, address and a few actions; hovering a collapsed folder lists the tabs inside it.
+
 ![Essentials and folders in the sidebar](https://github.com/user-attachments/assets/0c439e9d-651e-414c-8b85-d5bc8308aef4)
 
 Spaces with a colour of their own carry it through the sidebar:
