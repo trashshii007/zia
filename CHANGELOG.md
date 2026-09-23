@@ -4,6 +4,19 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.30.1] — 2026-09-24
+
+### Added
+
+- An essential dragged over the tab list makes room like any tab: the rows
+  below where it would go slide down a row, and it drops into that gap,
+  pinned or not by which side of the separator it lands.
+
+### Fixed
+
+- Dragging an essential gives the same single tap per step as dragging a
+  tab, instead of Zen's burst of taps.
+
 ## [2.30.0] — 2026-09-24
 
 Everything since 2.29.0. The 2.29.1 through 2.29.44 versions were local test

@@ -6648,6 +6648,8 @@
         window.gZenPinnedTabManager?.setEssentialTabIcon?.(copy);
       } catch (err) {}
       tab.setAttribute("zia-essential-dragged", "true");
+
+      muteZenHaptics(true);
       lastTileUnder = null;
       lastTapPoint = null;
       essentialDrag = {
@@ -6690,6 +6692,97 @@
       }
     };
 
+    const listRoom = { rows: null, pitch: 0, sep: null, sepTop: null, sepDelta: 0, first: undefined };
+    const openListRoom = () => {
+      listRoom.rows = measureRows(null);
+      listRoom.sep = currentSeparator();
+      listRoom.sepTop = listRoom.sep ? listRoom.sep.getBoundingClientRect().top : null;
+      const side = (top) => (listRoom.sepTop == null ? 0 : top > listRoom.sepTop ? 1 : -1);
+      const sorted = [...listRoom.rows].sort((a, b) => a.top - b.top);
+      let best = Infinity;
+      for (let i = 1; i < sorted.length; i++) {
+        const gap = sorted[i].top - sorted[i - 1].top;
+        if (side(sorted[i].top) === side(sorted[i - 1].top) && gap > 8 && gap < sorted[i - 1].height * 1.6 && gap < best) {
+          best = gap;
+        }
+      }
+      listRoom.pitch = best < Infinity ? best : (sorted[0]?.height || 35) + 4;
+      listRoom.sepDelta = 0;
+      listRoom.first = undefined;
+    };
+    const shapeListRoom = (y) => {
+      if (!listRoom.rows) {
+        openListRoom();
+      }
+      let first = null;
+      for (const row of listRoom.rows) {
+        const down = row.mid > y;
+        if (down && !first) {
+          first = row;
+        }
+        const delta = down ? listRoom.pitch : 0;
+        if (row.delta !== delta) {
+          row.delta = delta;
+          place(row.node, delta, false);
+        }
+      }
+      if (listRoom.sep) {
+        const delta = listRoom.sepTop != null && listRoom.sepTop > y ? listRoom.pitch : 0;
+        if (listRoom.sepDelta !== delta) {
+          listRoom.sepDelta = delta;
+          place(listRoom.sep, delta, false);
+        }
+      }
+      if (first !== listRoom.first) {
+        if (listRoom.first !== undefined) {
+          tap();
+        }
+        listRoom.first = first;
+      }
+    };
+    const closeListRoom = () => {
+      if (!listRoom.rows) {
+        return;
+      }
+      for (const row of listRoom.rows) {
+        if (row.delta) {
+          row.delta = 0;
+          place(row.node, 0, false);
+        }
+      }
+      if (listRoom.sep && listRoom.sepDelta) {
+        listRoom.sepDelta = 0;
+        place(listRoom.sep, 0, false);
+      }
+      listRoom.rows = null;
+      listRoom.first = undefined;
+    };
+
+    const dropIntoListRoom = (tab, y) => {
+      const first = listRoom.first || null;
+      const sep = listRoom.sep;
+      const below = listRoom.sepTop != null && y > listRoom.sepTop;
+      listRoom.rows = null;
+      listRoom.first = undefined;
+      setTimeout(() => {
+        try {
+          if (!tab.isConnected || tab.hasAttribute("zen-essential")) {
+            return;
+          }
+          pinFor(tab, !below);
+          if (first && (below || listRoom.sepTop == null || first.top < listRoom.sepTop)) {
+            placeBefore(tab, topLevel(first));
+          } else if (!below && sep) {
+            placeBefore(tab, sep);
+          } else {
+            gBrowser.moveTabToEnd?.(tab);
+          }
+        } catch (err) {
+          console.error("[Zia] Placing the essential in the list failed:", err);
+        }
+      }, 0);
+    };
+
     const onEssentialOver = (event) => {
       const state = essentialDrag;
       if (!state?.copy?.isConnected) {
@@ -6725,6 +6818,11 @@
         }
 
         state.offset = asTab ? { x: 0, y: 0 } : state.offset;
+      }
+      if (asTab) {
+        shapeListRoom(point.y);
+      } else {
+        closeListRoom();
       }
       const x = asTab
         ? (document.getElementById("navigator-toolbox")?.getBoundingClientRect().left || 0) + 8 + plainTabSize().width / 2
@@ -6769,8 +6867,14 @@
         const essentials = document.getElementById("zen-essentials");
         if (inBox(essentials, point) || event.target?.closest?.("#zen-essentials")) {
           dropPastLast(state.tab, point);
+        } else if (state.asTab && listRoom.rows) {
+          dropIntoListRoom(state.tab, point.y);
         }
       }
+      if (listRoom.rows) {
+        closeListRoom();
+      }
+      muteZenHaptics(false);
       state.copy.remove();
 
       setTimeout(() => state.tab.removeAttribute("zia-essential-dragged"), 0);
