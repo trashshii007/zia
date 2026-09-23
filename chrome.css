@@ -98,7 +98,7 @@
   --zia-active-tab-bg: rgba(0, 0, 0, 0.2);
   --zia-space-name-tint: 42%;
   --zia-card-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.35), 0 1px 4px rgba(0, 0, 0, 0.3);
-  --zia-hover-card-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  --zia-hover-card-shadow: none;
   --zia-color-fade: 0.15s;
 }
 
@@ -477,6 +477,44 @@
   pointer-events: none !important;
 }
 
+#zia-copy-link-button image {
+  list-style-image: url("chrome://sine/content/zia/icons/copy-link.svg") !important;
+  -moz-context-properties: fill, fill-opacity, stroke, stroke-opacity;
+  fill: currentColor;
+}
+
+#zia-copy-link-button[zia-copied] image {
+  list-style-image: url("chrome://sine/content/zia/icons/phosphor/check.svg") !important;
+}
+
+#urlbar :is(#zia-copy-link-button, #zen-site-data-icon-button) {
+  width: 26px !important;
+  min-width: 26px !important;
+  height: 26px !important;
+  min-height: 26px !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  justify-content: center !important;
+  align-items: center !important;
+  align-self: center !important;
+}
+
+#urlbar #zia-copy-link-button image {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+#zia-copy-link-button[hidden],
+#urlbar[breakout-extend] #zia-copy-link-button {
+  display: none !important;
+}
+
+#urlbar *:active,
+#urlbar *:active > image {
+  scale: 1 !important;
+  transform: none !important;
+}
+
 #zen-site-data-icon-button image {
   list-style-image: url("chrome://sine/content/zia/icons/site-settings.svg") !important;
 }
@@ -848,6 +886,12 @@ zen-folder[collapsed][has-active] > .tab-group-container {
   opacity: 1 !important;
 }
 
+.tabbrowser-tab[zia-essential-proxy],
+.tabbrowser-tab[zia-essential-proxy] > .tab-stack {
+  overflow: visible !important;
+  contain: none !important;
+}
+
 .tabbrowser-tab[zia-essential-proxy] > .tab-stack,
 .tabbrowser-tab[zia-essential-proxy] > .tab-stack > .tab-background {
   width: 100% !important;
@@ -877,6 +921,23 @@ zen-essentials-promo {
   max-width: var(--zia-essential-max-width);
 }
 
+.tabbrowser-tab[zen-essential][zia-essential-dragged] {
+  opacity: 0 !important;
+}
+
+:is(#zen-sidebar-splitter, #sidebar-splitter, .zen-sidebar-splitter),
+:is(#zen-sidebar-splitter, #sidebar-splitter, .zen-sidebar-splitter)::before,
+:is(#zen-sidebar-splitter, #sidebar-splitter, .zen-sidebar-splitter)::after {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.tabbrowser-tab:is([label=""], :not([label])) .tab-reset-pin-label {
+  display: none !important;
+}
+
 :root[zia-dragging-tab] :is(#zen-essentials, .zen-essentials-container) {
   transition: min-height 140ms ease-out;
 }
@@ -885,7 +946,8 @@ zen-essentials-promo {
   min-height: var(--zia-room) !important;
 }
 
-.tabbrowser-tab[zia-no-glow] {
+.tabbrowser-tab[zia-no-glow],
+.tabbrowser-tab[zia-no-glow] > .tab-stack > .tab-background {
   --zia-active-glow-color: transparent !important;
 }
 
@@ -939,6 +1001,7 @@ zen-essentials-promo {
   height: 22px;
   top: -14px;
   left: -14px;
+  pointer-events: none;
 }
 
 #zia-tab-card[zia-anchor="essential"][zia-side="right"]::before {
@@ -1361,6 +1424,7 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
 
 #zia-tab-card,
 #zia-folder-card {
+  clip-path: inset(0 round var(--zia-tab-card-radius));
   position: fixed;
   z-index: 2147483647;
   width: var(--zia-tab-card-width);
@@ -1385,21 +1449,38 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
   content: "";
   position: absolute;
   inset: 0;
-
-  padding: 1px;
-  opacity: 0.7;
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
   border-radius: inherit;
   corner-shape: round;
   pointer-events: none;
-  background: var(--zia-shine-layers);
-  mask:
-    linear-gradient(#000 0 0) content-box exclude,
-    linear-gradient(#000 0 0);
 }
 
 #zia-tab-card[zia-open],
 #zia-folder-card[zia-open] {
   animation: zia-tab-card-in 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+#zia-tab-card[zia-snap],
+#zia-folder-card[zia-snap] {
+  animation: none;
+}
+
+#zia-tab-card[zia-closing],
+#zia-folder-card[zia-closing] {
+  animation: zia-tab-card-out 0.12s ease-in forwards;
+  pointer-events: none;
+}
+
+@keyframes zia-tab-card-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.85);
+  }
 }
 
 #zia-folder-card {
@@ -1424,7 +1505,8 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
 
   height: var(--zia-tab-height);
   margin-block: calc((37px - var(--zia-tab-height)) / 2);
-  padding-inline: 9px 10px;
+
+  padding-inline: 9px 6px;
   border-radius: var(--zia-tab-radius);
   corner-shape: var(--zia-tab-corner, superellipse(var(--zen-squircle-value, 1)));
   color: rgba(255, 255, 255, 0.78);
@@ -1525,7 +1607,7 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
 
 .zia-tab-card-sub {
   color: var(--zia-tab-card-sub);
-  font-size: 12px;
+  font-size: 13px;
   margin-top: 1px;
   white-space: nowrap;
   overflow: hidden;
@@ -3035,13 +3117,6 @@ findbar {
 #urlbar #zen-site-data-icon-button image {
   width: 17px !important;
   height: 16px !important;
-}
-
-#urlbar #zen-site-data-icon-button {
-  padding: 4px !important;
-  height: auto !important;
-  min-height: 0 !important;
-  align-self: center !important;
 }
 
 #urlbar-search-mode-indicator,

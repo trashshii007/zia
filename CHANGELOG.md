@@ -4,6 +4,46 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.30.0] — 2026-09-24
+
+Everything since 2.29.0. The 2.29.1 through 2.29.44 versions were local test
+builds and were never published; what they changed is folded in here as it
+finally stands.
+
+### Added
+
+- **Copy link.** A paperclip in the address bar, just left of site settings,
+  in each split pane's toolbar, and on hover cards. It copies the page's
+  address, shows a tick for a moment, and only appears on web pages.
+- **Essentials back to tabs.** Dragging an essential off the essentials turns
+  it back into a tab, and back into a tile over the essentials.
+- Trackpad taps that follow what you see: one per row a dragged tab passes,
+  and one each time the essentials make room somewhere new. Zen's own taps,
+  which came in bursts during a drag, are switched off for its length.
+
+### Changed
+
+- Hover cards grow in only when none is showing, swap straight over when you
+  move to another tab, folder or essential, and shrink out when they go. They
+  stay up while the pointer is on them and go when it leaves. Copy link and
+  Bookmark keep the card up.
+- Hover cards have an even hairline edge all round, as in Dia, with no
+  shadow, and the grey address on them is a size bigger.
+- The folder card keeps working like the sidebar: closing or unloading tabs
+  from it keeps it open, its "−" turns into ✕ once a tab is unloaded, its
+  buttons sit where a tab's do, and its "+ New Tab" matches the sidebar's.
+- The selected tab has no glow as the very first or last row, including a
+  new tab at the bottom.
+- No icon in the address bar shrinks when clicked.
+
+### Fixed
+
+- A dragged essential can be dropped at the end of the essentials, and the
+  tile a dragged tab turns into is exactly the size of the others.
+- An essential with its hover card up can be clicked all over.
+- Resizing the sidebar no longer shows a dark bar up its edge.
+- No lone "/" while a page is loading.
+
 ## [2.29.0] — 2026-09-23
 
 Everything since 2.28.0. The 2.28.1 through 2.28.37 versions were local test
