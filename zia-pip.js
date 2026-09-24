@@ -142,7 +142,7 @@
     tuckButton.toggleAttribute("zia-keep", state === "out");
   };
   // A newer glide takes over from one still running.
-  const glide = (x, duration = 280) => {
+  const glide = (x, duration = 280, done = null) => {
     animating = true;
     const id = ++glideId;
     const from = window.screenX;
@@ -161,6 +161,7 @@
         animating = false;
         lastX = window.screenX;
         lastY = window.screenY;
+        done?.();
       }
     };
     requestAnimationFrame(step);
@@ -172,6 +173,7 @@
     root.removeAttribute("zia-drop-hint");
     root.setAttribute("zia-tucked", edge);
     root.removeAttribute("zia-nudged");
+    root.removeAttribute("zia-emerging");
     updateButton();
     glide(tuckedX(0));
   };
@@ -187,13 +189,20 @@
     root.toggleAttribute("zia-nudged", out);
     glide(tuckedX(out ? NUDGE : 0), 160);
   };
+  // The strip stays over the window's edge and fades as the window slides
+  // in, so no slice of video flashes at the side of the screen first.
   const slideOut = () => {
     state = "out";
-    root.removeAttribute("zia-tucked");
     root.removeAttribute("zia-nudged");
+    root.setAttribute("zia-emerging", "");
     updateButton();
     const box = screenBox();
-    glide(side === "right" ? box.right - window.outerWidth - MARGIN : box.left + MARGIN);
+    glide(side === "right" ? box.right - window.outerWidth - MARGIN : box.left + MARGIN, 280, () => {
+      if (state === "out") {
+        root.removeAttribute("zia-tucked");
+      }
+      root.removeAttribute("zia-emerging");
+    });
   };
   const release = () => {
     clearTimeout(leaveTimer);
@@ -201,6 +210,7 @@
     side = null;
     root.removeAttribute("zia-tucked");
     root.removeAttribute("zia-nudged");
+    root.removeAttribute("zia-emerging");
     updateButton();
   };
   updateButton();
@@ -215,10 +225,62 @@
   });
 
   // Pointing at the strip nudges the video out a little; clicking brings it
-  // all the way back.
+  // all the way back. Dragging it up or down moves the tucked window along
+  // the side of the screen, and it stays tucked where it's left.
+  let dragFrom = null;
+  let dragged = false;
   sliver.addEventListener("mouseenter", () => nudge(true));
-  sliver.addEventListener("mouseleave", () => nudge(false));
+  sliver.addEventListener("mouseleave", () => {
+    if (!dragFrom) {
+      nudge(false);
+    }
+  });
+  sliver.addEventListener("pointerdown", (event) => {
+    if (state !== "tucked" || event.button !== 0) {
+      return;
+    }
+    dragFrom = { pointer: event.screenY, window: window.screenY };
+    dragged = false;
+    sliver.setPointerCapture(event.pointerId);
+  });
+  sliver.addEventListener("pointermove", (event) => {
+    if (!dragFrom) {
+      return;
+    }
+    const dy = event.screenY - dragFrom.pointer;
+    if (!dragged && Math.abs(dy) < 4) {
+      return;
+    }
+    dragged = true;
+    root.setAttribute("zia-dragging", "");
+    const s = window.screen;
+    const top = s.availTop;
+    const bottom = s.availTop + s.availHeight - window.outerHeight;
+    const y = Math.round(Math.min(bottom, Math.max(top, dragFrom.window + dy)));
+    window.moveTo(window.screenX, y);
+    lastX = window.screenX;
+    lastY = y;
+  });
+  const endDrag = (event) => {
+    if (!dragFrom) {
+      return;
+    }
+    dragFrom = null;
+    root.removeAttribute("zia-dragging");
+    if (sliver.hasPointerCapture?.(event.pointerId)) {
+      sliver.releasePointerCapture(event.pointerId);
+    }
+    if (!sliver.matches(":hover")) {
+      nudge(false);
+    }
+  };
+  sliver.addEventListener("pointerup", endDrag);
+  sliver.addEventListener("pointercancel", endDrag);
   sliver.addEventListener("click", () => {
+    if (dragged) {
+      dragged = false;
+      return;
+    }
     if (state === "tucked") {
       slideOut();
     }
@@ -250,6 +312,12 @@
     const x = window.screenX;
     const y = window.screenY;
     const now = Date.now();
+    // Moved straight up or down while tucked: dragged along the side, so it
+    // stays tucked.
+    if (state === "tucked" && x === lastX && y !== lastY) {
+      lastY = y;
+      return;
+    }
     if (x !== lastX || y !== lastY) {
       // Being dragged: a tucked or peeking window that's moved is free again.
       lastX = x;

@@ -4,6 +4,20 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.38.0] — 2026-09-24
+
+### Added
+
+- Drag the strip of a tucked picture-in-picture up or down to move it along
+  the side of the screen. It stays tucked wherever you leave it; a click
+  without dragging still brings it out.
+
+### Fixed
+
+- Bringing a tucked picture-in-picture back out no longer flashes a thin
+  slice of video at the edge of the screen. The strip now stays over the
+  window's edge and fades as it slides in.
+
 ## [2.37.0] — 2026-09-24
 
 ### Changed
