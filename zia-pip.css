@@ -424,6 +424,18 @@
   scale: -1 1;
 }
 
+/* Coming back out: the strip fades as the window slides in */
+:root[zia-emerging] .zia-pip-sliver {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 280ms ease;
+}
+
+/* Dragged up or down along the side */
+:root[zia-dragging] .zia-pip-sliver {
+  cursor: grabbing;
+}
+
 /* Nudged out on hover: the strip widens with the window so the pointer
  * stays on it. */
 :root[zia-tucked][zia-nudged] .zia-pip-sliver {
@@ -435,7 +447,19 @@
   translate: -2px 0;
 }
 
-:root[zia-tucked="left"] /* Nudged out on hover: the strip widens with the window so the pointer
+:root[zia-tucked="left"] /* Coming back out: the strip fades as the window slides in */
+:root[zia-emerging] .zia-pip-sliver {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 280ms ease;
+}
+
+/* Dragged up or down along the side */
+:root[zia-dragging] .zia-pip-sliver {
+  cursor: grabbing;
+}
+
+/* Nudged out on hover: the strip widens with the window so the pointer
  * stays on it. */
 :root[zia-tucked][zia-nudged] .zia-pip-sliver {
   width: 36px;
