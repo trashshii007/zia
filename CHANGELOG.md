@@ -4,6 +4,28 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.44.0] — 2026-09-24
+
+### Changed
+
+- **Tucked picture-in-picture comes out by hand and stays out.** Hold the
+  strip and drag it away from the side to pull the video out under the
+  pointer; let go and it settles fully on the screen. Clicking the strip
+  still brings it out. Either way it no longer tucks itself away again when
+  the pointer leaves, which covered the video with its controls. The tuck
+  button puts it back.
+- The media stack opens without the spring, which made the top card bounce.
+  It still springs as it closes, and a single card still springs as it
+  opens.
+
+### Fixed
+
+- The copy-link button in the address bar uses the same Tabler paperclip as
+  the hover cards.
+- A music player card can no longer be dragged out of the sidebar. Dragging
+  one took it away from Zen's media player, which then stayed broken until
+  Zen restarted.
+
 ## [2.43.1] — 2026-09-24
 
 ### Fixed

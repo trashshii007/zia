@@ -297,8 +297,7 @@
   background-image: url("chrome://sine/content/zia/icons/pip/tuck.svg");
 }
 
-:root[zia-edge="left"] .zia-pip-tuck-button:not([zia-keep])::before,
-:root[zia-edge="right"] .zia-pip-tuck-button[zia-keep]::before {
+:root[zia-edge="left"] .zia-pip-tuck-button::before {
   scale: -1 1;
 }
 
@@ -450,9 +449,20 @@
   transition: opacity 280ms ease;
 }
 
-/* Dragged up or down along the side */
+/* Dragged up or down along the side, or out */
 :root[zia-dragging] .zia-pip-sliver {
   cursor: grabbing;
+}
+
+/* Pulled out by hand: the video clears and the strip fades as it comes, but
+ * the strip still takes the drag */
+:root[zia-dragging="out"] .zia-pip-sliver {
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+:root[zia-dragging="out"] .player-holder {
+  filter: none;
 }
 
 :root[zia-tucked] #controls {
