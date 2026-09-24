@@ -1609,14 +1609,30 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
     opacity: 0;
   }
 
-  /* A tab dragged in takes the slot's place: the slot goes at once, and the
-   * room the drag makes for the tab is the same size. */
-  &[zia-drop-slot] > .tab-group-container::after {
-    height: 0;
-    margin-block: 0;
-    border-width: 0;
+  /* A tab dragged in takes the slot's place: the slot fades but keeps its
+   * room (the layout never changes mid-drag), and the tab sits in it. */
+  &[zia-drop-slot]:not([collapsed]) > .tab-group-container::after {
     opacity: 0;
-    transition: none;
+    transition: opacity 100ms ease;
+  }
+
+  /* Collapsed, the slot shows as a tab is dragged in, below the header in
+   * the room the drag opens up. */
+  &[collapsed][zia-drop-slot] > .tab-group-label-container {
+    position: relative;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: calc(100% + var(--zia-slot-mt, 2px));
+      left: var(--zia-slot-ms, 16px);
+      right: var(--zia-slot-me, 7px);
+      height: var(--zia-slot-h, var(--tab-min-height, 35px));
+      box-sizing: border-box;
+      border: 1.5px dashed color-mix(in srgb, color-mix(in srgb, var(--zia-slot-color), white 45%) 70%, transparent);
+      border-radius: var(--zia-tab-radius);
+      pointer-events: none;
+    }
   }
 
   &:has(> .tab-group-label-container[zia-dragging]) > .tab-group-container::after {

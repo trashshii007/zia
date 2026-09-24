@@ -43,6 +43,20 @@
       start = FOLDER_SLOT_INSET.start + (b.left - t.left);
       end = FOLDER_SLOT_INSET.end + (t.right - b.right);
     }
+    // Same gap on the right as at the bottom, inside an open empty folder's box
+    const probe = document.querySelector("zen-folder[zia-empty]:not([collapsed])");
+    const container = probe?.querySelector(":scope > .tab-group-container");
+    if (probe && container) {
+      const box = getComputedStyle(probe, "::before");
+      const folderBox = probe.getBoundingClientRect();
+      const inner = container.getBoundingClientRect();
+      const boxRight = folderBox.right - (parseFloat(box.right) || 0);
+      const boxBottom = folderBox.bottom - (parseFloat(box.bottom) || 0);
+      const gap = boxBottom - (inner.bottom - bottom);
+      if (gap > 0 && gap < 20) {
+        end = inner.right - (boxRight - gap);
+      }
+    }
     const next = [top, bottom, start, end, b.height].map((n) => `${Math.round(n * 2) / 2}px`).join(" ");
     if (next === slotSize) {
       return;

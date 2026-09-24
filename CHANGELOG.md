@@ -13,6 +13,7 @@ Every release of Zia, newest first. The format follows
   here** slot where the first tab would go, outlined in the folder's colour
   (Zia blue for white and uncoloured folders). It's sized from a real tab,
   so a tab dragged in takes its place exactly, without the folder growing.
+  Dragging into a collapsed empty folder shows the slot under its header.
   It shrinks away smoothly when the folder collapses, and moves with the
   folder when other tabs are dragged past.
 
