@@ -339,7 +339,9 @@
   }
 
   :root[zia-pop-scrolls="true"] & .urlbarView {
-    clip-path: inset(0 0 var(--zia-pop-row-inset) 0);
+    /* the list hangs past the pop-up by the trim; cut it off just inside the
+       pop-up's edge so scrolled rows never show below it */
+    clip-path: inset(0 0 calc(var(--zia-pop-bottom-trim) + var(--zia-pop-row-inset) / 2) 0);
   }
 
   --urlbarView-item-inline-padding: 8px !important;
