@@ -256,7 +256,7 @@
     safely("addDownloadProgress", addDownloadProgress);
     ifOn("icon-picker", "addIconPicker", addIconPicker);
     safely("watchCompactTopRow", watchCompactTopRow);
-    safely("watchNewFolders", watchNewFolders);
+    safely("watchOldIcons", watchOldIcons);
     safely("watchFolderColors", watchFolderColors);
     safely("addFolderColorPicker", addFolderColorPicker);
     safely("watchFolderCloseButtons", watchFolderCloseButtons);

@@ -3904,6 +3904,14 @@
         console.error(`[Zia] Could not set default for ${name}:`, err);
       }
     };
+    // Zia 2.42.0 dropped folder names and icons from a local model; clear
+    // what it left behind.
+    try {
+      Services.prefs.clearUserPref("zia.features.folder-icon-suggest");
+      IOUtils.remove(PathUtils.join(PathUtils.profileDir, "zia-icon-vectors.json"), { ignoreAbsent: true }).catch(() => {});
+    } catch (err) {
+      noteError("zen defaults: old model cleanup", err);
+    }
     set("zen.widget.mac.mono-window-controls", false);
     set("zen.urlbar.replace-newtab", !Services.prefs.getBoolPref("zia.newtab.real-tab", true));
     set("zen.splitView.enable-tab-drop", !Services.prefs.getBoolPref("zia.split.drop-cards", true));
@@ -3920,7 +3928,6 @@
       set(`zia.features.${feature}`, true);
     }
 
-    set("zia.features.folder-icon-suggest", false);
     for (const name of ZIA_OPTIONS) {
       set(name, true);
     }
@@ -4391,7 +4398,7 @@
     });
   }
 
-  const FEATURES = ["media-player", "find-bar", "icon-picker", "undo-close", "folder-icon-suggest", "tab-hover-cards"];
+  const FEATURES = ["media-player", "find-bar", "icon-picker", "undo-close", "tab-hover-cards"];
 
   function featureOn(name) {
     try {
@@ -4488,17 +4495,136 @@
     data.addView(view);
   }
 
-  const ICON_DIR = "chrome://sine/content/zia/icons/phosphor";
-  let iconNames = null;
+  // Zia's icons are Tabler Icons (icons/tabler, made by
+  // scripts/tabler-icons.py), each in an outline and, for about a thousand of
+  // them, a solid style. The search index holds every icon's name, tags and
+  // category, so "money" finds cash, coins and wallet.
+  const ICON_ROOT = "chrome://sine/content/zia/icons";
+  const ICON_DIR = `${ICON_ROOT}/tabler`;
+  const ICON_STYLE_PREF = "zia.icons.style";
+  let iconIndex = null;
 
-  function phosphorNames() {
-    if (iconNames) {
-      return iconNames;
+  function tablerIcons() {
+    if (iconIndex) {
+      return iconIndex;
     }
     const holder = {};
-    Services.scriptloader.loadSubScript(`${ICON_DIR.replace("/phosphor", "")}/phosphor-names.js`, holder);
-    iconNames = holder.ZiaPhosphorNames || [];
-    return iconNames;
+    try {
+      Services.scriptloader.loadSubScript(`${ICON_ROOT}/tabler-names.js`, holder);
+    } catch (err) {
+      noteError("icon picker: load names", err);
+    }
+    iconIndex = (holder.ZiaTablerIcons || []).map((row) => {
+      const [name, styles, words] = row.split("|");
+      return { name, outline: styles.includes("o"), filled: styles.includes("f"), words: words || "" };
+    });
+    return iconIndex;
+  }
+
+  function iconStyle() {
+    try {
+      return Services.prefs.getStringPref(ICON_STYLE_PREF, "outline") === "filled" ? "filled" : "outline";
+    } catch (err) {
+      return "outline";
+    }
+  }
+
+  // Best matches first: the name itself, then words in the name, then tags.
+  function searchIcons(icons, text) {
+    const terms = text.toLowerCase().split(/[\s,]+/).filter(Boolean);
+    if (!terms.length) {
+      return icons;
+    }
+    const scored = [];
+    for (const icon of icons) {
+      const parts = icon.name.split("-");
+      let score = 0;
+      for (const term of terms) {
+        if (parts.includes(term)) {
+          score += 3;
+        } else if (parts.some((part) => part.startsWith(term))) {
+          score += 2;
+        } else if (icon.name.includes(term) || icon.words.includes(term)) {
+          score += 1;
+        } else {
+          score = 0;
+          break;
+        }
+      }
+      if (score) {
+        if (icon.name === terms.join("-")) {
+          score += 10;
+        } else if (parts[0] === terms[0]) {
+          score += 1;
+        }
+        scored.push({ icon, score });
+      }
+    }
+    return scored.sort((a, b) => b.score - a.score || a.icon.name.length - b.icon.name.length).map((entry) => entry.icon);
+  }
+
+  // Folders and spaces that still point at a Phosphor icon (Zia's icons
+  // before 2.42.0) switch to the closest Tabler one.
+  const OLD_ICON_DIR = `${ICON_ROOT}/phosphor/`;
+  let oldIconMap = null;
+
+  function tablerFor(url) {
+    if (typeof url !== "string" || !url.startsWith(OLD_ICON_DIR)) {
+      return null;
+    }
+    if (!oldIconMap) {
+      const holder = {};
+      try {
+        Services.scriptloader.loadSubScript(`${ICON_ROOT}/phosphor-to-tabler.js`, holder);
+      } catch (err) {
+        noteError("icon picker: load old icon map", err);
+      }
+      oldIconMap = holder.ZiaPhosphorToTabler || {};
+    }
+    const name = url.slice(OLD_ICON_DIR.length).replace(/\.svg$/, "");
+    return `${ICON_DIR}/outline/${oldIconMap[name] || name}.svg`;
+  }
+
+  function moveOffOldIcons() {
+    for (const folder of document.querySelectorAll("zen-folder")) {
+      const icon = tablerFor(folder.iconURL);
+      if (icon) {
+        try {
+          window.gZenFolders?.setFolderUserIcon(folder, icon);
+          folder.dispatchEvent(new CustomEvent("TabGroupUpdate", { bubbles: true }));
+        } catch (err) {
+          noteError("icon picker: move folder icon", err);
+        }
+      }
+    }
+    try {
+      for (const space of window.gZenWorkspaces?.getWorkspaces?.() || []) {
+        const icon = tablerFor(space.icon);
+        if (icon) {
+          space.icon = icon;
+          window.gZenWorkspaces.saveWorkspace(space);
+        }
+      }
+    } catch (err) {
+      noteError("icon picker: move space icons", err);
+    }
+  }
+
+  function watchOldIcons() {
+    let queued = false;
+    const queue = () => {
+      if (!queued) {
+        queued = true;
+        setTimeout(() => {
+          queued = false;
+          moveOffOldIcons();
+        }, 500);
+      }
+    };
+    gBrowser.tabContainer.addEventListener("TabGroupCreate", queue);
+    window.addEventListener("ZenWorkspacesUIUpdate", queue);
+    window.SessionStore?.promiseAllWindowsRestored?.then(queue, queue);
+    queue();
   }
 
   function addIconPicker() {
@@ -4525,21 +4651,53 @@
       }
     }
 
+    const HTML = "http://www.w3.org/1999/xhtml";
     const page = document.createXULElement("vbox");
     page.id = "zia-icons-page";
-    const bar = document.createElementNS("http://www.w3.org/1999/xhtml", "div");
+    const bar = document.createElementNS(HTML, "div");
     bar.id = "zia-icons-searchbar";
-    const box = document.createElementNS("http://www.w3.org/1999/xhtml", "input");
+    const box = document.createElementNS(HTML, "input");
     box.id = "zia-icons-search";
     box.setAttribute("type", "text");
     box.setAttribute("placeholder", "Search icons");
-    bar.appendChild(box);
-    const grid = document.createElementNS("http://www.w3.org/1999/xhtml", "div");
+    // Outline or solid, remembered
+    const styles = document.createElementNS(HTML, "div");
+    styles.id = "zia-icons-style";
+    const styleButtons = {};
+    for (const [value, label] of [["outline", "Outline"], ["filled", "Solid"]]) {
+      const button = document.createElementNS(HTML, "button");
+      button.className = "zia-icons-style-option";
+      button.textContent = label;
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        try {
+          Services.prefs.setStringPref(ICON_STYLE_PREF, value);
+        } catch (err) {
+          noteError("icon picker: save style", err);
+        }
+        showStyle();
+        render();
+      });
+      styleButtons[value] = button;
+      styles.appendChild(button);
+    }
+    bar.append(box, styles);
+    const grid = document.createElementNS(HTML, "div");
     grid.id = "zia-icons-grid";
-    page.append(bar, grid);
+    const empty = document.createElementNS(HTML, "div");
+    empty.id = "zia-icons-empty";
+    empty.textContent = "No icons found";
+    empty.hidden = true;
+    page.append(bar, grid, empty);
     pages.appendChild(page);
 
-    let built = false;
+    function showStyle() {
+      const current = iconStyle();
+      for (const [value, button] of Object.entries(styleButtons)) {
+        button.toggleAttribute("selected", value === current);
+      }
+    }
+
     let showing = false;
     let picked = false;
     let resolvePick = null;
@@ -4554,29 +4712,62 @@
       }
     }
 
-    function build() {
-      if (built) {
+    // Results are added a screenful at a time as the grid scrolls, so the
+    // thousands of icons never load at once.
+    const BATCH = 180;
+    let results = [];
+    let shown = 0;
+    let lastQuery = null;
+    const more = document.createElementNS(HTML, "div");
+    more.id = "zia-icons-more";
+    const moreWatcher = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          addMore();
+        }
+      },
+      { root: grid, rootMargin: "200px" }
+    );
+    moreWatcher.observe(more);
+
+    function addMore() {
+      if (shown >= results.length) {
         return;
       }
-      built = true;
+      const style = iconStyle();
       const fragment = document.createDocumentFragment();
-      for (const name of phosphorNames()) {
-        const url = `${ICON_DIR}/${name}.svg`;
+      for (const icon of results.slice(shown, shown + BATCH)) {
+        const url = `${ICON_DIR}/${style}/${icon.name}.svg`;
         const item = document.createXULElement("toolbarbutton");
-
         item.className = "toolbarbutton-1 zen-emojis-picker-svg zia-icon-item";
-        item.setAttribute("tooltiptext", name.replace(/-/g, " "));
-        item.setAttribute("zia-icon-name", name);
+        item.setAttribute("tooltiptext", icon.name.replace(/-/g, " "));
         item.style.listStyleImage = `url(${url})`;
         item.addEventListener("command", () => choose(url));
         fragment.appendChild(item);
       }
-      grid.appendChild(fragment);
+      shown = Math.min(results.length, shown + BATCH);
+      grid.insertBefore(fragment, more);
+    }
+
+    function render() {
+      const style = iconStyle();
+      const query = `${style}:${(box.value || "").trim()}`;
+      if (query === lastQuery) {
+        return;
+      }
+      lastQuery = query;
+      results = searchIcons(tablerIcons().filter((icon) => icon[style]), box.value || "");
+      shown = 0;
+      grid.replaceChildren(more);
+      grid.scrollTop = 0;
+      empty.hidden = results.length > 0;
+      addMore();
     }
 
     function show() {
-      build();
       showing = true;
+      showStyle();
+      render();
       box.focus({ preventScroll: true });
       page.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
       tab.classList.add("selected");
@@ -4584,17 +4775,6 @@
         if (other !== tab) {
           other.classList.remove("selected");
         }
-      }
-      filter();
-    }
-
-    function filter() {
-      if (!built) {
-        return;
-      }
-      const text = (box.value || "").trim().toLowerCase();
-      for (const item of grid.children) {
-        item.hidden = text ? !item.getAttribute("zia-icon-name").includes(text) : false;
       }
     }
 
@@ -4619,7 +4799,7 @@
       for (const prop of [
         "appearance", "padding", "border", "borderRadius", "backgroundColor",
         "backgroundImage", "color", "font", "fontSize", "fontFamily",
-        "boxShadow", "outline", "minHeight", "height", "lineHeight", "width",
+        "boxShadow", "outline", "minHeight", "height", "lineHeight",
       ]) {
         const value = from[prop];
         if (value && value !== "auto") {
@@ -4654,12 +4834,12 @@
       }
     }
 
-    box.addEventListener("input", filter);
+    box.addEventListener("input", render);
 
     search?.addEventListener("input", () => {
       if (showing) {
         box.value = search.value;
-        filter();
+        render();
       }
     });
 
@@ -4673,8 +4853,8 @@
       matchZenSearch();
       showing = false;
       tab.classList.remove("selected");
-      if (search) {
-        filter();
+      if (search && lastQuery !== null) {
+        render();
       }
     });
 
@@ -4758,649 +4938,6 @@
 
     moveTopRow();
     syncPanelOpen();
-  }
-
-  const ICON_SYNONYMS = {
-    flight: "airplane", flights: "airplane", fly: "airplane", airline: "airplane",
-    travel: "airplane", trip: "suitcase", holiday: "suitcase", vacation: "suitcase",
-    hike: "mountains", hikes: "mountains", hiking: "mountains", trail: "mountains",
-    walk: "mountains", climb: "mountains", outdoors: "tree", camping: "tent",
-    shop: "shopping-cart", shopping: "shopping-cart", buy: "shopping-cart",
-    order: "package", orders: "package", delivery: "truck",
-    money: "wallet", bank: "bank", budget: "wallet", invoice: "invoice",
-    pay: "credit-card", payment: "credit-card", finance: "chart-line-up",
-    code: "code", coding: "code", github: "github-logo", git: "git-branch",
-    dev: "terminal", api: "brackets-curly", server: "hard-drives",
-    docs: "file-text", doc: "file-text", notes: "note", note: "note",
-    read: "book-open", reading: "book-open", book: "book", books: "books",
-    music: "music-notes", song: "music-notes", playlist: "playlist",
-    video: "video", videos: "video", film: "film-slate", movie: "film-slate",
-    movies: "film-slate", watch: "monitor-play", stream: "broadcast",
-    game: "game-controller", games: "game-controller", gaming: "game-controller",
-    health: "heartbeat", medical: "first-aid-kit", doctor: "stethoscope",
-    fitness: "barbell", gym: "barbell", run: "person-simple-run",
-    food: "fork-knife", recipe: "cooking-pot", recipes: "cooking-pot",
-    cook: "cooking-pot", coffee: "coffee", drink: "beer-stein",
-    work: "briefcase", job: "briefcase", jobs: "briefcase", career: "briefcase",
-    meeting: "users-three", team: "users-three", email: "envelope",
-    mail: "envelope", inbox: "tray", calendar: "calendar", schedule: "calendar",
-    home: "house", house: "house", rent: "house", property: "buildings",
-    car: "car", cars: "car", drive: "car", train: "train", transport: "bus",
-    photo: "image", photos: "images", picture: "image", design: "palette",
-    art: "palette", draw: "pencil", ai: "sparkle", chat: "chat-circle",
-    news: "newspaper", weather: "cloud-sun", forecast: "cloud-sun",
-    learn: "graduation-cap", course: "graduation-cap", study: "student",
-    school: "graduation-cap", plan: "list-checks", todo: "list-checks",
-    tasks: "list-checks", project: "kanban", idea: "lightbulb",
-    settings: "gear", tools: "wrench", security: "shield-check",
-    password: "key", login: "sign-in", account: "user-circle",
-    pet: "paw-print", dog: "dog", cat: "cat", garden: "plant",
-    gift: "gift", wedding: "heart", baby: "baby", kids: "baby",
-  };
-
-  const ICON_STOPWORDS = new Set([
-    "the", "and", "for", "with", "from", "your", "you", "that", "this", "new",
-    "how", "what", "when", "why", "are", "was", "will", "can", "all", "our",
-    "www", "com", "net", "org", "html", "php", "index", "home", "page", "site",
-    "search", "google", "best", "top", "free", "online", "official", "site",
-    "folder", "group", "tab", "tabs", "untitled",
-  ]);
-
-  function iconWords(text) {
-    return String(text || "")
-      .toLowerCase()
-      .split(/[^a-z]+/)
-      .filter((word) => word.length > 2 && !ICON_STOPWORDS.has(word));
-  }
-
-  function folderWordWeights(folder) {
-    const weights = new Map();
-    const add = (text, weight) => {
-      for (const word of iconWords(text)) {
-        weights.set(word, (weights.get(word) || 0) + weight);
-      }
-    };
-    add(folder.label || folder.getAttribute("label"), 3);
-    for (const tab of folder.tabs || []) {
-      add(tab.label, 1);
-      try {
-        add(tab.linkedBrowser?.currentURI?.host?.replace(/^www\./, ""), 0.5);
-      } catch (err) {
-        noteError("folder names local model: add", err);
-      }
-    }
-    return weights;
-  }
-
-  function suggestFolderIcon(folder) {
-    const weights = folderWordWeights(folder);
-    if (!weights.size) {
-      return null;
-    }
-    const names = phosphorNames();
-    if (!names.length) {
-      return null;
-    }
-
-    let best = null;
-    let bestScore = 0;
-    for (const name of names) {
-      const parts = name.split("-");
-      let score = 0;
-      for (const [word, weight] of weights) {
-        if (name === word) {
-          score += weight * 4;
-          continue;
-        }
-
-        if (parts.includes(word)) {
-          score += weight * 2;
-          continue;
-        }
-
-        if (ICON_SYNONYMS[word] === name) {
-          score += weight * 3;
-        }
-      }
-      if (!score) {
-        continue;
-      }
-
-      score -= (parts.length - 1) * 0.1;
-      if (score > bestScore) {
-        bestScore = score;
-        best = name;
-      }
-    }
-
-    return bestScore >= 2 ? `${ICON_DIR}/${best}.svg` : null;
-  }
-
-  const DEFAULT_FOLDER_NAMES = /^(new folder|folder|untitled|new group)$/i;
-
-  function titleCase(text) {
-    return text
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((word) => (word.length > 3 ? word[0].toUpperCase() + word.slice(1) : word.toUpperCase()))
-      .join(" ");
-  }
-
-  function folderTabHosts(folder) {
-    const hosts = [];
-    for (const tab of folder.tabs || []) {
-      try {
-        const host = tab.linkedBrowser?.currentURI?.host?.replace(/^www\./, "");
-        if (host) {
-          hosts.push(host);
-        }
-      } catch (err) {
-        noteError("folder names local model: folderTabHosts", err);
-      }
-    }
-    return hosts;
-  }
-
-  function suggestFolderName(folder) {
-    const tabs = folder.tabs || [];
-    if (tabs.length < 2) {
-      return null;
-    }
-
-    const hosts = folderTabHosts(folder);
-    if (hosts.length === tabs.length && new Set(hosts).size === 1) {
-      const parts = hosts[0].split(".");
-      const brand = parts.length > 2 ? parts[parts.length - 2] : parts[0];
-      if (brand && brand.length > 2) {
-        return titleCase(brand);
-      }
-    }
-
-    const pieces = new Map();
-    for (const tab of tabs) {
-      const seen = new Set();
-      for (const piece of String(tab.label || "").split(/\s[-|—·]\s/)) {
-        const trimmed = piece.trim();
-        if (trimmed.length > 2 && trimmed.length < 30 && !seen.has(trimmed)) {
-          seen.add(trimmed);
-          pieces.set(trimmed, (pieces.get(trimmed) || 0) + 1);
-        }
-      }
-    }
-    for (const [piece, count] of pieces) {
-      if (count === tabs.length) {
-        return piece;
-      }
-    }
-
-    const inside = new Map();
-    for (const tab of tabs) {
-      for (const word of iconWords(tab.label)) {
-        inside.set(word, (inside.get(word) || 0) + 1);
-      }
-    }
-    const outside = new Map();
-    for (const tab of gBrowser.tabs) {
-      if (tabs.includes(tab)) {
-        continue;
-      }
-      for (const word of new Set(iconWords(tab.label))) {
-        outside.set(word, (outside.get(word) || 0) + 1);
-      }
-    }
-    const top = [...inside.entries()]
-      .filter(([, count]) => count > 1)
-      .map(([word, count]) => [word, count / (1 + (outside.get(word) || 0))])
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 2)
-      .map(([word]) => word);
-    return top.length ? titleCase(top.join(" ")) : null;
-  }
-
-  const EMBED_CACHE = "zia-icon-vectors.json";
-  const EMBED_MODEL = "Xenova/all-MiniLM-L6-v2";
-  let embedEngine = null;
-  let iconVectors = null;
-
-  async function textEmbedder() {
-    if (embedEngine) {
-      return embedEngine;
-    }
-    const { createEngine } = ChromeUtils.importESModule(
-      "chrome://global/content/ml/EngineProcess.sys.mjs"
-    );
-    embedEngine = await createEngine({
-      taskName: "feature-extraction",
-      featureId: "simple-text-embedder",
-      modelId: EMBED_MODEL,
-      dtype: "q8",
-    });
-    return embedEngine;
-  }
-
-  function readVectors(result, count) {
-    if (!result) {
-      return null;
-    }
-    if (Array.isArray(result) && Array.isArray(result[0])) {
-      return result;
-    }
-    const flat = result.data || result.output || result;
-    if (!flat || typeof flat.length !== "number") {
-      return null;
-    }
-    const dims = Math.floor(flat.length / count);
-    const out = [];
-    for (let i = 0; i < count; i++) {
-      out.push(Array.from(flat.slice(i * dims, (i + 1) * dims)));
-    }
-    return out;
-  }
-
-  function normalise(vector) {
-    let sum = 0;
-    for (const value of vector) {
-      sum += value * value;
-    }
-    const length = Math.sqrt(sum) || 1;
-    return vector.map((value) => value / length);
-  }
-
-  async function embedTexts(texts) {
-    const engine = await textEmbedder();
-    const result = await engine.run({
-      args: [texts],
-      options: { pooling: "mean", normalize: true },
-    });
-    const vectors = readVectors(result, texts.length);
-    return vectors ? vectors.map(normalise) : null;
-  }
-
-  function cachePath() {
-    return PathUtils.join(PathUtils.profileDir, EMBED_CACHE);
-  }
-
-  async function loadIconVectors() {
-    if (iconVectors) {
-      return iconVectors;
-    }
-    try {
-      const raw = JSON.parse(await IOUtils.readUTF8(cachePath()));
-      if (raw.model === EMBED_MODEL && raw.names?.length && raw.data) {
-        const bytes = Uint8Array.from(atob(raw.data), (c) => c.charCodeAt(0));
-        iconVectors = { names: raw.names, dims: raw.dims, data: new Int8Array(bytes.buffer) };
-        return iconVectors;
-      }
-    } catch (err) {
-      noteError("folder names local model: loadIconVectors", err);
-    }
-    return null;
-  }
-
-  function iconPhrase(name) {
-    return `${name.split("-").join(" ")} icon`;
-  }
-
-  async function buildIconVectors() {
-    const names = phosphorNames();
-    if (!names.length) {
-      return null;
-    }
-    console.info(`[Zia] Embedding ${names.length} icon names, once.`);
-    const all = [];
-    let dims = 0;
-    for (let i = 0; i < names.length; i += 64) {
-      const batch = names.slice(i, i + 64);
-      const vectors = await embedTexts(batch.map(iconPhrase));
-      if (!vectors) {
-        return null;
-      }
-      dims = vectors[0].length;
-      for (const vector of vectors) {
-        all.push(vector);
-      }
-    }
-
-    const data = new Int8Array(all.length * dims);
-    all.forEach((vector, row) => {
-      vector.forEach((value, col) => {
-        data[row * dims + col] = Math.max(-127, Math.min(127, Math.round(value * 127)));
-      });
-    });
-    iconVectors = { names, dims, data };
-    try {
-      await IOUtils.writeUTF8(
-        cachePath(),
-        JSON.stringify({
-          model: EMBED_MODEL,
-          dims,
-          names,
-          data: btoa(String.fromCharCode(...new Uint8Array(data.buffer))),
-        })
-      );
-    } catch (err) {
-      console.warn("[Zia] Couldn't save the icon vectors; they'll be built again next time.", err);
-    }
-    return iconVectors;
-  }
-
-  function nearestIcon(vector, vectors) {
-    const { names, dims, data } = vectors;
-    let best = null;
-    let bestScore = -1;
-    for (let row = 0; row < names.length; row++) {
-      let score = 0;
-      for (let col = 0; col < dims; col++) {
-        score += vector[col] * (data[row * dims + col] / 127);
-      }
-      if (score > bestScore) {
-        bestScore = score;
-        best = names[row];
-      }
-    }
-    return { name: best, score: bestScore };
-  }
-
-  function folderText(folder) {
-    const parts = [];
-    const label = (folder.name || folder.label || "").trim();
-    if (label && !DEFAULT_FOLDER_NAMES.test(label)) {
-      parts.push(label);
-    }
-    for (const tab of (folder.tabs || []).slice(0, 8)) {
-      const title = String(tab.label || "").trim();
-      if (title) {
-        parts.push(title);
-      }
-    }
-    return parts.join(". ");
-  }
-
-  async function suggestIconByMeaning(folder) {
-    const text = folderText(folder);
-    if (!text) {
-      return null;
-    }
-    const vectors = (await loadIconVectors()) || (await buildIconVectors());
-    if (!vectors) {
-      return null;
-    }
-    const embedded = await embedTexts([text]);
-    if (!embedded) {
-      return null;
-    }
-    const { name, score } = nearestIcon(embedded[0], vectors);
-    console.info(`[Zia] Closest icon to "${text.slice(0, 60)}": ${name} (${score.toFixed(3)})`);
-
-    return score >= 0.28 ? `${ICON_DIR}/${name}.svg` : null;
-  }
-
-  let nameEngine = null;
-  let nameEngineTried = false;
-
-  async function namingEngine() {
-    if (nameEngineTried) {
-      return nameEngine;
-    }
-    nameEngineTried = true;
-    const { createEngine } = ChromeUtils.importESModule(
-      "chrome://global/content/ml/EngineProcess.sys.mjs"
-    );
-    for (const options of [
-      { taskName: "text2text-generation", featureId: "smart-tab-topic" },
-      { taskName: "text2text-generation" },
-    ]) {
-      try {
-        nameEngine = await createEngine(options);
-        console.info(`[Zia] Naming engine: ${options.featureId || options.taskName}`);
-        return nameEngine;
-      } catch (err) {
-        console.warn("[Zia] Naming engine not available:", options, err.message);
-      }
-    }
-    return null;
-  }
-
-  function readGeneratedText(result) {
-    if (!result) {
-      return "";
-    }
-    if (typeof result === "string") {
-      return result;
-    }
-    if (Array.isArray(result)) {
-      return readGeneratedText(result[0]);
-    }
-    return result.generated_text || result.text || result.output || "";
-  }
-
-  function tidyName(raw, tabs) {
-    let name = String(raw || "")
-      .replace(/["'`]/g, "")
-      .replace(/^(a|an|the)\s+/i, "")
-      .split(/[\n.:;]/)[0]
-      .trim();
-    if (!name) {
-      return null;
-    }
-    const words = name.split(/\s+/).slice(0, 3);
-    name = words.join(" ");
-
-    const echoed = tabs.some((tab) => String(tab.label || "").toLowerCase().startsWith(name.toLowerCase()));
-    if (name.length < 3 || name.length > 28 || echoed) {
-      return null;
-    }
-    return titleCase(name);
-  }
-
-  async function suggestNameByModel(folder) {
-    const tabs = (folder.tabs || []).slice(0, 8);
-    if (tabs.length < 2) {
-      return null;
-    }
-    const engine = await namingEngine();
-    if (!engine) {
-      return null;
-    }
-    const titles = tabs.map((tab) => `- ${String(tab.label || "").slice(0, 80)}`).join("\n");
-    const prompt = `Give a short two word label for this group of browser tabs:\n${titles}\nLabel:`;
-    const result = await engine.run({ args: [prompt], options: { max_new_tokens: 8 } });
-    const name = tidyName(readGeneratedText(result), tabs);
-    console.info(`[Zia] Suggested name: ${name || "(nothing usable)"}`);
-    return name;
-  }
-
-  function findNameEditor(folder) {
-    const roots = [folder.labelElement, folder.labelElement?.shadowRoot, folder, folder.shadowRoot];
-    for (const root of roots) {
-      const editor = root?.querySelector?.("input, textarea, [contenteditable='true']");
-      if (editor) {
-        return editor;
-      }
-    }
-    const active = folder.ownerDocument.activeElement;
-    return folder.contains(active) || folder.labelElement?.contains?.(active) ? active : null;
-  }
-
-  function renameFolder(folder, name) {
-    const label = folder.labelElement;
-
-    const editor = findNameEditor(folder);
-    if (editor) {
-      if ("value" in editor) {
-        editor.value = name;
-      } else {
-        editor.textContent = name;
-      }
-      editor.dispatchEvent(new Event("input", { bubbles: true }));
-      editor.dispatchEvent(new Event("change", { bubbles: true }));
-      for (const type of ["keydown", "keypress", "keyup"]) {
-        editor.dispatchEvent(
-          new KeyboardEvent(type, { key: "Enter", keyCode: 13, bubbles: true })
-        );
-      }
-      editor.blur?.();
-    }
-
-    if (typeof label?.onRenameFinished === "function") {
-      label.onRenameFinished(name);
-    } else {
-      folder.name = name;
-      folder.dispatchEvent(new CustomEvent("ZenFolderRenamed", { bubbles: true }));
-    }
-
-    for (const method of ["finishRename", "stopRename", "stopEditing", "blur"]) {
-      try {
-        label?.[method]?.();
-      } catch (err) {
-        noteError("folder names local model: renameFolder", err);
-      }
-    }
-    label?.removeAttribute?.("editing");
-    folder.removeAttribute("editing");
-    folder.ownerDocument.activeElement?.blur?.();
-    console.info(`[Zia] Renamed the folder to "${name}"${editor ? " (field was open)" : ""}.`);
-  }
-
-  function showFolderSkeleton(folder) {
-    try {
-      const container = folder.querySelector(".tab-group-label-container") || folder;
-      if (container.querySelector(".zia-skeleton-overlay")) {
-        return;
-      }
-      const doc = folder.ownerDocument;
-      const containerRect = container.getBoundingClientRect();
-      const iconEl = folder.querySelector(".tab-group-folder-icon");
-      const iconRect = iconEl?.getBoundingClientRect();
-
-      const label = folder.labelElement;
-      const fontSize = parseFloat(getComputedStyle(label || container).fontSize) || 13;
-      const size = Math.max(9, Math.round(fontSize * 0.85));
-
-      const iconCentre = iconRect?.width
-        ? iconRect.left - containerRect.left + iconRect.width / 2
-        : 16;
-      const iconLeft = Math.round(iconCentre - size / 2);
-
-      const labelRect = label?.getBoundingClientRect();
-      const textLeft = Math.round(
-        labelRect?.width
-          ? labelRect.left - containerRect.left
-          : (iconRect?.right || 0) - containerRect.left + 8
-      );
-
-      const overlay = doc.createElement("div");
-      overlay.className = "zia-skeleton-overlay";
-      overlay.style.cssText = `position:absolute;inset:0;pointer-events:none;z-index:5;`;
-
-      const block = (left, width, height, radius) => {
-        const el = doc.createElement("div");
-        el.className = "zia-skeleton-block";
-        el.style.cssText =
-          `position:absolute;left:${left}px;top:50%;transform:translateY(-50%);` +
-          `width:${width}px;height:${height}px;border-radius:${radius}px;`;
-        return el;
-      };
-
-      overlay.appendChild(block(iconLeft, size, size, Math.round(size / 3.5)));
-      overlay.appendChild(block(textLeft, 88, size, Math.round(size / 3.5)));
-
-      if (getComputedStyle(container).position === "static") {
-        container.style.position = "relative";
-      }
-      container.setAttribute("zia-skeleton-on", "true");
-      container.appendChild(overlay);
-    } catch (err) {
-      console.warn("[Zia] Couldn't show the folder placeholder:", err);
-    }
-  }
-
-  function hideFolderSkeleton(folder) {
-    const container = folder.querySelector(".tab-group-label-container") || folder;
-    container.querySelector(".zia-skeleton-overlay")?.remove();
-    container.removeAttribute("zia-skeleton-on");
-    container.style.removeProperty("position");
-  }
-  const isDefaultName = (name) => !name || DEFAULT_FOLDER_NAMES.test(name);
-
-  function currentFolderName(folder) {
-    const editor = findNameEditor(folder);
-    const name = editor ? ("value" in editor ? editor.value : editor.textContent) : folder.name;
-    return (name || "").trim();
-  }
-
-  function folderIconURL(folder) {
-    if (folder.localName === "zen-folder") {
-      return folder.iconURL;
-    }
-    const icon = folder.querySelector(":scope > .tab-group-label-container .tab-group-icon > :is(.group-icon, label)");
-    if (icon) {
-      return icon.localName === "label" ? icon.textContent : icon.getAttribute("src");
-    }
-    return window.advancedTabGroups?.savedIcons?.[folder.id] || "";
-  }
-
-  function setFolderIcon(folder, icon) {
-    if (folder.localName === "zen-folder") {
-      window.gZenFolders?.setFolderUserIcon(folder, icon);
-    } else {
-      window.advancedTabGroups?.applyGroupIcon(folder, icon);
-    }
-  }
-
-  function applySuggestedFolderIcon(folder) {
-    if (!featureOn("folder-icon-suggest")) {
-      return;
-    }
-    if (!isFolder(folder) || folderIconURL(folder)) {
-      return;
-    }
-
-    folder.setAttribute("zia-suggesting", "true");
-    showFolderSkeleton(folder);
-    setTimeout(async () => {
-      try {
-        if (!folder.isConnected) {
-          return;
-        }
-        if (!folderIconURL(folder)) {
-          let icon = null;
-          try {
-            icon = await suggestIconByMeaning(folder);
-          } catch (err) {
-            console.warn("[Zia] The embedding model wasn't available:", err);
-          }
-          icon = icon || suggestFolderIcon(folder);
-          if (icon && !folderIconURL(folder)) {
-            setFolderIcon(folder, icon);
-            folder.dispatchEvent(new CustomEvent("TabGroupUpdate", { bubbles: true }));
-          }
-        }
-        if (isDefaultName(currentFolderName(folder))) {
-          let name = null;
-          try {
-            name = await suggestNameByModel(folder);
-          } catch (err) {
-            console.warn("[Zia] Couldn't name the folder with the model:", err);
-          }
-          name = name || suggestFolderName(folder);
-          if (name && isDefaultName(currentFolderName(folder))) {
-            renameFolder(folder, name);
-          }
-        }
-      } catch (err) {
-        console.error("[Zia] Could not suggest a folder icon or name:", err);
-      } finally {
-        folder.removeAttribute("zia-suggesting");
-        hideFolderSkeleton(folder);
-      }
-    }, 600);
-  }
-
-  function watchNewFolders() {
-    gBrowser.tabContainer.addEventListener("TabGroupCreate", (event) => {
-      requestAnimationFrame(() => requestAnimationFrame(() => applySuggestedFolderIcon(event.target)));
-    });
   }
 
   const FOLDER_DEFAULT_COLOR = "white";
@@ -5917,7 +5454,7 @@
   const TAB_CARD_ACTIONS = [
     {
       name: "essential",
-      icon: "push-pin",
+      icon: "pin",
       label: "Add to Essentials",
 
       run: (tab) => gZenPinnedTabManager?.addToEssentials(tab),
@@ -5925,7 +5462,7 @@
     },
     {
       name: "unpin",
-      icon: "push-pin-slash",
+      icon: "pinned-off",
       label: "Unpin",
       run: (tab) => {
         if (tab.hasAttribute("zen-essential")) {
@@ -5938,14 +5475,14 @@
     },
     {
       name: "bookmark",
-      icon: "bookmark-simple",
+      icon: "bookmark",
       label: "Bookmark",
       run: (tab) => bookmarkTab(tab),
       keepsCard: true,
     },
     {
       name: "split",
-      icon: "square-split-horizontal",
+      icon: "layout-columns",
       label: "Add to Split",
 
       run: (tab) => {
@@ -5987,7 +5524,7 @@
     button.setAttribute("zia-copied", "true");
     const img = button.localName === "button" ? button.querySelector("img") : null;
     if (img) {
-      img.setAttribute("src", "chrome://sine/content/zia/icons/phosphor/check.svg");
+      img.setAttribute("src", "chrome://sine/content/zia/icons/tabler/outline/check.svg");
     }
     clearTimeout(button.ziaCopiedTimer);
     button.ziaCopiedTimer = setTimeout(() => {
@@ -6126,7 +5663,7 @@
       button.title = action.label;
 
       const icon = document.createElementNS(XHTML_NS, "img");
-      icon.setAttribute("src", `chrome://sine/content/zia/icons/phosphor/${action.icon}.svg`);
+      icon.setAttribute("src", `chrome://sine/content/zia/icons/tabler/outline/${action.icon}.svg`);
       icon.setAttribute("alt", "");
       button.appendChild(icon);
       button.addEventListener("click", (event) => {
@@ -6270,7 +5807,7 @@
   function tabButtonIcon(tab, selector, fallback) {
     const button = tab.querySelector(selector);
     const url = button ? getComputedStyle(button).listStyleImage?.match(/^url\("?(.*?)"?\)$/)?.[1] : null;
-    return url || `chrome://sine/content/zia/icons/phosphor/${fallback}.svg`;
+    return url || `chrome://sine/content/zia/icons/tabler/outline/${fallback}.svg`;
   }
 
   function fillFolderCard(card, folder) {
@@ -6285,7 +5822,7 @@
       if (tab.hasAttribute("soundplaying") || tab.hasAttribute("muted")) {
         const muted = tab.hasAttribute("muted");
         const speaker = folderCardIcon(
-          `chrome://sine/content/zia/icons/phosphor/${muted ? "speaker-x" : "speaker-high"}.svg`,
+          `chrome://sine/content/zia/icons/tabler/outline/${muted ? "volume-off" : "volume"}.svg`,
           "zia-folder-card-sound"
         );
         speaker.classList.add("zia-folder-card-act");
@@ -6342,7 +5879,7 @@
     const shown = button?.querySelector(".toolbarbutton-icon");
     const style = shown ? getComputedStyle(shown) : null;
     const url = style?.listStyleImage?.match(/^url\("?(.*?)"?\)$/)?.[1];
-    const icon = folderCardIcon(url || "chrome://sine/content/zia/icons/phosphor/plus.svg", "zia-folder-card-icon");
+    const icon = folderCardIcon(url || "chrome://sine/content/zia/icons/tabler/outline/plus.svg", "zia-folder-card-icon");
     icon.setAttribute("zia-plus", "true");
     if (style) {
       const size = (value) => (parseFloat(value) > 0 ? value : "");
@@ -6522,8 +6059,8 @@
             keepCardUntil = Date.now() + 1200;
             if (action.name === "copy") {
               const button = card.querySelector('[zia-action="copy"] img');
-              button?.setAttribute("src", "chrome://sine/content/zia/icons/phosphor/check.svg");
-              setTimeout(() => button?.setAttribute("src", "chrome://sine/content/zia/icons/phosphor/paperclip.svg"), 1200);
+              button?.setAttribute("src", "chrome://sine/content/zia/icons/tabler/outline/check.svg");
+              setTimeout(() => button?.setAttribute("src", "chrome://sine/content/zia/icons/tabler/outline/paperclip.svg"), 1200);
             }
           }
           if (!tab?.isConnected) {
@@ -8890,7 +8427,7 @@
     safely("addDownloadProgress", addDownloadProgress);
     ifOn("icon-picker", "addIconPicker", addIconPicker);
     safely("watchCompactTopRow", watchCompactTopRow);
-    safely("watchNewFolders", watchNewFolders);
+    safely("watchOldIcons", watchOldIcons);
     safely("watchFolderColors", watchFolderColors);
     safely("addFolderColorPicker", addFolderColorPicker);
     safely("watchFolderCloseButtons", watchFolderCloseButtons);

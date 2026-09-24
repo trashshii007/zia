@@ -4,6 +4,26 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.42.0] — 2026-09-24
+
+### Changed
+
+- **New icons: Tabler.** The icon picker now has the 5,166
+  [Tabler](https://tabler.io/icons) icons in place of Phosphor's 1,512. A switch at the top of the picker shows
+  them as outline or solid (about a thousand have a solid version), and Zia
+  remembers which you chose. Search now looks at each icon's tags as well as
+  its name, so *money* also finds cash, coins and wallets, and results load as
+  you scroll, so the picker opens quickly.
+- Folders and spaces that already use a Phosphor icon switch to the closest
+  Tabler icon on their own.
+- The icons on hover cards and the copy-link button are Tabler's too.
+
+### Removed
+
+- Folder names and icons from a local model. Zia no longer names new folders
+  or picks their icons, and the setting is gone. The icon names it cached in
+  your profile are deleted.
+
 ## [2.41.0] — 2026-09-24
 
 ### Added

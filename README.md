@@ -112,7 +112,7 @@ Cmd/Ctrl+Z reopens what you just closed for ten seconds afterwards. That include
 
 ![Essentials and folders in the sidebar](https://github.com/user-attachments/assets/0c439e9d-651e-414c-8b85-d5bc8308aef4)
 
-Covers come from an icon picker Zia adds as a third tab beside Zen's own: 1,512 Phosphor icons with their own search, and Zen's emojis are still there if you'd rather use one.
+Covers come from an icon picker Zia adds as a third tab beside Zen's own: 5,166 [Tabler](https://tabler.io/icons) icons, in outline or, for about a thousand of them, solid. Switch between the two at the top of the picker. The search knows each icon's tags as well as its name, so *money* finds cash, coins and wallets. Zen's emojis are still there if you'd rather use one.
 
 ![The icon picker](https://github.com/user-attachments/assets/07c2baf3-9af4-4d7f-a6c9-b9701070312a)
 
@@ -125,30 +125,6 @@ Each pane in a split gets its own toolbar, address and controls, with even spaci
 Playing music brings up a card with the track's artwork and a soft glow in its colours. It handles live streams as well as ordinary videos. Playing tabs get sound bars instead of Zen's speaker, and so do essentials. The bars turn to dots when muted and toggle the sound when clicked.
 
 ![The music player card](https://github.com/user-attachments/assets/5b4e2542-61a9-4fd6-b2ee-7fb58970ef5b)
-
-### Folder names and icons from a local model
-
-Make a folder and Zia can name it and choose its icon for you, with a model that
-runs on your machine. Three tabs from Levi's, Gucci and Louis Vuitton become a
-folder called **Clothing** with a clothing icon; PayPal, Stripe and Cash App
-become **Financial**. Nothing is sent anywhere.
-
-It's **off by default**, because the first use downloads a model (about 25MB).
-To turn it on:
-
-1. Open `about:config` and set **`browser.ml.enable`** to `true`. This is
-   Firefox's local AI runtime, which Zen ships but leaves switched off.
-2. Restart Zen.
-3. In **Settings → Sine Mods → Zia**, turn on **Suggest a folder's icon with a
-   local model**.
-
-The first folder you make takes a few seconds while the model downloads and the
-1,512 icon names are read once. After that it's immediate, and the icon names
-are cached in your profile.
-
-It only ever fills in a folder that has no icon and still has its default name,
-so anything you've named or chosen yourself is left alone. Groups made with
-Advanced Tab Groups get the same treatment, with the icon saved through that mod.
 
 ---
 
@@ -163,10 +139,9 @@ Almost every part of Zia can be switched on or off on its own. The settings are 
 | **Features** | |
 | Music player card | on |
 | Find in page bar | on |
-| Icon picker (1,512 Phosphor icons) | on |
+| Icon picker (5,166 Tabler icons, outline and solid) | on |
 | Undo a closed tab with Cmd/Ctrl+Z | on |
 | Tab and folder hover cards | on |
-| Suggest a folder's icon with a local model ([see above](#folder-names-and-icons-from-a-local-model)) | off |
 | **Tabs** | |
 | Sound bars on playing tabs (off: Zen's speaker) | on |
 | Tint the selected tab's glow and the sound bars with the site's colours | off |
@@ -227,7 +202,7 @@ Zia is an independent, unofficial project. It isn't affiliated with, endorsed by
 
 ## Credits
 
-Icons are [Phosphor](https://phosphoricons.com), MIT licensed and bundled unmodified; their licence is in `icons/phosphor/LICENSE`.
+Icons are [Tabler Icons](https://tabler.io/icons), MIT licensed; their licence is in `icons/tabler/LICENSE`. They're recoloured to follow Zen's icon colour and otherwise unchanged (`scripts/tabler-icons.py` makes them from the npm package).
 
 The bleeding corners technique was inspired by [Bleeding Corners Fix](https://github.com/rsiebertdev/zen-themes/tree/main/bleeding-corners-fix) by rsiebertdev. Zia uses its own implementation, matched to its card shape.
 
