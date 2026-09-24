@@ -1283,12 +1283,13 @@
   // that slide into a spring: it eases in quickly, runs a few pixels past
   // where it's going, and settles back. Opening, the folder's box stretches a
   // little further than it needs to; closing, whatever is below the folder
-  // bounces up a little. The overshoot is the same few pixels whatever the
+  // bounces up a little. The overshoot is the same pixel or two whatever the
   // folder's size, like the music player's, rather than growing with it.
   // Zen moves the element that starts a folder's contents by its top margin;
   // Zia only changes that one animation.
   const FOLDER_SPRING_MS = 420;
-  const FOLDER_OVERSHOOT_PX = 3;
+  const FOLDER_OVERSHOOT_PX = 2;
+  const FOLDER_CLOSE_BOUNCE_PX = 1.5;
   const FOLDER_SELECTOR = "zen-folder, tab-group:not([split-view-group])";
 
   const isFolder = (el) =>
@@ -1334,7 +1335,7 @@
   // Closing, the folder's contents shrink to nothing before the slide
   // overshoots, and a height can't go below nothing, so the overshoot alone
   // moves nothing. The folder's contents also pull up by the same few pixels
-  // with a negative bottom margin as they arrive, so the folder's box and
+  // (a little less than opening) with a negative bottom margin as they arrive, so the folder's box and
   // everything below it rise past their place and drop back.
   function bounceUpAfterClosing(container, animate) {
     if (!container?.classList?.contains("tab-group-container")) {
@@ -1345,7 +1346,7 @@
       [
         { marginBottom: "0px", offset: 0 },
         { marginBottom: "0px", offset: 0.45, easing: "cubic-bezier(0.25, 1, 0.5, 1)" },
-        { marginBottom: `${-FOLDER_OVERSHOOT_PX}px`, offset: 0.66, easing: "ease-in-out" },
+        { marginBottom: `${-FOLDER_CLOSE_BOUNCE_PX}px`, offset: 0.66, easing: "ease-in-out" },
         { marginBottom: "0px", offset: 1 },
       ],
       { duration: FOLDER_SPRING_MS }
