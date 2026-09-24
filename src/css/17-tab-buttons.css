@@ -1,0 +1,22 @@
+.tabbrowser-tab .tab-reset-button,
+zen-folder .tab-reset-button {
+  -moz-context-properties: fill, fill-opacity !important;
+  fill: rgb(255, 255, 255) !important;
+  fill-opacity: 1 !important;
+  color: rgb(255, 255, 255) !important;
+  border-radius: var(--zia-close-radius) !important;
+  corner-shape: var(--zia-close-corner) !important;
+  width: var(--zia-close-size) !important;
+  height: var(--zia-close-size) !important;
+  min-width: var(--zia-close-size) !important;
+  padding: 4px !important;
+}
+
+zen-folder .tab-reset-button {
+  fill-opacity: var(--zia-folder-mark-opacity) !important;
+}
+
+#urlbar #identity-icon-label,
+#urlbar .identity-icon-label {
+  display: none !important;
+}

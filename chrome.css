@@ -497,7 +497,7 @@
 }
 
 #zia-copy-link-button[zia-copied] image {
-  list-style-image: url("chrome://sine/content/zia/icons/phosphor/check.svg") !important;
+  list-style-image: url("chrome://sine/content/zia/icons/tabler/outline/check.svg") !important;
 }
 
 #urlbar :is(#zia-copy-link-button, #zen-site-data-icon-button) {
@@ -3495,11 +3495,15 @@ tooltip[default="true"] {
 
 #zia-icons-searchbar {
   display: flex;
+  align-items: center;
+  gap: 6px;
   width: 100%;
+  box-sizing: border-box;
 }
 
 #zia-icons-search {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: 4px;
 
   &::placeholder {
@@ -3510,6 +3514,50 @@ tooltip[default="true"] {
   &:focus-visible {
     outline: none;
   }
+}
+
+/* Outline or solid */
+#zia-icons-style {
+  display: flex;
+  flex: none;
+  padding: 2px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.07);
+}
+
+.zia-icons-style-option {
+  appearance: none;
+  margin: 0;
+  padding: 3px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: default;
+
+  &:hover {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  &[selected] {
+    background-color: rgba(255, 255, 255, 0.14);
+    color: rgb(255, 255, 255);
+  }
+}
+
+#zia-icons-empty {
+  padding: 18px 10px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 12px;
+}
+
+#zia-icons-more {
+  grid-column: 1 / -1;
+  height: 1px;
 }
 
 #zia-icons-grid {
@@ -3612,31 +3660,6 @@ zen-folder .tab-reset-button {
 #urlbar .identity-icon-label {
   display: none !important;
 }
-
-.tab-group-label-container[zia-skeleton-on="true"] > *:not(.zia-skeleton-overlay) {
-  opacity: 0 !important;
-}
-
-.zia-skeleton-block {
-  background-image: linear-gradient(
-    100deg,
-    rgba(255, 255, 255, 0.06) 40%,
-    rgba(255, 255, 255, 0.14) 50%,
-    rgba(255, 255, 255, 0.06) 60%
-  );
-  background-size: 300% 100%;
-  animation: zia-suggesting-shimmer 1.1s ease-in-out infinite;
-}
-
-@keyframes zia-suggesting-shimmer {
-  from {
-    background-position: 130% 0;
-  }
-  to {
-    background-position: -30% 0;
-  }
-}
-
 @media -moz-pref("layout.css.prefers-color-scheme.content-override", 1),
        (-moz-pref("layout.css.prefers-color-scheme.content-override", 2)) and (not (-moz-system-dark-theme)) {
   :root:not([privatebrowsingmode="temporary"]) #urlbar[breakout-extend]:not([zia-classic]),

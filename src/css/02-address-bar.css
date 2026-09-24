@@ -312,7 +312,7 @@
 }
 
 #zia-copy-link-button[zia-copied] image {
-  list-style-image: url("chrome://sine/content/zia/icons/phosphor/check.svg") !important;
+  list-style-image: url("chrome://sine/content/zia/icons/tabler/outline/check.svg") !important;
 }
 
 #urlbar :is(#zia-copy-link-button, #zen-site-data-icon-button) {

@@ -17,7 +17,7 @@
   },
   {
     "type": "checkbox",
-    "label": "Icon picker (1,512 Phosphor icons)",
+    "label": "Icon picker (5,166 Tabler icons, outline and solid)",
     "property": "zia.features.icon-picker",
     "defaultValue": true
   },
@@ -32,12 +32,6 @@
     "label": "Tab and folder hover cards",
     "property": "zia.features.tab-hover-cards",
     "defaultValue": true
-  },
-  {
-    "type": "checkbox",
-    "label": "Suggest a folder's icon with a local model (downloads ~25MB the first time)",
-    "property": "zia.features.folder-icon-suggest",
-    "defaultValue": false
   },
   {
     "type": "separator",

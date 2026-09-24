@@ -7,6 +7,14 @@
         console.error(`[Zia] Could not set default for ${name}:`, err);
       }
     };
+    // Zia 2.42.0 dropped folder names and icons from a local model; clear
+    // what it left behind.
+    try {
+      Services.prefs.clearUserPref("zia.features.folder-icon-suggest");
+      IOUtils.remove(PathUtils.join(PathUtils.profileDir, "zia-icon-vectors.json"), { ignoreAbsent: true }).catch(() => {});
+    } catch (err) {
+      noteError("zen defaults: old model cleanup", err);
+    }
     set("zen.widget.mac.mono-window-controls", false);
     set("zen.urlbar.replace-newtab", !Services.prefs.getBoolPref("zia.newtab.real-tab", true));
     set("zen.splitView.enable-tab-drop", !Services.prefs.getBoolPref("zia.split.drop-cards", true));
@@ -23,7 +31,6 @@
       set(`zia.features.${feature}`, true);
     }
 
-    set("zia.features.folder-icon-suggest", false);
     for (const name of ZIA_OPTIONS) {
       set(name, true);
     }

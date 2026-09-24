@@ -10,7 +10,7 @@
   const TAB_CARD_ACTIONS = [
     {
       name: "essential",
-      icon: "push-pin",
+      icon: "pin",
       label: "Add to Essentials",
 
       run: (tab) => gZenPinnedTabManager?.addToEssentials(tab),
@@ -18,7 +18,7 @@
     },
     {
       name: "unpin",
-      icon: "push-pin-slash",
+      icon: "pinned-off",
       label: "Unpin",
       run: (tab) => {
         if (tab.hasAttribute("zen-essential")) {
@@ -31,14 +31,14 @@
     },
     {
       name: "bookmark",
-      icon: "bookmark-simple",
+      icon: "bookmark",
       label: "Bookmark",
       run: (tab) => bookmarkTab(tab),
       keepsCard: true,
     },
     {
       name: "split",
-      icon: "square-split-horizontal",
+      icon: "layout-columns",
       label: "Add to Split",
 
       run: (tab) => {
@@ -80,7 +80,7 @@
     button.setAttribute("zia-copied", "true");
     const img = button.localName === "button" ? button.querySelector("img") : null;
     if (img) {
-      img.setAttribute("src", "chrome://sine/content/zia/icons/phosphor/check.svg");
+      img.setAttribute("src", "chrome://sine/content/zia/icons/tabler/outline/check.svg");
     }
     clearTimeout(button.ziaCopiedTimer);
     button.ziaCopiedTimer = setTimeout(() => {
