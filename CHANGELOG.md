@@ -9,8 +9,9 @@ Every release of Zia, newest first. The format follows
 ### Changed
 
 - A tucked picture-in-picture's strip takes on your space's colour and
-  fades to the new one when you switch spaces. It's slightly see-through
-  now, too. (The window can't blur what's behind it, so there's no blur.)
+  fades to the new one when you switch spaces. It's see-through, over the
+  video blurred behind it like frosted glass; the blur clears as the video
+  comes back out.
 
 ## [2.38.1] — 2026-09-24
 
