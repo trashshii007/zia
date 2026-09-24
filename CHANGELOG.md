@@ -13,7 +13,7 @@ Every release of Zia, newest first. The format follows
   join it, in a grid that re-tiles itself to fill the tab as videos come and
   go. Hover a tile to drag it somewhere else, give it the sound (only one
   plays sound at a time), open it on its site or remove it. Videos carry on
-  from where they were; live streams join live and say when they've ended.
+  from where they were, and live streams join live.
   Works with YouTube, Twitch (live, videos and clips), Kick, Vimeo,
   Dailymotion and plain video files. Sites with copy protection (Netflix,
   sports services) can't be added. The Multiview page is hosted on the
