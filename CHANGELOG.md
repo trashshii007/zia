@@ -4,6 +4,15 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.41.0] — 2026-09-24
+
+### Added
+
+- **Empty folders say so.** Zia lets you make a folder before it has any
+  tabs, so an empty one, when open, shows a dashed **Drag tabs here** slot
+  where the first tab would go. It lights up in blue as **Drop to add**
+  while you drag a tab into the folder.
+
 ## [2.40.1] — 2026-09-24
 
 ### Fixed

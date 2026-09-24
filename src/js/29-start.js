@@ -260,6 +260,7 @@
     safely("watchFolderColors", watchFolderColors);
     safely("addFolderColorPicker", addFolderColorPicker);
     safely("watchFolderCloseButtons", watchFolderCloseButtons);
+    safely("watchEmptyFolders", watchEmptyFolders);
     safely("watchEssentialRows", watchEssentialRows);
     safely("watchSidebarPaint", watchSidebarPaint);
     safely("watchWindowButtonsSide", watchWindowButtonsSide);
