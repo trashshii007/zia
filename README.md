@@ -16,6 +16,20 @@ What's new in each release: [CHANGELOG.md](CHANGELOG.md).
 
 ![Zia](https://github.com/user-attachments/assets/998f92b8-74ea-4bac-8131-6ab4a9993ab7)
 
+Two sites side by side in split view, each with its own toolbar:
+
+![Two sites in split view](https://github.com/user-attachments/assets/5318d0ce-d6b3-4adb-aef9-56ffbed72ae9)
+
+The toolbar takes on the colour of the site underneath, light or dark:
+
+![The toolbar on a light page](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/toolbar-light.webp>)
+
+![The toolbar on a dark page](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/toolbar-dark.webp>)
+
+A space's colour carries through the whole sidebar:
+
+![A coloured space](https://github.com/user-attachments/assets/2b8748a4-d7fc-4ef0-a5b3-41ab3243e83b)
+
 ---
 
 ## Install
@@ -50,10 +64,6 @@ Workspace and folder icons do a lot of the work in the Dia look, so they're wort
 
 The page and toolbar sit together in one rounded card. The toolbar picks up the colour of the site underneath and follows it as you scroll, switching to dark text on light sites. Colours are remembered per site, so pages open already in their colour instead of fading into it. While a page loads, a glow runs along the address bar. The address itself reads as `domain / title`, and hovering it shows the full URL.
 
-![The toolbar on a light page](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/toolbar-light.webp>)
-
-![The toolbar on a dark page](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/toolbar-dark.webp>)
-
 ### The address bar
 
 The address pop-up follows Dia's shape: short rows with room around them, one size and weight of text throughout, and none of Firefox's chips, row menus or extra engine bars. What you type lines up exactly with the results underneath. As you type an address, the site's own icon takes the place of the magnifying glass. A paperclip beside site settings copies the page's link. The whole bar can also move to the **bottom**, under the page, with the pop-up opening upwards, in a single page or a split.
@@ -72,9 +82,7 @@ Cmd/Ctrl+Z reopens what you just closed for ten seconds afterwards. That include
 
 ![Essentials and folders in the sidebar](https://github.com/user-attachments/assets/0c439e9d-651e-414c-8b85-d5bc8308aef4)
 
-Spaces with a colour of their own carry it through the sidebar:
-
-![A coloured space](https://github.com/user-attachments/assets/2b8748a4-d7fc-4ef0-a5b3-41ab3243e83b)
+Spaces with a colour of their own carry it through the whole sidebar.
 
 Covers come from an icon picker Zia adds as a third tab beside Zen's own: 1,512 Phosphor icons with their own search, and Zen's emojis are still there if you'd rather use one.
 
@@ -90,15 +98,13 @@ In split view, each pane gets its own toolbar. Drag a tab over the page and drop
 
 ![Dragging a tab into a split](https://github.com/user-attachments/assets/50fed722-962c-4af6-9979-18800ae01a50)
 
-Let go and both sites sit side by side, each with its own address and controls:
-
-![Two sites in split view](https://github.com/user-attachments/assets/5318d0ce-d6b3-4adb-aef9-56ffbed72ae9)
+Let go and both sites sit side by side, each with its own address and controls.
 
 ### Picture-in-picture
 
 Picture-in-picture looks like Dia's. At rest it's just the video, with nothing laid over it. Hover it and the video dims to show **Back to Tab** and **Close** at the top with the site between them, big 15-second skip and play/pause buttons in the middle, and a thin progress line along the bottom.
 
-![Picture-in-picture over the browser](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/pip.webp>)
+![Picture-in-picture with its controls](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/pip-controls.webp>)
 
 When you need the screen back, tuck it away. Press the tuck button beside Close, or drag the window against the left or right edge of the screen (a blue edge says *Let go to tuck away*), and it slides off, leaving a slim strip. Point at the strip and the video glides back out; move away and it tucks itself away again.
 
