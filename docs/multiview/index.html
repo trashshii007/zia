@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Multiview</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3E%3Crect x='1' y='2' width='6' height='5' rx='1.5'/%3E%3Crect x='9' y='2' width='6' height='5' rx='1.5'/%3E%3Crect x='1' y='9' width='6' height='5' rx='1.5'/%3E%3Crect x='9' y='9' width='6' height='5' rx='1.5'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --gap: 8px;
+    --radius: 12px;
+    --ease: cubic-bezier(0.2, 0.9, 0.3, 1);
+    color-scheme: dark;
+  }
+
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: #101012;
+    color: #fff;
+    font: 500 13px/1.3 -apple-system, BlinkMacSystemFont, "Helvetica Neue", system-ui, sans-serif;
+  }
+
+  #wall {
+    position: absolute;
+    inset: var(--gap);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap);
+    place-content: center;
+  }
+
+  .tile {
+    position: relative;
+    flex: none;
+    width: var(--tile-w, 100%);
+    height: var(--tile-h, 100%);
+    overflow: hidden;
+    border-radius: var(--radius);
+    background: #000;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
+    transition: box-shadow 160ms ease, opacity 160ms ease;
+    animation: tile-in 260ms var(--ease);
+  }
+
+  @keyframes tile-in {
+    from { opacity: 0; scale: 0.96; }
+  }
+
+  .tile[sound] {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
+  }
+
+  .tile.drop-target {
+    box-shadow: 0 0 0 2px rgb(10, 132, 255);
+  }
+
+  .tile.dragging {
+    opacity: 0.4;
+  }
+
+  .player,
+  .player > iframe,
+  .player > video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .player > video {
+    background: #000;
+    object-fit: contain;
+  }
+
+  /* While a tile is dragged, the players mustn't swallow the drag. */
+  body.dragging .player {
+    pointer-events: none;
+  }
+
+  /* The bar along the top of a tile, on hover */
+  .bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px;
+    background: linear-gradient(rgba(0, 0, 0, 0.55), transparent);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 150ms ease;
+  }
+
+  .tile:hover .bar,
+  .tile:focus-within .bar,
+  body.dragging .bar {
+    opacity: 1;
+    transition-duration: 90ms;
+  }
+
+  .bar > * {
+    pointer-events: auto;
+  }
+
+  .label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+  }
+
+  .pill {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 27px;
+    min-width: 27px;
+    padding: 0 8px;
+    border: 0;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font: inherit;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .pill:hover,
+  .pill:focus-visible {
+    background: rgba(255, 255, 255, 0.32);
+    outline: none;
+  }
+
+  .pill svg {
+    width: 14px;
+    height: 14px;
+    flex: none;
+  }
+
+  .handle {
+    cursor: grab;
+  }
+
+  .handle:active {
+    cursor: grabbing;
+  }
+
+  .tile[sound] .sound {
+    background: #fff;
+    color: #000;
+  }
+
+  /* "Stream ended" / "Ended" */
+  .ended {
+    position: absolute;
+    left: 50%;
+    bottom: 14px;
+    z-index: 2;
+    translate: -50% 0;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.7);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .ended[hidden] {
+    display: none;
+  }
+
+  #empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 24px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  #empty strong {
+    color: #fff;
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  #empty[hidden] {
+    display: none;
+  }
+</style>
+</head>
+<body>
+<div id="wall"></div>
+<div id="empty" hidden>
+  <strong>Multiview</strong>
+  <span>Right-click a video, its page or its tab and choose <b>Add to Multiview</b>.<br>
+  Works with YouTube, Twitch, Kick, Vimeo, Dailymotion and video files, live streams included.</span>
+</div>
+<script>
+(() => {
+  "use strict";
+
+  const wall = document.getElementById("wall");
+  const empty = document.getElementById("empty");
+  const HOST = location.hostname || "localhost";
+  const icon = (body) => `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+  const ICONS = {
+    handle: icon('<circle cx="6" cy="4" r=".6"/><circle cx="10" cy="4" r=".6"/><circle cx="6" cy="8" r=".6"/><circle cx="10" cy="8" r=".6"/><circle cx="6" cy="12" r=".6"/><circle cx="10" cy="12" r=".6"/>'),
+    muted: icon('<path d="M2.5 6h2.2L8 3.2v9.6L4.7 10H2.5z" fill="currentColor"/><path d="M11 6.2l3.4 3.6M14.4 6.2L11 9.8"/>'),
+    sound: icon('<path d="M2.5 6h2.2L8 3.2v9.6L4.7 10H2.5z" fill="currentColor"/><path d="M10.6 5.6a3.4 3.4 0 0 1 0 4.8M12.6 3.8a6 6 0 0 1 0 8.4"/>'),
+    open: icon('<path d="M9.5 2.5h4v4M13.5 2.5L7.5 8.5M12 9.5v3a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3"/>'),
+    close: icon('<path d="M4 4l8 8M12 4l-8 8"/>'),
+  };
+
+  // ---------- The address holds the videos: #kind:id@seconds,kind:id,...
+  function readEntries() {
+    return (location.hash.slice(1) || "")
+      .split(",")
+      .filter(Boolean)
+      .map((item) => {
+        const [head, at] = item.split("@");
+        const [kind, id] = head.split(":");
+        return kind && id ? { kind, id: decodeURIComponent(id), at: Number(at) || 0 } : null;
+      })
+      .filter((entry) => entry && KINDS[entry.kind]);
+  }
+
+  function writeEntries() {
+    const items = order.map((key) => {
+      const { kind, id, at } = tiles.get(key).entry;
+      return `${kind}:${encodeURIComponent(id)}${at ? `@${Math.floor(at)}` : ""}`;
+    });
+    history.replaceState(null, "", `#${items.join(",")}`);
+  }
+
+  const keyOf = (entry) => `${entry.kind}:${entry.id}`;
+
+  // ---------- One player per kind of site
+  const hms = (s) => `${Math.floor(s / 3600)}h${Math.floor((s % 3600) / 60)}m${Math.floor(s % 60)}s`;
+
+  function iframe(src) {
+    const frame = document.createElement("iframe");
+    frame.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
+    frame.allowFullscreen = true;
+    frame.referrerPolicy = "strict-origin-when-cross-origin";
+    frame.src = src;
+    return frame;
+  }
+
+  // Players without a mute API start muted and reload to switch sound on.
+  function reloading(makeSrc) {
+    return (tile) => {
+      const frame = iframe(makeSrc(true));
+      tile.player.append(frame);
+      return {
+        mute(muted) {
+          frame.src = makeSrc(muted);
+        },
+      };
+    };
+  }
+
+  let twitchScript = null;
+  function loadTwitch() {
+    twitchScript ??= new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "https://player.twitch.tv/js/embed/v1.js";
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.append(script);
+    });
+    return twitchScript;
+  }
+
+  function twitchPlayer(options) {
+    return (tile) => {
+      const holder = document.createElement("div");
+      holder.id = `twitch-${Math.random().toString(36).slice(2)}`;
+      holder.style.cssText = "position:absolute;inset:0";
+      tile.player.append(holder);
+      let player = null;
+      let wantMuted = true;
+      loadTwitch().then(() => {
+        player = new Twitch.Player(holder.id, {
+          ...options(tile.entry),
+          parent: [HOST],
+          width: "100%",
+          height: "100%",
+          autoplay: true,
+          muted: true,
+        });
+        player.addEventListener(Twitch.Player.OFFLINE, () => tile.showEnded("Stream ended"));
+        player.addEventListener(Twitch.Player.ONLINE, () => tile.showEnded(null));
+        player.addEventListener(Twitch.Player.ENDED, () => tile.showEnded("Ended"));
+        player.addEventListener(Twitch.Player.READY, () => player.setMuted(wantMuted));
+        const frame = holder.querySelector("iframe");
+        if (frame) {
+          frame.style.cssText = "position:absolute;inset:0;width:100%;height:100%;border:0";
+        }
+      }, () => tile.showEnded("Couldn't load Twitch"));
+      return {
+        mute(muted) {
+          wantMuted = muted;
+          if (player) {
+            player.setMuted(muted);
+            if (!muted) {
+              player.setVolume(1);
+            }
+          }
+        },
+      };
+    };
+  }
+
+  const KINDS = {
+    yt: {
+      source: ({ id, at }) => `https://www.youtube.com/watch?v=${id}${at ? `&t=${at}s` : ""}`,
+      label: () => "YouTube",
+      make(tile) {
+        const { id, at } = tile.entry;
+        const frame = iframe(
+          `https://www.youtube.com/embed/${encodeURIComponent(id)}?autoplay=1&mute=1&playsinline=1&rel=0&enablejsapi=1` +
+            `&origin=${encodeURIComponent(location.origin)}${at ? `&start=${Math.floor(at)}` : ""}`
+        );
+        tile.player.append(frame);
+        const send = (message) => frame.contentWindow?.postMessage(JSON.stringify(message), "https://www.youtube.com");
+        // Ask the player for its state (for "Ended"); it answers once ready.
+        let listening = 0;
+        const listen = setInterval(() => {
+          send({ event: "listening", id: tile.key, channel: "widget" });
+          if (++listening > 20) {
+            clearInterval(listen);
+          }
+        }, 500);
+        tile.onMessage = (origin, data) => {
+          if (!origin.endsWith("youtube.com") || typeof data !== "string") {
+            return false;
+          }
+          let message;
+          try {
+            message = JSON.parse(data);
+          } catch (err) {
+            return false;
+          }
+          if (message.id !== tile.key) {
+            return false;
+          }
+          clearInterval(listen);
+          const state = message.info?.playerState;
+          if (state === 0) {
+            tile.showEnded("Ended");
+          } else if (state === 1) {
+            tile.showEnded(null);
+          }
+          return true;
+        };
+        return {
+          mute(muted) {
+            const command = (func, args = []) => send({ event: "command", func, args });
+            command(muted ? "mute" : "unMute");
+            if (!muted) {
+              command("setVolume", [100]);
+            }
+          },
+        };
+      },
+    },
+    tw: {
+      source: ({ id }) => `https://www.twitch.tv/${id}`,
+      label: ({ id }) => `twitch.tv/${id}`,
+      make: twitchPlayer(({ id }) => ({ channel: id })),
+    },
+    twv: {
+      source: ({ id, at }) => `https://www.twitch.tv/videos/${id}${at ? `?t=${hms(at)}` : ""}`,
+      label: () => "Twitch video",
+      make: twitchPlayer(({ id, at }) => ({ video: `v${id}`, time: hms(at || 0) })),
+    },
+    twc: {
+      source: ({ id }) => `https://clips.twitch.tv/${id}`,
+      label: () => "Twitch clip",
+      make: (tile) =>
+        reloading((muted) => `https://clips.twitch.tv/embed?clip=${encodeURIComponent(tile.entry.id)}&parent=${HOST}&autoplay=true&muted=${muted}`)(tile),
+    },
+    kick: {
+      source: ({ id }) => `https://kick.com/${id}`,
+      label: ({ id }) => `kick.com/${id}`,
+      make: (tile) => reloading((muted) => `https://player.kick.com/${encodeURIComponent(tile.entry.id)}?autoplay=true&muted=${muted}`)(tile),
+    },
+    vm: {
+      source: ({ id, at }) => `https://vimeo.com/${id}${at ? `#t=${at}s` : ""}`,
+      label: () => "Vimeo",
+      make(tile) {
+        const { id, at } = tile.entry;
+        const frame = iframe(`https://player.vimeo.com/video/${encodeURIComponent(id)}?autoplay=1&muted=1&dnt=1${at ? `#t=${Math.floor(at)}s` : ""}`);
+        tile.player.append(frame);
+        const send = (message) => frame.contentWindow?.postMessage(JSON.stringify(message), "https://player.vimeo.com");
+        frame.addEventListener("load", () => send({ method: "addEventListener", value: "ended" }));
+        tile.onMessage = (origin, data) => {
+          if (origin !== "https://player.vimeo.com" || frame.contentWindow !== tile.lastSource) {
+            return false;
+          }
+          try {
+            const message = typeof data === "string" ? JSON.parse(data) : data;
+            if (message.event === "ended") {
+              tile.showEnded("Ended");
+            }
+          } catch (err) {}
+          return true;
+        };
+        return {
+          mute(muted) {
+            send({ method: "setMuted", value: muted });
+            if (!muted) {
+              send({ method: "setVolume", value: 1 });
+            }
+          },
+        };
+      },
+    },
+    dm: {
+      source: ({ id }) => `https://www.dailymotion.com/video/${id}`,
+      label: () => "Dailymotion",
+      make: (tile) =>
+        reloading(
+          (muted) =>
+            `https://www.dailymotion.com/embed/video/${encodeURIComponent(tile.entry.id)}?autoplay=1&mute=${muted ? 1 : 0}` +
+            (tile.entry.at ? `&start=${Math.floor(tile.entry.at)}` : "")
+        )(tile),
+    },
+    file: {
+      source: ({ id }) => id,
+      label: ({ id }) => {
+        try {
+          return new URL(id).hostname.replace(/^www\./, "");
+        } catch (err) {
+          return "Video";
+        }
+      },
+      make(tile) {
+        const video = document.createElement("video");
+        video.src = tile.entry.id;
+        video.autoplay = true;
+        video.muted = true;
+        video.playsInline = true;
+        video.controls = true;
+        video.addEventListener("loadedmetadata", () => {
+          if (tile.entry.at && Number.isFinite(video.duration)) {
+            video.currentTime = tile.entry.at;
+          }
+        }, { once: true });
+        video.addEventListener("ended", () => tile.showEnded("Ended"));
+        video.addEventListener("play", () => tile.showEnded(null));
+        video.addEventListener("error", () => tile.showEnded("Can't play this video here"));
+        tile.player.append(video);
+        return {
+          mute(muted) {
+            video.muted = muted;
+            if (!muted) {
+              video.volume = 1;
+            }
+          },
+        };
+      },
+    },
+  };
+
+  // ---------- Tiles
+  const tiles = new Map();
+  let order = [];
+  let soundKey = null;
+  let dragKey = null;
+
+  function makeTile(entry) {
+    const key = keyOf(entry);
+    const kind = KINDS[entry.kind];
+    const el = document.createElement("div");
+    el.className = "tile";
+    el.innerHTML = `
+      <div class="player"></div>
+      <div class="bar">
+        <button class="pill handle" draggable="true" title="Drag to move">${ICONS.handle}</button>
+        <span class="label"></span>
+        <button class="pill sound" title="Play this one's sound">${ICONS.muted}</button>
+        <a class="pill open" target="_blank" rel="noopener" title="Open on the site">${ICONS.open}</a>
+        <button class="pill remove" title="Remove">${ICONS.close}</button>
+      </div>
+      <div class="ended" hidden></div>`;
+    const tile = {
+      key,
+      entry,
+      el,
+      player: el.querySelector(".player"),
+      onMessage: null,
+      lastSource: null,
+      showEnded(text) {
+        const label = el.querySelector(".ended");
+        label.hidden = !text;
+        label.textContent = text || "";
+      },
+    };
+    el.querySelector(".label").textContent = kind.label(entry);
+    el.querySelector(".open").href = kind.source(entry);
+    el.querySelector(".sound").addEventListener("click", () => setSound(soundKey === key ? null : key));
+    el.querySelector(".remove").addEventListener("click", () => removeTile(key));
+
+    const handle = el.querySelector(".handle");
+    handle.addEventListener("dragstart", (event) => {
+      dragKey = key;
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", key);
+      event.dataTransfer.setDragImage(el, 20, 20);
+      document.body.classList.add("dragging");
+      el.classList.add("dragging");
+    });
+    handle.addEventListener("dragend", () => {
+      dragKey = null;
+      document.body.classList.remove("dragging");
+      for (const t of tiles.values()) {
+        t.el.classList.remove("dragging", "drop-target");
+      }
+    });
+    el.addEventListener("dragover", (event) => {
+      if (dragKey && dragKey !== key) {
+        event.preventDefault();
+        el.classList.add("drop-target");
+      }
+    });
+    el.addEventListener("dragleave", () => el.classList.remove("drop-target"));
+    el.addEventListener("drop", (event) => {
+      event.preventDefault();
+      el.classList.remove("drop-target");
+      if (!dragKey || dragKey === key) {
+        return;
+      }
+      // Take the dropped-on tile's place.
+      const from = order.indexOf(dragKey);
+      const to = order.indexOf(key);
+      order.splice(from, 1);
+      order.splice(to, 0, dragKey);
+      applyOrder();
+      writeEntries();
+    });
+
+    Object.assign(tile, kind.make(tile));
+    return tile;
+  }
+
+  function setSound(key) {
+    soundKey = key;
+    for (const tile of tiles.values()) {
+      const on = tile.key === key;
+      const was = tile.el.hasAttribute("sound");
+      tile.el.toggleAttribute("sound", on);
+      tile.el.querySelector(".sound").innerHTML = on ? ICONS.sound : ICONS.muted;
+      tile.el.querySelector(".sound").title = on ? "Mute" : "Play this one's sound";
+      if (on !== was) {
+        tile.mute?.(!on);
+      }
+    }
+  }
+
+  function removeTile(key) {
+    const tile = tiles.get(key);
+    if (!tile) {
+      return;
+    }
+    tile.el.remove();
+    tiles.delete(key);
+    order = order.filter((k) => k !== key);
+    if (soundKey === key) {
+      soundKey = null;
+    }
+    writeEntries();
+    refresh();
+  }
+
+  function applyOrder() {
+    order.forEach((key, index) => {
+      tiles.get(key).el.style.order = index;
+    });
+  }
+
+  // Moving an iframe in the page reloads it, so tiles are only ever added or
+  // removed; their order is CSS.
+  function sync() {
+    const entries = readEntries();
+    const keys = entries.map(keyOf);
+    for (const key of [...tiles.keys()]) {
+      if (!keys.includes(key)) {
+        tiles.get(key).el.remove();
+        tiles.delete(key);
+        if (soundKey === key) {
+          soundKey = null;
+        }
+      }
+    }
+    for (const entry of entries) {
+      const key = keyOf(entry);
+      if (!tiles.has(key)) {
+        const tile = makeTile(entry);
+        tiles.set(key, tile);
+        wall.append(tile.el);
+      }
+    }
+    order = keys.filter((key, i) => keys.indexOf(key) === i);
+    applyOrder();
+    refresh();
+  }
+
+  // ---------- The grid: as many columns as make the tiles biggest, 16:9,
+  // with a part-filled last row centred
+  function layout() {
+    const n = order.length;
+    const gap = 8;
+    const width = wall.clientWidth;
+    const height = wall.clientHeight;
+    let best = { cols: 1, w: 0, h: 0 };
+    for (let cols = 1; cols <= Math.max(1, n); cols++) {
+      const rows = Math.ceil(n / cols);
+      let w = (width - gap * (cols - 1)) / cols;
+      let h = (height - gap * (rows - 1)) / rows;
+      if (w / h > 16 / 9) {
+        w = (h * 16) / 9;
+      } else {
+        h = (w * 9) / 16;
+      }
+      if (w > best.w) {
+        best = { cols, w, h };
+      }
+    }
+    wall.style.setProperty("--tile-w", `${Math.floor(best.w)}px`);
+    wall.style.setProperty("--tile-h", `${Math.floor(best.h)}px`);
+  }
+
+  function refresh() {
+    empty.hidden = order.length > 0;
+    document.title = order.length ? `Multiview · ${order.length}` : "Multiview";
+    layout();
+  }
+
+  window.addEventListener("message", (event) => {
+    for (const tile of tiles.values()) {
+      const frame = tile.player.querySelector("iframe");
+      if (frame && frame.contentWindow === event.source) {
+        tile.lastSource = event.source;
+        tile.onMessage?.(event.origin, event.data);
+        return;
+      }
+    }
+  });
+  window.addEventListener("hashchange", sync);
+  new ResizeObserver(layout).observe(wall);
+  sync();
+})();
+</script>
+</body>
+</html>

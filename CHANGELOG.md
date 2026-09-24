@@ -4,6 +4,23 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.35.0] — 2026-09-24
+
+### Added
+
+- **Multiview.** Right-click a video, a video's page or its tab and choose
+  **Add to Multiview**. The first one opens a Multiview tab and later ones
+  join it, in a grid that re-tiles itself to fill the tab as videos come and
+  go. Hover a tile to drag it somewhere else, give it the sound (only one
+  plays sound at a time), open it on its site or remove it. Videos carry on
+  from where they were; live streams join live and say when they've ended.
+  Works with YouTube, Twitch (live, videos and clips), Kick, Vimeo,
+  Dailymotion and plain video files. Sites with copy protection (Netflix,
+  sports services) can't be added. The Multiview page is hosted on the
+  repo's GitHub Pages, because YouTube and Twitch only play embedded videos
+  on a real web address; the list of videos stays in the page's address and
+  is sent nowhere.
+
 ## [2.34.0] — 2026-09-24
 
 ### Added

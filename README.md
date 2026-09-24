@@ -112,6 +112,7 @@ Parts of the theme can be switched on or off individually.
 | Small bounce when folders open or close | on |
 | Dia-style picture-in-picture controls (off: Firefox's own) | on |
 | Tuck picture-in-picture into the side of the screen | on |
+| **Add to Multiview**: grid videos and live streams in one tab | on |
 
 More features become switchable with each release. The styling toggles apply straight away; the ones that change behaviour need a restart.
 
