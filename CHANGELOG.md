@@ -12,9 +12,10 @@ Every release of Zia, newest first. The format follows
   tabs, so an open empty folder shows a dashed, tab-sized **Drag tabs here**
   slot where the first tab will go. A folder emptied by moving its last tab
   out collapses. While you drag a tab into an empty folder, open or
-  collapsed, the tab carries the slot's dashes. The slot is outlined in the folder's colour
-  (a soft white for white and uncoloured folders). It's sized from a real tab,
-  so a tab dragged in takes its place exactly, without the folder growing.
+  collapsed, the tab carries the slot's dashes. The slot is outlined in the
+  folder's colour (a soft white for white and uncoloured folders). It's sized
+  from a real tab, so a tab dragged in takes its place exactly, without the
+  folder growing.
   It shrinks away smoothly when the folder collapses, and moves with the
   folder when other tabs are dragged past.
 
