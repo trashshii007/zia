@@ -4,7 +4,7 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.33.1] — 2026-09-24
+## [2.33.2] — 2026-09-24
 
 ### Fixed
 
