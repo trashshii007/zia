@@ -440,7 +440,7 @@
 }
 
 :root[zia-tucked]:not([zia-emerging]) .player-holder {
-  filter: blur(8px) brightness(0.85);
+  filter: blur(16px) brightness(0.85);
 }
 
 /* Coming back out: the strip fades as the window slides in */
