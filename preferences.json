@@ -144,5 +144,21 @@
     "label": "Use Zen's accent color for the loading bar (default: Zia blue)",
     "property": "zia.loading-bar.accent-color",
     "defaultValue": false
+  },
+  {
+    "type": "separator",
+    "label": "Picture-in-picture"
+  },
+  {
+    "type": "checkbox",
+    "label": "Dia-style picture-in-picture controls (off: Firefox's own)",
+    "property": "zia.pip.dia-style",
+    "defaultValue": true
+  },
+  {
+    "type": "checkbox",
+    "label": "Push picture-in-picture against the side of the screen to tuck it away",
+    "property": "zia.pip.tuck",
+    "defaultValue": true
   }
 ]

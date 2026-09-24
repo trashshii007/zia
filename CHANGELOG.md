@@ -4,6 +4,33 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.34.0] — 2026-09-24
+
+### Added
+
+- **Dia-style picture-in-picture.** At rest it's just the video. On hover the
+  video dims and shows **Back to Tab** and **Close** pills at the top, the
+  site's name in the middle, big 15-second back / play-pause / 15-second
+  forward buttons in the centre, and a thin progress line along the bottom.
+  Turn it off in the settings to get Firefox's own controls back.
+- **Tuck picture-in-picture away.** Press the new tuck button beside Close,
+  or drag the window against the left or right side of the screen (a blue
+  edge says "Let go to tuck away"), and it slides off, leaving a thin strip
+  with an arrow pointing back out. Point at the strip to peek the video back
+  out; it tucks away again when you move off it. Press **Keep it out** (the
+  same button) or drag it away from the edge to leave it out.
+- The music player always shows its picture-in-picture button when you hover
+  it. Zen only showed it when a page had exactly one video, so never on
+  YouTube.
+
+### Fixed
+
+- Typing an address no longer flashes between the site's icon and the
+  magnifying glass; the icon changes once, when it's found.
+- Results in the address pop-up show the site's icon when it's saved under
+  the other form of the address (youtube.com vs www.youtube.com), instead of
+  a blank globe.
+
 ## [2.33.4] — 2026-09-24
 
 ### Fixed

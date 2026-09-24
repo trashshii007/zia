@@ -2281,7 +2281,9 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
   .zen-media-mute-button { grid-column: 1; grid-row: 3; justify-self: start !important; }
   .zen-media-previoustrack-button { grid-column: 3; grid-row: 3; }
   .zen-media-nexttrack-button { grid-column: 4; grid-row: 3; }
-  .zen-media-pip-button { grid-column: 5; grid-row: 3; }
+  /* Zen hides it unless the page has exactly one video (YouTube has hidden
+   * previews too); the button picks the main video either way. */
+  .zen-media-pip-button { grid-column: 5; grid-row: 3; display: flex !important; }
   .zen-media-close-button { grid-column: 6; grid-row: 3; }
 
   .zen-media-mute-button,
@@ -2317,10 +2319,6 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
   .zen-media-mute-button > .toolbarbutton-icon {
     -moz-context-properties: fill;
     fill: currentColor !important;
-  }
-
-  .zen-media-card:not([can-pip]) .zen-media-pip-button {
-    display: none !important;
   }
 
   .media-device-buttons {
