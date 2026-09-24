@@ -4,6 +4,24 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.40.1] — 2026-09-24
+
+### Fixed
+
+- Zen's haptic feedback could stay switched off for good. Zia mutes it for
+  the length of a tab drag, and a drag that didn't finish cleanly (Zen quit
+  mid-drag, a cancelled drop) left it muted, even after a restart. Zia now
+  puts it back shortly after the pointer is released, or on the next launch
+  at the latest, and undoes its own change instead of saving a new value.
+- Zia's drag taps no longer switch Zen's haptics on if you'd turned them off.
+- If haptics were left switched off by the old version, this version switches
+  them back on once, the first time it runs. Turning them off again
+  afterwards is respected.
+- Dragging an essential one place along now taps as it passes the
+  neighbouring tile, and taps again if you change your mind and move it
+  back, either way. It only tapped from the second tile on, and not at all
+  going back.
+
 ## [2.40.0] — 2026-09-24
 
 ### Changed

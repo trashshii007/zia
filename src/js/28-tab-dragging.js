@@ -402,8 +402,11 @@
       document.querySelector("#tabs-newtab-button, #vertical-tabs-newtab-button");
 
     let lastTap = 0;
+    // Zia's own tap. Only if haptics are on in Zen; while a drag has them
+    // muted, they're let through for just this one.
     const tap = () => {
-      if (hapticsWereOn === false) {
+      const muted = hapticsWereOn !== null;
+      if (muted ? !hapticsWereOn : !Services.prefs.getBoolPref(HAPTIC_PREF, true)) {
         return;
       }
       const now = Date.now();
@@ -413,12 +416,14 @@
       }
       lastTap = now;
       try {
-        Services.prefs.setBoolPref(HAPTIC_PREF, true);
+        if (muted) {
+          Services.prefs.setBoolPref(HAPTIC_PREF, true);
+        }
         zenHaptic?.();
       } catch (err) {
         noteError("tab dragging: tap", err);
       } finally {
-        if (hapticsWereOn !== null) {
+        if (muted) {
           Services.prefs.setBoolPref(HAPTIC_PREF, false);
         }
       }
@@ -1404,7 +1409,9 @@
       noLanding();
 
       muteZenHaptics(true);
-      lastTileUnder = null;
+      // The drag starts on its own tile (which tileUnder skips), so the very
+      // first neighbour it moves onto taps too.
+      lastTileUnder = tab;
       lastTapPoint = null;
       essentialDrag = {
         tab,
@@ -1426,24 +1433,37 @@
       return null;
     };
 
+    const OVER_GAP = {};
     let lastTileUnder = null;
     let lastTapPoint = null;
+    let lastTapAt = 0;
     const tapOnNewTile = (point, skip) => {
       const tile = tileUnder(point, skip);
       if (tile && tile !== lastTileUnder && lastTileUnder !== null) {
         const box = tile.getBoundingClientRect();
+        // Half a tile on from the last tap, or long enough after it: so
+        // jitter on a tile's edge doesn't tap twice, but changing your mind
+        // and heading back over the same edge does.
         const far =
           !lastTapPoint ||
           Math.abs(point.x - lastTapPoint.x) >= box.width / 2 ||
-          Math.abs(point.y - lastTapPoint.y) >= box.height / 2;
+          Math.abs(point.y - lastTapPoint.y) >= box.height / 2 ||
+          Date.now() - lastTapAt > 300;
         if (far) {
           tap();
           lastTapPoint = { x: point.x, y: point.y };
+          lastTapAt = Date.now();
         }
       }
       if (tile) {
         lastTileUnder = tile;
         lastTapPoint ||= { x: point.x, y: point.y };
+      } else if (skip && inBox(window.gZenWorkspaces?.getCurrentEssentialsContainer?.(), point)) {
+        // Over the essentials but on no tile: the gap opened for the drop, or
+        // the dragged essential's own spot. Whatever tile comes next is a new
+        // one, so changing your mind and moving back onto the tile that just
+        // slid aside taps again.
+        lastTileUnder = OVER_GAP;
       }
     };
 
