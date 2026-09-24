@@ -4,6 +4,14 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.43.1] — 2026-09-24
+
+### Fixed
+
+- In compact mode, pointing at a tab or folder hover card no longer hides the
+  sidebar. It stays open while the pointer is on the card, and hides as usual
+  a moment after the pointer leaves both.
+
 ## [2.43.0] — 2026-09-24
 
 ### Changed
