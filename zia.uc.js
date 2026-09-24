@@ -627,6 +627,18 @@
     const title = (browser?.contentTitle || "").trim();
     const valid = urlbar.getAttribute("pageproxystate") === "valid";
 
+    // Multiview reads as a browser feature ("Multiview · 3"), not a website.
+    if (valid && isMultiviewURI(uri)) {
+      titleEl.firstChild.textContent = title || "Multiview";
+      titleEl.lastChild.textContent = "";
+      if (plainEl) {
+        plainEl.firstChild.textContent = title || "Multiview";
+        plainEl.lastChild.textContent = "";
+      }
+      urlbar.setAttribute("zia-has-title", "true");
+      return;
+    }
+
     if (!host || !valid || isErrorPage(browser)) {
       urlbar.removeAttribute("zia-has-title");
       return;
@@ -3040,7 +3052,9 @@
     let host = "";
     try {
       const uri = browser.currentURI;
-      if (uri && /^https?$/.test(uri.scheme)) {
+      if (isMultiviewURI(uri)) {
+        host = "";
+      } else if (uri && /^https?$/.test(uri.scheme)) {
         host = uri.displayHost.replace(/^www\./, "");
       } else if (uri && uri.spec !== "about:blank") {
         host = uri.spec;
@@ -4061,6 +4075,16 @@
       noteError("multiview: multiviewPosition", err);
     }
     return 0;
+  }
+
+  // The Multiview page is Zia's own, so the address bar, split panes and hover
+  // cards show it by name rather than as a github.io address.
+  function isMultiviewURI(uri) {
+    try {
+      return !!uri?.spec?.startsWith(MULTIVIEW_URL);
+    } catch (err) {
+      return false;
+    }
   }
 
   const multiviewKey = (entry) => `${entry[0]}:${entry[1]}`;
@@ -5951,7 +5975,7 @@
   function tabCardDomain(tab) {
     try {
       const uri = tab.linkedBrowser?.currentURI;
-      if (!uri) {
+      if (!uri || isMultiviewURI(uri)) {
         return "";
       }
       if (/^https?$/.test(uri.scheme)) {

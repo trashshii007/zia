@@ -44,7 +44,7 @@
   function tabCardDomain(tab) {
     try {
       const uri = tab.linkedBrowser?.currentURI;
-      if (!uri) {
+      if (!uri || isMultiviewURI(uri)) {
         return "";
       }
       if (/^https?$/.test(uri.scheme)) {

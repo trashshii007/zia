@@ -4,6 +4,15 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.40.0] — 2026-09-24
+
+### Changed
+
+- Multiview reads as part of the browser: the address bar shows
+  **Multiview · 3** instead of `z1n-k.github.io / Multiview · 3`, and so do
+  split panes and the tab's hover card. Clicking into the address bar to
+  type still shows the page's real address.
+
 ## [2.39.3] — 2026-09-24
 
 ### Changed

@@ -88,6 +88,16 @@
     return 0;
   }
 
+  // The Multiview page is Zia's own, so the address bar, split panes and hover
+  // cards show it by name rather than as a github.io address.
+  function isMultiviewURI(uri) {
+    try {
+      return !!uri?.spec?.startsWith(MULTIVIEW_URL);
+    } catch (err) {
+      return false;
+    }
+  }
+
   const multiviewKey = (entry) => `${entry[0]}:${entry[1]}`;
 
   // Entries are [kind, id, seconds, title]. In the address:

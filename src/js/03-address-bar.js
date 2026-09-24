@@ -45,6 +45,18 @@
     const title = (browser?.contentTitle || "").trim();
     const valid = urlbar.getAttribute("pageproxystate") === "valid";
 
+    // Multiview reads as a browser feature ("Multiview · 3"), not a website.
+    if (valid && isMultiviewURI(uri)) {
+      titleEl.firstChild.textContent = title || "Multiview";
+      titleEl.lastChild.textContent = "";
+      if (plainEl) {
+        plainEl.firstChild.textContent = title || "Multiview";
+        plainEl.lastChild.textContent = "";
+      }
+      urlbar.setAttribute("zia-has-title", "true");
+      return;
+    }
+
     if (!host || !valid || isErrorPage(browser)) {
       urlbar.removeAttribute("zia-has-title");
       return;
