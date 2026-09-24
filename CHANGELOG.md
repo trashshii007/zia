@@ -11,7 +11,8 @@ Every release of Zia, newest first. The format follows
 - Hovering a tucked picture-in-picture no longer shows a slice of video
   beside the strip while it nudges out. The strip is now always wide enough
   to cover the nudge.
-- The strip's arrow stays still when you hover, instead of drifting right.
+- The strip's arrow stays by its inner edge and moves out with the video
+  when you hover, instead of drifting right, and no longer brightens.
 
 ## [2.38.0] — 2026-09-24
 

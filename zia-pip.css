@@ -382,8 +382,8 @@
 /* Tucked: only a strip of the window shows, with an arrow pointing back
  * out. Hovering it nudges the window out 12px (zia-pip.js); clicking brings
  * it back. The strip is always as wide as the nudged view (24px + 12px), so
- * no video ever shows beside it, and the arrow moves against the window so
- * it stays still on screen. */
+ * no video ever shows beside it. The arrow sits by the strip's inner edge,
+ * the one nearest the page, and moves out with the window. */
 .zia-pip-sliver {
   display: none;
 }
@@ -423,24 +423,10 @@
   height: 14px;
   background: url("chrome://sine/content/zia/icons/pip/chevron.svg") center / contain no-repeat;
   opacity: 0.7;
-  transition: translate 160ms cubic-bezier(0.33, 1, 0.68, 1), opacity 160ms ease;
 }
 
 :root[zia-tucked="left"] .zia-pip-sliver::after {
   scale: -1 1;
-}
-
-.zia-pip-sliver:hover::after {
-  opacity: 1;
-}
-
-/* Nudged: the window moves 12px out, the arrow 12px back */
-:root[zia-tucked="right"][zia-nudged] .zia-pip-sliver::after {
-  translate: 12px 0;
-}
-
-:root[zia-tucked="left"][zia-nudged] .zia-pip-sliver::after {
-  translate: -12px 0;
 }
 
 /* Coming back out: the strip fades as the window slides in */
