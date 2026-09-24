@@ -3986,8 +3986,9 @@
       const id = host === "dai.ly" ? parts[0] : parts.includes("video") ? parts[parts.indexOf("video") + 1] : null;
       return id ? ["dm", id.split("_")[0], at] : null;
     }
-    // Anything else: the video's own file, if it's a real address.
-    if (/^https?:\/\//i.test(mediaSpec || "")) {
+    // Anything else: the video's own file, if it's a whole video file (not
+    // one chunk of a stream, which is all many sites' players load at once).
+    if (/^https?:\/\/[^?#]+\.(mp4|m4v|webm|ogv|ogg|mov)([?#]|$)/i.test(mediaSpec || "")) {
       return ["file", mediaSpec, at];
     }
     return null;
@@ -4092,7 +4093,12 @@
           if (topPage?.startsWith(MULTIVIEW_URL)) {
             pending = null;
           } else if (context.onVideo) {
-            pending = multiviewEntry(framePage || topPage, media, at) || multiviewEntry(topPage, media, at);
+            // The site first (the frame the video is in, then the page), and
+            // only then the video's own file.
+            pending =
+              (framePage && multiviewEntry(framePage, null, at)) ||
+              multiviewEntry(topPage, null, at) ||
+              multiviewEntry(topPage, media, at);
           } else {
             const entry = multiviewEntry(topPage, null, at);
             pending = entry && entry[0] !== "file" ? entry : null;
