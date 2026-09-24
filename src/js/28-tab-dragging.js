@@ -219,6 +219,14 @@
       drag.slot?.removeAttribute("zia-drop-slot");
       drag.slot = folder || null;
       folder?.setAttribute("zia-drop-slot", "true");
+      // Over an empty folder the tab covers its slot, so the tab carries the
+      // slot's dashes instead (chrome.css), in the folder's colour.
+      const tab = drag.moving === drag.tab ? drag.tab : null;
+      const into = !!tab && !!folder?.hasAttribute("zia-empty");
+      if (into) {
+        tab.style.setProperty("--zia-slot-border", getComputedStyle(folder).getPropertyValue("--zia-slot-border"));
+      }
+      tab?.toggleAttribute("zia-into-empty", into);
     };
 
     const updateTarget = (visualMid) => {
@@ -1914,6 +1922,10 @@
       muteZenHaptics(false);
       reclip();
       document.querySelectorAll("[zia-drop-slot]").forEach((folder) => folder.removeAttribute("zia-drop-slot"));
+      document.querySelectorAll("[zia-into-empty]").forEach((tab) => {
+        tab.removeAttribute("zia-into-empty");
+        tab.style.removeProperty("--zia-slot-border");
+      });
       clearFolderPaint();
       dropProxy();
       hideThumb(true);
