@@ -1,6 +1,10 @@
 /* Zia: built from src/css by scripts/build.sh. Edit the parts in src/css, not this file. */
 
 :root {
+  /* A spring with a slight overshoot, for things that open and close:
+   * the music player and folders */
+  --zia-spring: cubic-bezier(0.32, 1.25, 0.5, 1);
+  --zia-spring-time: 0.42s;
   --zia-fallback-bg: #121212;
   --zia-page-loading-bg: #000;
   --zia-separator: rgba(255, 255, 255, 0.1);
@@ -1572,9 +1576,9 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
  * the folder's colour, or a soft white for white and uncoloured folders.
  * (A folder emptied by moving its last tab out collapses, zia.uc.js.)
  * While a tab is dragged in, open or collapsed, the tab wears the dashes.
- * The slot is drawn on the container so Zen's own
- * folder code never sees an extra element; it shrinks away alongside Zen's
- * collapse (0.18s), and --zia-slot-y moves it with its folder's header
+ * The slot is drawn on the container so Zen's own folder code never sees an
+ * extra element; it shrinks away alongside the folder's collapse (the same
+ * spring, zia.uc.js), and --zia-slot-y moves it with its folder's header
  * while rows slide aside for a drag. */
 :root[zen-sidebar-expanded="true"] zen-folder[zia-empty] {
   --zia-slot-border: 1.5px dashed rgba(255, 255, 255, 0.28);
@@ -1602,9 +1606,9 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
     translate: 0 var(--zia-slot-y, 0px);
     pointer-events: none;
     transition:
-      height 180ms ease-in-out,
-      margin 180ms ease-in-out,
-      border-width 180ms ease-in-out,
+      height var(--zia-spring-time) var(--zia-spring),
+      margin var(--zia-spring-time) var(--zia-spring),
+      border-width var(--zia-spring-time) var(--zia-spring),
       opacity 180ms ease-in-out,
       translate 100ms ease-out;
   }
@@ -2112,10 +2116,10 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
     box-sizing: border-box !important;
     height: var(--zia-media-card-height) !important;
     transition:
-      transform 0.35s var(--zia-media-ease),
+      transform var(--zia-spring-time) var(--zia-spring),
       opacity 0.3s var(--zia-media-ease),
       filter 0.3s var(--zia-media-ease),
-      height 0.3s var(--zia-media-ease),
+      height var(--zia-spring-time) var(--zia-spring),
       background-color 0.3s var(--zia-media-ease) !important;
 
     &[zen-reindexing] {
@@ -2283,8 +2287,8 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
     margin: 0 !important;
     pointer-events: none !important;
     transition:
-      height 0.3s var(--zia-media-ease),
-      margin 0.3s var(--zia-media-ease),
+      height var(--zia-spring-time) var(--zia-spring),
+      margin var(--zia-spring-time) var(--zia-spring),
       opacity 0.25s var(--zia-media-ease) !important;
   }
 
@@ -2382,10 +2386,10 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
     margin-top: 0 !important;
     pointer-events: none;
     transition:
-      max-height 0.3s var(--zia-media-ease),
+      max-height var(--zia-spring-time) var(--zia-spring),
       opacity 0.3s var(--zia-media-ease),
-      translate 0.3s var(--zia-media-ease),
-      margin 0.3s var(--zia-media-ease) !important;
+      translate var(--zia-spring-time) var(--zia-spring),
+      margin var(--zia-spring-time) var(--zia-spring) !important;
   }
 
   .zen-media-card:not([muted]) .zen-media-mute-button {

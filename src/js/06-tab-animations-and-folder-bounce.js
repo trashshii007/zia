@@ -30,31 +30,38 @@
     }).observe(essentials, { childList: true, subtree: true });
   }
 
-  const ZEN_FOLDER_ANIMATION_MS = 180;
-  const FOLDER_SETTLE_MS = 180;
-  const FOLDER_BOUNCE_PX = 1;
+  // Zen slides a folder open and shut in 0.18s at an even pace. Zia gives
+  // that slide a spring with a slight overshoot instead, the same one the
+  // music player uses (--zia-spring), so the folder settles into place. Zen
+  // moves the element that starts a folder's contents by its top margin;
+  // Zia only changes the timing of that one animation.
+  const FOLDER_SPRING = { duration: 420, easing: "cubic-bezier(0.32, 1.25, 0.5, 1)" };
+
   const FOLDER_SELECTOR = "zen-folder, tab-group:not([split-view-group])";
 
   const isFolder = (el) =>
     el?.localName === "zen-folder" || (el?.localName === "tab-group" && !el.hasAttribute("split-view-group"));
 
-  function bounceFolderBox(folder, opening) {
-    const total = ZEN_FOLDER_ANIMATION_MS + FOLDER_SETTLE_MS;
-    const arrive = (ZEN_FOLDER_ANIMATION_MS - 20) / total;
-    const peak = (ZEN_FOLDER_ANIMATION_MS + 60) / total;
-    for (const pseudoElement of ["::before", "::after"]) {
-      const bottom = parseFloat(getComputedStyle(folder, pseudoElement).bottom) || 0;
-      const past = opening ? bottom - FOLDER_BOUNCE_PX : bottom + FOLDER_BOUNCE_PX;
-      folder.animate(
-        [
-          { bottom: `${bottom}px`, offset: 0 },
-          { bottom: `${bottom}px`, offset: arrive, easing: "ease-out" },
-          { bottom: `${past}px`, offset: peak, easing: "ease-in-out" },
-          { bottom: `${bottom}px`, offset: 1 },
-        ],
-        { duration: total, pseudoElement }
-      );
+  const movesTopMargin = (keyframes) =>
+    Array.isArray(keyframes) ? keyframes.some((frame) => frame && "marginTop" in frame) : !!keyframes && "marginTop" in keyframes;
+
+  function springFolderAnimation(element, keyframes, options) {
+    if (
+      !element.classList?.contains("zen-tab-group-start") ||
+      !isFolder(element.parentElement?.parentElement) ||
+      !movesTopMargin(keyframes) ||
+      !(typeof options === "object" && options?.duration > 0)
+    ) {
+      return options;
     }
+    try {
+      if (!Services.prefs.getBoolPref("zia.folders.bounce", true)) {
+        return options;
+      }
+    } catch (err) {
+      return options;
+    }
+    return { ...options, ...FOLDER_SPRING };
   }
 
   function allowEmojiFolderIcons() {
@@ -74,37 +81,15 @@
   }
 
   function addFolderBounce() {
-    const tabs = document.getElementById("tabbrowser-tabs");
-    if (!tabs) {
+    const animate = Element.prototype.animate;
+    if (animate.__zia) {
       return;
     }
-    new MutationObserver((mutations) => {
-      if (!Services.prefs.getBoolPref("zia.folders.bounce", true)) {
-        return;
-      }
-      for (const mutation of mutations) {
-        const folder = mutation.target;
-        if (!isFolder(folder)) {
-          continue;
-        }
-        const collapsedNow = folder.hasAttribute("collapsed");
-        const wasCollapsed = mutation.oldValue !== null;
-        if (collapsedNow === wasCollapsed) {
-          continue;
-        }
-        try {
-          bounceFolderBox(folder,  !collapsedNow);
-        } catch (err) {
-          console.error("[Zia] Folder bounce failed:", err);
-        }
-      }
-    }).observe(tabs, {
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["collapsed"],
-      attributeOldValue: true,
-    });
-    console.info("[Zia] Folder bounce ready");
+    const patched = function (keyframes, options) {
+      return animate.call(this, keyframes, springFolderAnimation(this, keyframes, options));
+    };
+    patched.__zia = true;
+    Element.prototype.animate = patched;
   }
 
   function hideWwwInUrlbar() {

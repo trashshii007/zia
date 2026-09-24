@@ -4,6 +4,17 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.43.0] — 2026-09-24
+
+### Changed
+
+- **Folders open and close with a spring.** The folder slides open or shut
+  with a slight overshoot and settles into place, instead of Zen's even
+  slide followed by a separate 1px nudge of the folder's box. The setting
+  is now called **Folders open and close with a gentle spring**.
+- The music player opens on hover with the same spring, and its buttons and
+  progress bar spring in with it.
+
 ## [2.42.0] — 2026-09-24
 
 ### Changed

@@ -51,10 +51,10 @@
     box-sizing: border-box !important;
     height: var(--zia-media-card-height) !important;
     transition:
-      transform 0.35s var(--zia-media-ease),
+      transform var(--zia-spring-time) var(--zia-spring),
       opacity 0.3s var(--zia-media-ease),
       filter 0.3s var(--zia-media-ease),
-      height 0.3s var(--zia-media-ease),
+      height var(--zia-spring-time) var(--zia-spring),
       background-color 0.3s var(--zia-media-ease) !important;
 
     &[zen-reindexing] {
@@ -222,8 +222,8 @@
     margin: 0 !important;
     pointer-events: none !important;
     transition:
-      height 0.3s var(--zia-media-ease),
-      margin 0.3s var(--zia-media-ease),
+      height var(--zia-spring-time) var(--zia-spring),
+      margin var(--zia-spring-time) var(--zia-spring),
       opacity 0.25s var(--zia-media-ease) !important;
   }
 
@@ -321,10 +321,10 @@
     margin-top: 0 !important;
     pointer-events: none;
     transition:
-      max-height 0.3s var(--zia-media-ease),
+      max-height var(--zia-spring-time) var(--zia-spring),
       opacity 0.3s var(--zia-media-ease),
-      translate 0.3s var(--zia-media-ease),
-      margin 0.3s var(--zia-media-ease) !important;
+      translate var(--zia-spring-time) var(--zia-spring),
+      margin var(--zia-spring-time) var(--zia-spring) !important;
   }
 
   .zen-media-card:not([muted]) .zen-media-mute-button {

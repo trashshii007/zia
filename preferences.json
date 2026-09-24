@@ -125,7 +125,7 @@
   },
   {
     "type": "checkbox",
-    "label": "Tiny bounce when folders open or close",
+    "label": "Folders open and close with a gentle spring",
     "property": "zia.folders.bounce",
     "defaultValue": true
   },

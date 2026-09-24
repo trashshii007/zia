@@ -1,6 +1,10 @@
 /* Zia: built from src/css by scripts/build.sh. Edit the parts in src/css, not this file. */
 
 :root {
+  /* A spring with a slight overshoot, for things that open and close:
+   * the music player and folders */
+  --zia-spring: cubic-bezier(0.32, 1.25, 0.5, 1);
+  --zia-spring-time: 0.42s;
   --zia-fallback-bg: #121212;
   --zia-page-loading-bg: #000;
   --zia-separator: rgba(255, 255, 255, 0.1);
