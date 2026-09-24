@@ -3786,6 +3786,11 @@
     }
     set("zia.tabs.favicon-glow", false);
     set("zia.essentials.fill-row", false);
+    set("zia.pip.dia-style", true);
+    set("zia.pip.tuck", true);
+    // Dia's picture-in-picture has skip buttons and a progress line, which
+    // Firefox only shows with its improved controls.
+    set("media.videocontrols.picture-in-picture.improved-video-controls.enabled", true);
     try {
       defaults.setStringPref("zia.urlbar.position", "top");
     } catch (err) {
@@ -3802,6 +3807,42 @@
     "zia.page.rounding",
   ];
   const WATCHED_OPTIONS = ["zia.urlbar.dia-style", "zia.newtab.real-tab", "zia.toolbar.site-color", "zia.split.drop-cards"];
+
+
+  // ---------- Picture-in-picture: Dia's look, and tucking into the screen edge
+  const PIP_PLAYER_URL = "chrome://global/content/pictureinpicture/player.xhtml";
+  const PIP_SCRIPT_URL = "chrome://sine/content/zia/zia-pip.js";
+
+  function decoratePipWindow(win) {
+    try {
+      if (win.__ziaPipLoaded || win.location?.href !== PIP_PLAYER_URL) {
+        return;
+      }
+      Services.scriptloader.loadSubScript(PIP_SCRIPT_URL, win);
+    } catch (err) {
+      console.error("[Zia] Couldn't set up picture-in-picture:", err);
+    }
+  }
+  function watchPipWindows() {
+    const observer = (subject, topic) => {
+      if (topic !== "domwindowopened") {
+        return;
+      }
+      subject.addEventListener(
+        "load",
+        () => {
+          // The player fills in its controls on load; give it a moment first.
+          setTimeout(() => decoratePipWindow(subject), 0);
+        },
+        { once: true }
+      );
+    };
+    Services.ww.registerNotification(observer);
+    window.addEventListener("unload", () => Services.ww.unregisterNotification(observer));
+    for (const win of Services.wm.getEnumerator("Toolkit:PictureInPicture")) {
+      decoratePipWindow(win);
+    }
+  }
 
   const URLBAR_POSITION_PREF = "zia.urlbar.position";
 
@@ -8024,6 +8065,7 @@
     safely("applyZenDefaults", applyZenDefaults);
     safely("watchOptions", watchOptions);
     safely("watchUrlbarPosition", watchUrlbarPosition);
+    safely("watchPipWindows", watchPipWindows);
     safely("watchNewTabPage", watchNewTabPage);
     safely("createWorkspaceSlot", createWorkspaceSlot);
     safely("watchTabAnimations", watchTabAnimations);

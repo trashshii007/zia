@@ -110,6 +110,8 @@ Parts of the theme can be switched on or off individually.
 | New tabs open your default search engine's page | on |
 | Use Zen's accent colour for the loading bar | off |
 | Small bounce when folders open or close | on |
+| Dia-style picture-in-picture controls (off: Firefox's own) | on |
+| Tuck picture-in-picture into the side of the screen | on |
 
 More features become switchable with each release. The styling toggles apply straight away; the ones that change behaviour need a restart.
 

@@ -4,6 +4,20 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.34.0] — 2026-09-24
+
+### Added
+
+- **Dia-style picture-in-picture.** At rest it's just the video. On hover the
+  video dims and shows **Back to Tab** and **Close** pills at the top, the
+  site's name in the middle, big 15-second back / play-pause / 15-second
+  forward buttons in the centre, and a thin progress line along the bottom.
+  Turn it off in the settings to get Firefox's own controls back.
+- **Tuck picture-in-picture away.** Drag the window against the left or right
+  edge of the screen and it slides off, leaving a thin tab with sound bars.
+  Hover the tab to slide the video back out; it tucks away again when you
+  move off it. Drag it away from the edge to leave it out.
+
 ## [2.33.4] — 2026-09-24
 
 ### Fixed
