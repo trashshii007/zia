@@ -4,6 +4,14 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.31.1] — 2026-09-24
+
+### Changed
+
+- The favicon glow on the selected tab (an option, off by default) is now
+  mostly the usual white glow with only a hint of the favicon's colours,
+  barely stronger than the plain one.
+
 ## [2.31.0] — 2026-09-24
 
 ### Added

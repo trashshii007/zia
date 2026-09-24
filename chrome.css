@@ -763,26 +763,22 @@
   }
 }
 
-/* Selected tab: the soft glow around it takes a blend of the favicon's colours */
+/* Selected tab: the white glow around it picks up a hint of the favicon's
+   colours. Mostly white, barely stronger than the plain glow. */
 @media -moz-pref("zia.tabs.favicon-glow") {
-  .tabbrowser-tab:not([zen-essential])[visuallyselected][zia-glow] > .tab-stack > .tab-background {
-    --zia-glow-mix-1: color-mix(in srgb, var(--zia-glow-1) 10%, transparent);
-    --zia-glow-mix-2: color-mix(in srgb, var(--zia-glow-2, var(--zia-glow-1)) 9%, transparent);
-    --zia-glow-mix-3: color-mix(in srgb, var(--zia-glow-3, var(--zia-glow-1)) 8%, transparent);
+  .tabbrowser-tab:not([zen-essential])[visuallyselected][zia-glow] > .tab-stack > .tab-background,
+  :root[zen-sidebar-expanded="true"] tab-group[split-view-group][zia-glow]:is([hasactivetab], :has(.tabbrowser-tab[visuallyselected])) .tab-group-container {
+    --zia-glow-hint: 35%;
+    --zia-glow-strength: 6%;
+    --zia-glow-mix-1: color-mix(in srgb, color-mix(in srgb, var(--zia-glow-1) var(--zia-glow-hint), white) var(--zia-glow-strength), transparent);
+    --zia-glow-mix-2: color-mix(in srgb, color-mix(in srgb, var(--zia-glow-2, var(--zia-glow-1)) var(--zia-glow-hint), white) var(--zia-glow-strength), transparent);
+    --zia-glow-mix-3: color-mix(in srgb, color-mix(in srgb, var(--zia-glow-3, var(--zia-glow-1)) var(--zia-glow-hint), white) var(--zia-glow-strength), transparent);
 
     box-shadow:
-      calc(-1 * var(--zia-glow-side, 8px)) 0 var(--zia-active-glow-blur) var(--zia-active-glow-spread) var(--zia-glow-mix-1),
-      var(--zia-glow-side, 8px) 0 var(--zia-active-glow-blur) var(--zia-active-glow-spread) var(--zia-glow-mix-2),
+      calc(-1 * var(--zia-glow-side, 6px)) 0 var(--zia-active-glow-blur) var(--zia-active-glow-spread) var(--zia-glow-mix-1),
+      var(--zia-glow-side, 6px) 0 var(--zia-active-glow-blur) var(--zia-active-glow-spread) var(--zia-glow-mix-2),
       0 calc(-1 * var(--zia-active-glow-reach)) var(--zia-active-glow-blur) var(--zia-active-glow-spread) var(--zia-glow-mix-3),
       0 var(--zia-active-glow-reach) var(--zia-active-glow-blur) var(--zia-active-glow-spread) var(--zia-glow-mix-1) !important;
-  }
-
-  :root[zen-sidebar-expanded="true"] tab-group[split-view-group][zia-glow]:is([hasactivetab], :has(.tabbrowser-tab[visuallyselected])) .tab-group-container {
-    box-shadow:
-      calc(-1 * var(--zia-glow-side, 8px)) 0 var(--zia-active-glow-blur) var(--zia-active-glow-spread) color-mix(in srgb, var(--zia-glow-1) 10%, transparent),
-      var(--zia-glow-side, 8px) 0 var(--zia-active-glow-blur) var(--zia-active-glow-spread) color-mix(in srgb, var(--zia-glow-2) 10%, transparent),
-      0 calc(-1 * var(--zia-active-glow-reach)) var(--zia-active-glow-blur) var(--zia-active-glow-spread) color-mix(in srgb, var(--zia-glow-3) 7%, transparent),
-      0 var(--zia-active-glow-reach) var(--zia-active-glow-blur) var(--zia-active-glow-spread) color-mix(in srgb, color-mix(in srgb, var(--zia-glow-1), var(--zia-glow-2)) 7%, transparent) !important;
   }
 }
 
