@@ -17,6 +17,8 @@ Every release of Zia, newest first. The format follows
   edge of the screen and it slides off, leaving a thin tab with sound bars.
   Hover the tab to slide the video back out; it tucks away again when you
   move off it. Drag it away from the edge to leave it out.
+- The music player always shows its picture-in-picture button when you hover
+  it (Zen only showed it for some videos).
 
 ## [2.33.4] — 2026-09-24
 

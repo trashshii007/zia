@@ -2319,10 +2319,6 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
     fill: currentColor !important;
   }
 
-  .zen-media-card:not([can-pip]) .zen-media-pip-button {
-    display: none !important;
-  }
-
   .media-device-buttons {
     grid-column: 3 / -1;
     grid-row: 1;
