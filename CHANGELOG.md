@@ -11,7 +11,9 @@ Every release of Zia, newest first. The format follows
 - **Throw picture-in-picture at the side to tuck it.** The blue "Let go to
   tuck away" edge is gone. Let go of the window with about a third of it
   past the left or right side of the screen, or flick it quickly at a side,
-  and it springs the rest of the way into its tucked strip.
+  and it springs the rest of the way into its tucked strip. The video frosts
+  over as it goes past the side, fully frosted where it would tuck, and
+  clears again the same way as you pull it back out.
 
 ### Fixed
 

@@ -404,15 +404,18 @@
   cursor: grabbing;
 }
 
-/* Pulled out by hand: the video clears and the strip fades as it comes, but
- * the strip still takes the drag */
-:root[zia-dragging="out"] .zia-pip-sliver {
-  opacity: 0;
-  transition: opacity 200ms ease;
+/* Thrown at a side, or pulled back out by hand: the video frosts over in
+ * step with how far past the side it is (--zia-veil, 0 to 1, from
+ * zia-pip.js), fully frosted where it would tuck. Pulling out, the strip
+ * fades the same way but still takes the drag. */
+:root:is([zia-leaving], [zia-dragging="out"]):not([zia-emerging]) .player-holder {
+  filter: blur(calc(var(--zia-veil, 0) * 16px)) brightness(calc(1 - var(--zia-veil, 0) * 0.15));
+  transition: filter 80ms linear;
 }
 
-:root[zia-dragging="out"] .player-holder {
-  filter: none;
+:root[zia-dragging="out"] .zia-pip-sliver {
+  opacity: var(--zia-veil, 0);
+  transition: opacity 80ms linear;
 }
 
 :root[zia-tucked] #controls {

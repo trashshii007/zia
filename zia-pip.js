@@ -151,6 +151,17 @@
     const middle = window.screenX + window.outerWidth / 2;
     return middle > (box.left + box.right) / 2 ? "right" : "left";
   };
+  // How far the window is past either side, as a share of TUCK_OFF: 0 on
+  // the screen, 1 where letting go would tuck it. It frosts the video over
+  // as it goes (zia-pip.css).
+  const veil = (progress) => root.style.setProperty("--zia-veil", Math.min(1, Math.max(0, progress)).toFixed(3));
+  const pastSide = () => {
+    const box = screenBox();
+    const width = window.outerWidth;
+    const off = Math.max(window.screenX + width - box.right, box.left - window.screenX, 0);
+    return off / width / TUCK_OFF;
+  };
+
   // Where the window was let go: far enough past a side, or flicked at one
   const tuckEdge = () => {
     const box = screenBox();
@@ -308,6 +319,10 @@
       const to = outX();
       x = Math.round(Math.min(Math.max(from, to), Math.max(Math.min(from, to), dragFrom.windowX + dx)));
     }
+    if (dragMode === "out") {
+      const from = tuckedX(0);
+      veil(1 - (x - from) / (outX() - from || 1));
+    }
     window.moveTo(x, y);
     lastX = x;
     lastY = y;
@@ -374,6 +389,9 @@
       if (state !== "free") {
         release();
       }
+      const past = pastSide();
+      root.toggleAttribute("zia-leaving", past > 0);
+      veil(past);
       updateButton();
       return;
     }
@@ -384,8 +402,13 @@
       const edge = tuckEdge();
       trail = [];
       if (edge) {
+        veil(1);
         tuck(edge);
+      } else {
+        veil(0);
       }
+      // Tucked, the strip's own frosting takes over; otherwise it clears
+      setTimeout(() => root.removeAttribute("zia-leaving"), 120);
     }
   }, 40);
 })();
