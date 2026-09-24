@@ -3928,6 +3928,9 @@
   // restarts.
   const MULTIVIEW_URL = "https://z1n-k.github.io/zia/multiview/";
   const MULTIVIEW_PREF = "zia.multiview";
+  const MULTIVIEW_COLOR_PREF = "zia.multiview.icon-color";
+  const MULTIVIEW_MAX = 4;
+  const ZIA_BLUE = "5ab9f5";
   const TWITCH_RESERVED = new Set([
     "directory", "videos", "settings", "search", "p", "downloads", "jobs", "turbo",
     "subscriptions", "inventory", "wallet", "drops", "friends", "messages", "login", "signup",
@@ -4011,7 +4014,7 @@
     const hash = (spec.split("#")[1] || "").trim();
     return hash
       .split(",")
-      .filter(Boolean)
+      .filter((item) => item && !item.startsWith("~"))
       .map((item) => {
         const [head, at] = item.split("@");
         const [kind, id] = head.split(":");
@@ -4020,9 +4023,52 @@
       .filter(Boolean);
   }
 
+  // The colour the Multiview tab fills its grid icon with, one square per
+  // video: Zia's blue, or the space's own colour.
+  function multiviewColor() {
+    let choice = "zia";
+    try {
+      choice = Services.prefs.getStringPref(MULTIVIEW_COLOR_PREF, "zia");
+    } catch (err) {}
+    if (choice === "space" && root.getAttribute("zen-default-theme") !== "true") {
+      const m = getComputedStyle(root).getPropertyValue("--zen-primary-color").match(/\d+(\.\d+)?/g);
+      if (m && m.length >= 3) {
+        return m
+          .slice(0, 3)
+          .map((n) => Math.round(Math.min(255, Number(n))).toString(16).padStart(2, "0"))
+          .join("");
+      }
+    }
+    return ZIA_BLUE;
+  }
+
   function multiviewSpec(entries) {
     const items = entries.map(([kind, id, at]) => `${kind}:${encodeURIComponent(id)}${at ? `@${Math.floor(at)}` : ""}`);
-    return `${MULTIVIEW_URL}#${items.join(",")}`;
+    return `${MULTIVIEW_URL}#${[`~${multiviewColor()}`, ...items].join(",")}`;
+  }
+
+  // Only the address's # part changes, so the page updates without
+  // reloading its players.
+  function setMultiviewSpec(tab, spec) {
+    if (tab.linkedBrowser.currentURI.spec !== spec) {
+      tab.linkedBrowser.fixupAndLoadURIString(spec, {
+        triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+      });
+    }
+  }
+
+  const findMultiviewTab = () => gBrowser.visibleTabs.find(isMultiviewTab);
+
+  function multiviewFull() {
+    const tab = findMultiviewTab();
+    return !!tab && multiviewEntries(tab.linkedBrowser.currentURI.spec).length >= MULTIVIEW_MAX;
+  }
+
+  function recolorMultiview(tab) {
+    // Not unloaded tabs: changing their address would load them.
+    if (isMultiviewTab(tab) && !tab.hasAttribute("pending")) {
+      setMultiviewSpec(tab, multiviewSpec(multiviewEntries(tab.linkedBrowser.currentURI.spec)));
+    }
   }
 
   function isMultiviewTab(tab) {
@@ -4030,19 +4076,18 @@
   }
 
   function addToMultiview(entry) {
-    const tab = gBrowser.visibleTabs.find(isMultiviewTab);
-    const system = Services.scriptSecurityManager.getSystemPrincipal();
+    const tab = findMultiviewTab();
     if (!tab) {
-      gBrowser.selectedTab = gBrowser.addTrustedTab(multiviewSpec([entry]), { triggeringPrincipal: system });
+      gBrowser.selectedTab = gBrowser.addTrustedTab(multiviewSpec([entry]), {
+        triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+      });
       return;
     }
     const entries = multiviewEntries(tab.linkedBrowser.currentURI.spec);
-    if (!entries.some((item) => multiviewKey(item) === multiviewKey(entry))) {
+    if (!entries.some((item) => multiviewKey(item) === multiviewKey(entry)) && entries.length < MULTIVIEW_MAX) {
       entries.push(entry);
-      // Only the address's # part changes, so the page adds the tile without
-      // reloading the others.
-      tab.linkedBrowser.fixupAndLoadURIString(multiviewSpec(entries), { triggeringPrincipal: system });
     }
+    setMultiviewSpec(tab, multiviewSpec(entries));
     gBrowser.selectedTab = tab;
   }
 
@@ -4052,6 +4097,14 @@
       return null;
     }
     return multiviewEntry(browser.currentURI?.spec, null, multiviewPosition(browser));
+  }
+
+  // Up to four videos; after that the item says so instead.
+  function showMultiviewItem(item, entry) {
+    item.hidden = !entry;
+    const full = !!entry && multiviewFull();
+    item.disabled = full;
+    item.setAttribute("label", full ? "Multiview is full (4 videos)" : "Add to Multiview");
   }
 
   function makeMultiviewItem(id, onCommand) {
@@ -4104,7 +4157,7 @@
             pending = entry && entry[0] !== "file" ? entry : null;
           }
         }
-        item.hidden = !pending;
+        showMultiviewItem(item, pending);
       });
     }
 
@@ -4128,9 +4181,20 @@
           return;
         }
         const entry = enabled() && tabMultiviewEntry(window.TabContextMenu?.contextTab);
-        item.hidden = !entry || entry[0] === "file";
+        showMultiviewItem(item, entry && entry[0] !== "file" ? entry : null);
       });
     }
+
+    // Keep the grid icon's colour current: when the Multiview tab is shown
+    // (the space may have changed colour) and when the setting changes.
+    gBrowser.tabContainer.addEventListener("TabSelect", (event) => recolorMultiview(event.target));
+    const onColorPref = () => {
+      for (const tab of gBrowser.tabs) {
+        recolorMultiview(tab);
+      }
+    };
+    Services.prefs.addObserver(MULTIVIEW_COLOR_PREF, onColorPref);
+    window.addEventListener("unload", () => Services.prefs.removeObserver(MULTIVIEW_COLOR_PREF, onColorPref));
   }
 
   const URLBAR_POSITION_PREF = "zia.urlbar.position";

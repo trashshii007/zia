@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Multiview</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3E%3Crect x='1' y='2' width='6' height='5' rx='1.5'/%3E%3Crect x='9' y='2' width='6' height='5' rx='1.5'/%3E%3Crect x='1' y='9' width='6' height='5' rx='1.5'/%3E%3Crect x='9' y='9' width='6' height='5' rx='1.5'/%3E%3C/svg%3E">
+<link rel="icon" id="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3E%3Crect x='1' y='2' width='6' height='5' rx='1.5'/%3E%3Crect x='9' y='2' width='6' height='5' rx='1.5'/%3E%3Crect x='1' y='9' width='6' height='5' rx='1.5'/%3E%3Crect x='9' y='9' width='6' height='5' rx='1.5'/%3E%3C/svg%3E">
 <style>
   :root {
     --gap: 8px;
@@ -214,7 +214,7 @@
 <div id="empty" hidden>
   <strong>Multiview</strong>
   <span>Right-click a video, its page or its tab and choose <b>Add to Multiview</b>.<br>
-  Works with YouTube, Twitch, Kick, Vimeo, Dailymotion and video files, live streams included.</span>
+  Up to four at a time, from YouTube, Twitch, Kick, Vimeo, Dailymotion or video files, live streams included.</span>
 </div>
 <script>
 (() => {
@@ -232,17 +232,25 @@
     close: icon('<path d="M4 4l8 8M12 4l-8 8"/>'),
   };
 
-  // ---------- The address holds the videos: #kind:id@seconds,kind:id,...
+  // ---------- The address holds the videos: #~colour,kind:id@seconds,kind:id,...
+  // (the colour, from Zia, fills the tab's grid icon). Four at most.
+  const MAX = 4;
+  const ZIA_BLUE = "5ab9f5";
+  let color = ZIA_BLUE;
+
   function readEntries() {
-    return (location.hash.slice(1) || "")
-      .split(",")
-      .filter(Boolean)
+    const items = (location.hash.slice(1) || "").split(",").filter(Boolean);
+    const token = items.find((item) => item.startsWith("~"));
+    color = /^~[0-9a-f]{6}$/i.test(token || "") ? token.slice(1) : ZIA_BLUE;
+    return items
+      .filter((item) => !item.startsWith("~"))
       .map((item) => {
         const [head, at] = item.split("@");
         const [kind, id] = head.split(":");
         return kind && id ? { kind, id: decodeURIComponent(id), at: Number(at) || 0 } : null;
       })
-      .filter((entry) => entry && KINDS[entry.kind]);
+      .filter((entry) => entry && KINDS[entry.kind])
+      .slice(0, MAX);
   }
 
   function writeEntries() {
@@ -250,7 +258,7 @@
       const { kind, id, at } = tiles.get(key).entry;
       return `${kind}:${encodeURIComponent(id)}${at ? `@${Math.floor(at)}` : ""}`;
     });
-    history.replaceState(null, "", `#${items.join(",")}`);
+    history.replaceState(null, "", `#${[`~${color}`, ...items].join(",")}`);
   }
 
   const keyOf = (entry) => `${entry.kind}:${entry.id}`;
@@ -607,7 +615,22 @@
     wall.style.setProperty("--tile-h", `${Math.floor(best.h)}px`);
   }
 
+  // The tab's icon: a 2×2 grid with one square filled per video.
+  function drawIcon() {
+    const spots = [[1, 2], [9, 2], [1, 9], [9, 9]];
+    const squares = spots
+      .map(([x, y], i) =>
+        i < order.length
+          ? `<rect x="${x}" y="${y}" width="6" height="5" rx="1.5" fill="#${color}"/>`
+          : `<rect x="${x + 0.5}" y="${y + 0.5}" width="5" height="4" rx="1.2" fill="none" stroke="#fff" stroke-opacity="0.55"/>`
+      )
+      .join("");
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">${squares}</svg>`;
+    document.getElementById("icon").href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+  }
+
   function refresh() {
+    drawIcon();
     empty.hidden = order.length > 0;
     document.title = order.length ? `Multiview · ${order.length}` : "Multiview";
     layout();

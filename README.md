@@ -88,7 +88,7 @@ Multiview turns a tab into a wall of videos. Right-click any video, a video's pa
 
 <img src="https://raw.githubusercontent.com/z1n-k/zia/readme-images/multiview-menu.webp" alt="Add to Multiview in a video's right-click menu" width="360">
 
-The first video opens the Multiview tab and the rest join it. The grid re-tiles itself to fill the tab, always at the biggest size that fits, as videos come and go. It's made for following several live streams at once.
+The first video opens the Multiview tab and up to three more join it. The grid re-tiles itself to fill the tab, always at the biggest size that fits, as videos come and go. It's made for following several live streams at once. The tab's grid icon fills a square for each video, in Zia's blue or your space's colour.
 
 ![Multiview with sport, scenery and two live streams](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/multiview-wall.webp>)
 
@@ -190,6 +190,7 @@ Almost every part of Zia can be switched on or off on its own. The settings are 
 | Tuck picture-in-picture into the side of the screen | on |
 | **Multiview** | |
 | **Add to Multiview** on videos and tabs | on |
+| Multiview tab icon colour: Zia blue or the space's colour | Zia blue |
 
 More features become switchable with each release. The styling toggles apply straight away; the ones that change behaviour need a restart.
 
