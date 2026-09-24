@@ -1409,7 +1409,9 @@
       noLanding();
 
       muteZenHaptics(true);
-      lastTileUnder = null;
+      // The drag starts on its own tile (which tileUnder skips), so the very
+      // first neighbour it moves onto taps too.
+      lastTileUnder = tab;
       lastTapPoint = null;
       essentialDrag = {
         tab,

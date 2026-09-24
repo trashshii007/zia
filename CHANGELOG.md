@@ -17,6 +17,8 @@ Every release of Zia, newest first. The format follows
 - If haptics were left switched off by the old version, this version switches
   them back on once, the first time it runs. Turning them off again
   afterwards is respected.
+- Dragging an essential one place along now taps as it passes the
+  neighbouring tile. It only tapped from the second tile on.
 
 ## [2.40.0] — 2026-09-24
 
