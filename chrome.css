@@ -3123,7 +3123,10 @@ findbar {
     clip-path: inset(0 round var(--zia-card-radius) var(--zia-card-radius) 0 0);
   }
 
+  /* The opened bar is a plain block by default, so make it a reversed
+     column: the typing box at the bottom by the bar, the results above it. */
   & #urlbar[breakout-extend]:not([zia-classic]) {
+    display: flex !important;
     flex-direction: column-reverse !important;
 
     & > .urlbar-background {
