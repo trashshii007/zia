@@ -42,27 +42,34 @@
     return el;
   };
 
-  // The site, between "Back to Tab" and "Close"
-  const host = make("div", "zia-pip-host", controls);
+  // Zia's own top bar: "Back to Tab", the site, the tuck button and "Close".
+  // Firefox's corner buttons fight any restyling, so they're hidden and
+  // ours press them.
+  const topBar = make("div", "zia-pip-top", controls);
+  const back = make("button", "zia-pip-pill zia-pip-back control-item", topBar);
+  back.textContent = "Back to Tab";
+  const host = make("div", "zia-pip-host control-item", topBar);
   try {
     const { PictureInPicture } = ChromeUtils.importESModule("resource://gre/modules/PictureInPicture.sys.mjs");
     const browser = PictureInPicture.weakWinToBrowser?.get(window);
     host.textContent = browser?.currentURI?.host || "";
   } catch (err) {
   }
+  const end = make("div", "zia-pip-end", topBar);
+  const tuckButton = make("button", "zia-pip-pill zia-pip-tuck-button control-item", end);
+  const closeButton = make("button", "zia-pip-pill zia-pip-close control-item", end);
+  closeButton.textContent = "Close";
+  // Keep our clicks away from Firefox's own click handling on #controls.
+  const press = (id) => (event) => {
+    event.stopPropagation();
+    document.getElementById(id)?.click();
+  };
+  back.addEventListener("click", press("unpip"));
+  closeButton.addEventListener("click", press("close"));
 
-  const tuckButton = make("button", "zia-pip-tuck-button control-item control-button", controls);
   const dropHint = make("div", "zia-pip-drop-hint", document.body);
   dropHint.textContent = "Let go to tuck away";
   const sliver = make("div", "zia-pip-sliver", document.body);
-
-  // The tuck button sits just left of Close, whatever width Close is.
-  const close = document.getElementById("close");
-  if (close) {
-    new window.ResizeObserver(() => {
-      root.style.setProperty("--zia-close-width", `${close.offsetWidth}px`);
-    }).observe(close);
-  }
 
   const applyPrefs = () => {
     root.toggleAttribute("zia-dia", pref("zia.pip.dia-style", true));
@@ -177,7 +184,8 @@
   };
   updateButton();
 
-  tuckButton.addEventListener("click", () => {
+  tuckButton.addEventListener("click", (event) => {
+    event.stopPropagation();
     if (state === "out") {
       release();
     } else if (state === "free") {

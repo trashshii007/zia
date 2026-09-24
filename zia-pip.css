@@ -12,9 +12,6 @@
   --zia-pip-pad: 16px;
   --zia-pip-play: clamp(34px, 23vh, 96px);
   --zia-pip-seek: clamp(24px, 12.5vh, 48px);
-  --zia-pip-font: 500 13px/27px -apple-system, BlinkMacSystemFont, "Helvetica Neue", system-ui, sans-serif;
-  --zia-pip-glass: rgba(255, 255, 255, 0.2);
-  --zia-pip-glass-hover: rgba(255, 255, 255, 0.3);
 }
 
 /* the dark tint */
@@ -52,66 +49,118 @@
   transition-duration: 90ms, 200ms, 120ms !important;
 }
 
-/* "Back to Tab" and "Close": frosted pills in the top corners */
-:root[zia-dia] :is(#unpip, #close, .zia-pip-tuck-button) {
-  position: absolute !important;
-  top: var(--zia-pip-pad) !important;
-  width: auto !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  height: 27px !important;
-  margin: 0 !important;
-  padding: 0 11px 0 29px !important;
-  border-radius: 7px !important;
-  background-color: var(--zia-pip-glass) !important;
-  background-position: 10px center !important;
-  background-size: 13px !important;
-  background-repeat: no-repeat !important;
-  backdrop-filter: blur(16px) saturate(1.5);
-  color: #fff !important;
-  font: var(--zia-pip-font) !important;
-  white-space: nowrap;
-  transform: none !important;
-}
-
-:root[zia-dia] :is(#unpip, #close, .zia-pip-tuck-button):is(:hover, :focus-visible) {
-  background-color: var(--zia-pip-glass-hover) !important;
-}
-
-:root[zia-dia] #unpip {
-  left: var(--zia-pip-pad) !important;
-  right: auto !important;
-  background-image: url("chrome://sine/content/zia/icons/pip/to-tab.svg") !important;
-}
-
-:root[zia-dia] #unpip::before {
-  content: "Back to Tab";
-}
-
-:root[zia-dia] #close {
-  right: var(--zia-pip-pad) !important;
-  left: auto !important;
-  background-image: url("chrome://sine/content/zia/icons/pip/close.svg") !important;
-}
-
-:root[zia-dia] #close::before {
-  content: "Close";
-}
-
-/* the site, between the pills */
-:root[zia-dia] .zia-pip-host {
+/* Zia's own top bar: "Back to Tab", the site, and "Close" (plus the tuck
+ * button). Firefox's corner buttons are hidden; ours press them. */
+#controls .zia-pip-top {
   position: absolute;
-  top: var(--zia-pip-pad);
-  left: 50%;
-  translate: -50% 0;
-  max-width: calc(100% - 300px);
+  top: var(--zia-pip-pad, 10px);
+  left: var(--zia-pip-pad, 10px);
+  right: var(--zia-pip-pad, 10px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+#controls .zia-pip-top > * {
+  pointer-events: auto;
+}
+
+#controls .zia-pip-end {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+}
+
+#controls .zia-pip-pill {
+  appearance: none;
+  flex: none;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 27px;
+  margin: 0;
+  padding: 0 11px 0 9px;
+  border: 0;
+  border-radius: 7px;
+  background-color: rgba(255, 255, 255, 0.22);
+  color: #fff;
+  font: 500 13px/1 -apple-system, BlinkMacSystemFont, "Helvetica Neue", system-ui, sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+  -moz-window-dragging: no-drag;
+}
+
+#controls .zia-pip-pill:is(:hover, :focus-visible) {
+  background-color: rgba(255, 255, 255, 0.32);
+}
+
+#controls .zia-pip-pill::before {
+  content: "";
+  flex: none;
+  width: 13px;
+  height: 13px;
+  background: center / contain no-repeat;
+}
+
+#controls .zia-pip-back {
+  justify-self: start;
+}
+
+#controls .zia-pip-back::before {
+  background-image: url("chrome://sine/content/zia/icons/pip/to-tab.svg");
+}
+
+#controls .zia-pip-close::before {
+  background-image: url("chrome://sine/content/zia/icons/pip/close.svg");
+}
+
+#controls .zia-pip-host {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: #fff;
-  font: var(--zia-pip-font);
+  font: 500 13px/27px -apple-system, BlinkMacSystemFont, "Helvetica Neue", system-ui, sans-serif;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
-  pointer-events: none;
+  cursor: default !important;
+  pointer-events: none !important;
+}
+
+/* small windows: drop the site, then the pill labels */
+@media (max-width: 439px) {
+  #controls .zia-pip-host {
+    visibility: hidden;
+  }
+}
+
+@media (max-width: 319px) {
+  #controls .zia-pip-pill {
+    width: 27px;
+    padding: 0;
+    justify-content: center;
+    font-size: 0;
+  }
+}
+
+:root[zia-dia] :is(#unpip, #close) {
+  display: none !important;
+}
+
+/* With Firefox's look, only the tuck button, top centre */
+:root:not([zia-dia]) #controls :is(.zia-pip-back, .zia-pip-close, .zia-pip-host) {
+  display: none;
+}
+
+:root:not([zia-dia]) #controls .zia-pip-top {
+  top: 10px;
+  left: 50%;
+  right: auto;
+  translate: -50% 0;
+  display: block;
 }
 
 /* back 15, play or pause, forward 15: big, in the middle */
@@ -235,21 +284,16 @@
 
 /* "Tuck into the side": a small frosted button beside Close. Its arrow
  * points at the nearer side, and back out again while the video peeks. */
-.zia-pip-tuck-button {
+#controls .zia-pip-tuck-button {
   display: none;
 }
 
-:root[zia-tuck-on] .zia-pip-tuck-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+:root[zia-tuck-on] #controls .zia-pip-tuck-button {
+  display: inline-flex;
 }
 
-.zia-pip-tuck-button::before {
-  content: "";
-  width: 13px;
-  height: 13px;
-  background: url("chrome://sine/content/zia/icons/pip/tuck.svg") center / contain no-repeat;
+#controls .zia-pip-tuck-button::before {
+  background-image: url("chrome://sine/content/zia/icons/pip/tuck.svg");
 }
 
 :root[zia-edge="left"] .zia-pip-tuck-button:not([zia-keep])::before,
@@ -257,24 +301,15 @@
   scale: -1 1;
 }
 
-:root[zia-dia] #controls .zia-pip-tuck-button {
-  right: calc(var(--zia-pip-pad) + var(--zia-close-width, 70px) + 6px) !important;
-  left: auto !important;
-  width: 27px !important;
-  padding: 0 !important;
-}
-
-:root:not([zia-dia]) .zia-pip-tuck-button {
-  position: absolute;
-  top: 10px;
-  right: calc(10px + var(--player-control-item-height) + 6px);
-  width: var(--player-control-item-height);
-  max-width: none;
-  background-color: rgba(0, 0, 0, 0.55);
+#controls .zia-pip-tuck-button {
+  position: relative;
+  width: 27px;
+  padding: 0;
+  justify-content: center;
 }
 
 /* its label, shown on hover like Firefox's own */
-.zia-pip-tuck-button:is(:hover, :focus-visible)::after {
+#controls .zia-pip-tuck-button:is(:hover, :focus-visible)::after {
   content: attr(tooltip);
   position: absolute;
   top: calc(100% + 6px);
