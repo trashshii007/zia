@@ -1561,13 +1561,14 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
 }
 
 
-/* An empty folder: a dashed "Drag tabs here" slot the size of a tab where
- * the first tab would go, lit up as "Drop to add" while a tab is dragged in.
- * Outlined in the folder's colour, or Zia blue for white and uncoloured
- * folders. Drawn on the container so Zen's own folder code never sees an
- * extra element. Collapsing shrinks it away alongside Zen's slide (0.18s);
- * zia-slot-shift moves it with its folder's header while rows slide aside
- * for a drag (zia.uc.js). */
+/* An empty folder: a dashed "Drag tabs here" slot exactly where the first
+ * tab will sit (sized from a real tab by zia.uc.js), outlined in the
+ * folder's colour, or Zia blue for white and uncoloured folders. When a tab
+ * is dragged in, the slot steps aside at once and the tab takes its place.
+ * Drawn on the container so Zen's own folder code never sees an extra
+ * element. Collapsing shrinks it away alongside Zen's slide (0.18s);
+ * --zia-slot-y moves it with its folder's header while rows slide aside for
+ * a drag. */
 :root[zen-sidebar-expanded="true"] zen-folder[zia-empty] {
   --zia-slot-color: rgb(90, 185, 245);
 
@@ -1581,9 +1582,9 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
-    height: var(--tab-min-height, 35px);
-    margin-block: var(--tab-margin-block, 2px);
-    margin-inline: calc(var(--zen-folder-indent, 14px) + var(--tab-margin-block, 2px)) var(--tab-margin-block, 2px);
+    height: var(--zia-slot-h, var(--tab-min-height, 35px));
+    margin-block: var(--zia-slot-mt, 2px) var(--zia-slot-mb, 2px);
+    margin-inline: var(--zia-slot-ms, 16px) var(--zia-slot-me, 7px);
     overflow: hidden;
     /* lightened, so it still stands out against the folder's own tint */
     border: 1.5px dashed color-mix(in srgb, color-mix(in srgb, var(--zia-slot-color), white 45%) 70%, transparent);
@@ -1598,10 +1599,7 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
       margin 180ms ease-in-out,
       border-width 180ms ease-in-out,
       opacity 180ms ease-in-out,
-      translate 100ms ease-out,
-      border-color 120ms ease,
-      background-color 120ms ease,
-      color 120ms ease;
+      translate 100ms ease-out;
   }
 
   &[collapsed] > .tab-group-container::after {
@@ -1611,11 +1609,14 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
     opacity: 0;
   }
 
-  &[zia-drop-slot]:not([collapsed]) > .tab-group-container::after {
-    content: url("chrome://sine/content/zia/icons/folder-drop-active.svg") "\2002 Drop to add";
-    border-color: color-mix(in srgb, var(--zia-slot-color), white 35%);
-    background-color: color-mix(in srgb, var(--zia-slot-color) 30%, transparent);
-    color: rgb(255, 255, 255);
+  /* A tab dragged in takes the slot's place: the slot goes at once, and the
+   * room the drag makes for the tab is the same size. */
+  &[zia-drop-slot] > .tab-group-container::after {
+    height: 0;
+    margin-block: 0;
+    border-width: 0;
+    opacity: 0;
+    transition: none;
   }
 
   &:has(> .tab-group-label-container[zia-dragging]) > .tab-group-container::after {

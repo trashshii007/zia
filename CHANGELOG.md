@@ -11,9 +11,10 @@ Every release of Zia, newest first. The format follows
 - **Empty folders say so.** Zia lets you make a folder before it has any
   tabs, so an empty one, when open, shows a dashed, tab-sized **Drag tabs
   here** slot where the first tab would go, outlined in the folder's colour
-  (Zia blue for white and uncoloured folders). It lights up as **Drop to
-  add** while you drag a tab in, shrinks away smoothly when the folder
-  collapses, and moves with the folder when other tabs are dragged past.
+  (Zia blue for white and uncoloured folders). It's sized from a real tab,
+  so a tab dragged in takes its place exactly, without the folder growing.
+  It shrinks away smoothly when the folder collapses, and moves with the
+  folder when other tabs are dragged past.
 
 ### Fixed
 
