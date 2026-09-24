@@ -54,7 +54,7 @@ Zia is a JavaScript mod, so Sine needs permission to load scripts from outside i
 
 Other mods may conflict, and Zia won't be adjusted around them. If something looks off, turn your other mods off and add them back one at a time.
 
-## Workspace icons
+### Workspace icons
 
 Workspace and folder icons do a lot of the work in the Dia look, so they're worth five minutes.
 
@@ -104,7 +104,7 @@ Essentials sit as tiles, four to a row, or six when the sidebar is wide. Folders
 
 ![A tinted folder](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/folder-tint.png>)
 
-Plain tab groups, like the ones [Advanced Tab Groups](https://github.com/Vertex-Mods/Advanced-Tab-Groups) makes, get the same folder treatment. Downloads sit next to the space name with a progress ring around them.
+Spaces with a colour of their own carry it through the whole sidebar. Plain tab groups, like the ones [Advanced Tab Groups](https://github.com/Vertex-Mods/Advanced-Tab-Groups) makes, get the same folder treatment. Downloads sit next to the space name with a progress ring around them.
 
 Tabs drag the way they do in Dia. The tab itself follows the pointer while the rows it passes slide aside, a folder opens up by a row to make room, and over the essentials a tab turns into the tile it's about to become. Drag an essential back off and it's a tab again. Hovering a tab shows a card with its title, address and a few actions; hovering a collapsed folder lists what's inside.
 
@@ -112,11 +112,13 @@ Cmd/Ctrl+Z reopens what you just closed for ten seconds afterwards. That include
 
 ![Essentials and folders in the sidebar](https://github.com/user-attachments/assets/0c439e9d-651e-414c-8b85-d5bc8308aef4)
 
-Spaces with a colour of their own carry it through the whole sidebar.
-
 Covers come from an icon picker Zia adds as a third tab beside Zen's own: 1,512 Phosphor icons with their own search, and Zen's emojis are still there if you'd rather use one.
 
 ![The icon picker](https://github.com/user-attachments/assets/07c2baf3-9af4-4d7f-a6c9-b9701070312a)
+
+### Split view
+
+Each pane in a split gets its own toolbar, address and controls, with even spacing and a frame around the pair. Your pinned extensions sit in the focused pane's toolbar and move with the focus. Drag a tab over the page and drop cards rise on either side, growing and turning blue as you near the edge; let go and the split is made.
 
 ### Music
 
@@ -124,49 +126,7 @@ Playing music brings up a card with the track's artwork and a soft glow in its c
 
 ![The music player card](https://github.com/user-attachments/assets/5b4e2542-61a9-4fd6-b2ee-7fb58970ef5b)
 
----
-
-## Options
-
-**Settings → Sine Mods → Zia**
-
-Almost every part of Zia can be switched on or off on its own.
-
-| Feature | Default |
-| --- | --- |
-| Music player card | on |
-| Sound bars on playing tabs (off: Zen's speaker) | on |
-| Tint the selected tab's glow and the sound bars with the site's colours | off |
-| The last essential stretches across the rest of its row | off |
-| Toolbar takes the colour of the site (off: the theme's colour) | on |
-| Zia's rounded page corners (off: Zen's own) | on |
-| Split view drop cards when dragging a tab onto the page (off: Zen's own) | on |
-| Address bar position: top or bottom (not with Zen's single toolbar) | top |
-| Dia-style address bar pop-up (off: Zen's own) | on |
-| Cmd/Ctrl+T and **+ New Tab** open a real tab (off: Zen's floating address bar) | on |
-| Find in page bar | on |
-| Icon picker | on |
-| Undo a closed tab with Cmd/Ctrl+Z | on |
-| New tabs open your default search engine's page | on |
-| Use Zen's accent colour for the loading bar | off |
-| Small bounce when folders open or close | on |
-| Dia-style picture-in-picture controls (off: Firefox's own) | on |
-| Tuck picture-in-picture into the side of the screen | on |
-| **Add to Multiview**: grid videos and live streams in one tab | on |
-
-More features become switchable with each release. The styling toggles apply straight away; the ones that change behaviour need a restart.
-
-<details>
-<summary><b>Zen settings Zia changes</b></summary>
-
-Changed at the default level only. If you've set either yourself in `about:config`, your choice is kept.
-
-- `zen.widget.mac.mono-window-controls` → off, for native macOS window buttons
-- `zen.urlbar.replace-newtab` → off, so **+ New Tab** and Cmd+T open a real new tab. Turn off **Cmd/Ctrl+T and + New Tab open a real tab** to get Zen's floating address bar back.
-
-</details>
-
-## Folder names and icons from a local model
+### Folder names and icons from a local model
 
 Make a folder and Zia can name it and choose its icon for you, with a model that
 runs on your machine. Three tabs from Levi's, Gucci and Louis Vuitton become a
@@ -190,14 +150,64 @@ It only ever fills in a folder that has no icon and still has its default name,
 so anything you've named or chosen yourself is left alone. Groups made with
 Advanced Tab Groups get the same treatment, with the icon saved through that mod.
 
+---
+
+## Options
+
+**Settings → Sine Mods → Zia**
+
+Almost every part of Zia can be switched on or off on its own. The settings are grouped the same way here as on the settings page.
+
+| Setting | Default |
+| --- | --- |
+| **Features** | |
+| Music player card | on |
+| Find in page bar | on |
+| Icon picker (1,512 Phosphor icons) | on |
+| Undo a closed tab with Cmd/Ctrl+Z | on |
+| Tab and folder hover cards | on |
+| Suggest a folder's icon with a local model ([see above](#folder-names-and-icons-from-a-local-model)) | off |
+| **Tabs** | |
+| Sound bars on playing tabs (off: Zen's speaker) | on |
+| Tint the selected tab's glow and the sound bars with the site's colours | off |
+| The last essential stretches across the rest of its row | off |
+| **Page** | |
+| Toolbar takes the colour of the site (off: the theme's colour) | on |
+| Zia's rounded page corners (off: Zen's own) | on |
+| Split view drop cards when dragging a tab onto the page (off: Zen's own) | on |
+| **Address bar** | |
+| Dia-style address bar pop-up (off: Zen's own) | on |
+| Address bar position: top or bottom (not with Zen's single toolbar) | top |
+| **New tabs** | |
+| Cmd/Ctrl+T and **+ New Tab** open a real tab (off: Zen's floating address bar) | on |
+| New tabs open your default search engine's page | on |
+| **Folders** | |
+| Small bounce when folders open or close | on |
+| **Loading bar** | |
+| Use Zen's accent colour for the loading bar (off: Zia blue) | off |
+| **Picture-in-picture** | |
+| Dia-style picture-in-picture controls (off: Firefox's own) | on |
+| Tuck picture-in-picture into the side of the screen | on |
+| **Multiview** | |
+| **Add to Multiview** on videos and tabs | on |
+
+More features become switchable with each release. The styling toggles apply straight away; the ones that change behaviour need a restart.
+
 <details>
-<summary><b>Known gaps</b></summary>
+<summary><b>Zen settings Zia changes</b></summary>
+
+Changed at the default level only. If you've set either yourself in `about:config`, your choice is kept.
+
+- `zen.widget.mac.mono-window-controls` → off, for native macOS window buttons
+- `zen.urlbar.replace-newtab` → off, so **+ New Tab** and Cmd+T open a real new tab. Turn off **Cmd/Ctrl+T and + New Tab open a real tab** to get Zen's floating address bar back.
+
+</details>
+
+## Known gaps
 
 - Compact mode has no transparency or backdrop blur yet
 - Light mode is untested and will very likely need work
 - Other sidebar layouts, Windows and Linux are untested
-
-</details>
 
 ---
 
