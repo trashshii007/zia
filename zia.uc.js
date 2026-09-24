@@ -1321,6 +1321,7 @@
     // place and drop back.
     const past = to + Math.sign(to - from) * Math.min(FOLDER_OVERSHOOT_PX, Math.abs(to - from) / 4);
     return {
+      closing: to < from,
       keyframes: [
         { marginTop: `${from}px`, offset: 0, easing: "cubic-bezier(0.25, 1, 0.5, 1)" },
         { marginTop: `${past}px`, offset: 0.62, easing: "ease-in-out" },
@@ -1328,6 +1329,27 @@
       ],
       options: { ...options, duration: FOLDER_SPRING_MS, easing: "linear" },
     };
+  }
+
+  // Closing, the folder's contents shrink to nothing before the slide
+  // overshoots, and a height can't go below nothing, so the overshoot alone
+  // moves nothing. The folder's contents also pull up by the same few pixels
+  // with a negative bottom margin as they arrive, so the folder's box and
+  // everything below it rise past their place and drop back.
+  function bounceUpAfterClosing(container, animate) {
+    if (!container?.classList?.contains("tab-group-container")) {
+      return;
+    }
+    animate.call(
+      container,
+      [
+        { marginBottom: "0px", offset: 0 },
+        { marginBottom: "0px", offset: 0.45, easing: "cubic-bezier(0.25, 1, 0.5, 1)" },
+        { marginBottom: `${-FOLDER_OVERSHOOT_PX}px`, offset: 0.66, easing: "ease-in-out" },
+        { marginBottom: "0px", offset: 1 },
+      ],
+      { duration: FOLDER_SPRING_MS }
+    );
   }
 
   function allowEmojiFolderIcons() {
@@ -1353,7 +1375,13 @@
     }
     const patched = function (keyframes, options) {
       const spring = springFolderAnimation(this, keyframes, options);
-      return spring ? animate.call(this, spring.keyframes, spring.options) : animate.call(this, keyframes, options);
+      if (!spring) {
+        return animate.call(this, keyframes, options);
+      }
+      if (spring.closing) {
+        bounceUpAfterClosing(this.parentElement, animate);
+      }
+      return animate.call(this, spring.keyframes, spring.options);
     };
     patched.__zia = true;
     Element.prototype.animate = patched;
