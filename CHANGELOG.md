@@ -4,7 +4,29 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.30.4] — 2026-09-24
+## [2.31.0] — 2026-09-24
+
+### Added
+
+- New options in the settings:
+  - **Sound bars on playing tabs** (on). Off brings back Zen's speaker.
+  - **Selected tab glows faintly in its favicon's colours** (off). The glow
+    blends up to three of the favicon's colours, and a split glows in each
+    side's. Icons with no colour keep the white glow.
+  - **Dia-style address bar pop-up** (on). Off gives you Zen's own.
+  - **Cmd/Ctrl+T and + New Tab open a real tab** (on). Off gives Cmd/Ctrl+T
+    back to Zen's floating address bar, which Zia had no way to return to.
+
+### Changed
+
+- Zen's speaker on playing tabs is replaced by three sound bars in the
+  artwork's colours, in the same spot, which shrink to three dots when
+  muted. Click them to mute or unmute. Until the artwork's colours are
+  known, a tab's bars use its favicon's colours.
+- Essentials and the music player use the same three bars, in place of the
+  four. On essentials they stay white.
+
+ — 2026-09-24
 
 ### Fixed
 

@@ -72,7 +72,7 @@ Covers come from an icon picker Zia adds as a third tab beside Zen's own: 1,512 
 
 ### Media and split view
 
-Playing music gives you a card with the track's artwork and a glow in its colours. Sound bars in those same colours appear on essentials and tabs, turning to dots when muted, and clicking them toggles the sound. It handles livestreams as well as ordinary videos.
+Playing music gives you a card with the track's artwork and a glow in its colours. Three sound bars in those same colours replace Zen's speaker on playing tabs (white on essentials), shrinking to three dots when muted, and clicking them toggles the sound. It handles livestreams as well as ordinary videos.
 
 ![The music player card](https://github.com/user-attachments/assets/5b4e2542-61a9-4fd6-b2ee-7fb58970ef5b)
 
@@ -90,11 +90,15 @@ Drop it and both sites sit side by side, each with its own address and controls:
 
 **Settings → Sine Mods → Zia**
 
-Parts of the theme can be switched off individually. Everything is on by default.
+Parts of the theme can be switched on or off individually.
 
 | Feature | Default |
 | --- | --- |
 | Music player card | on |
+| Sound bars on playing tabs (off: Zen's speaker) | on |
+| Selected tab glows faintly in its favicon's colours | off |
+| Dia-style address bar pop-up (off: Zen's own) | on |
+| Cmd/Ctrl+T and **+ New Tab** open a real tab (off: Zen's floating address bar) | on |
 | Find in page bar | on |
 | Icon picker | on |
 | Undo a closed tab with Cmd/Ctrl+Z | on |
@@ -110,7 +114,7 @@ More features become switchable with each release. The styling toggles apply str
 Changed at the default level only. If you've set either yourself in `about:config`, your choice is kept.
 
 - `zen.widget.mac.mono-window-controls` → off, for native macOS window buttons
-- `zen.urlbar.replace-newtab` → off, so **+ New Tab** and Cmd+T open a real new tab
+- `zen.urlbar.replace-newtab` → off, so **+ New Tab** and Cmd+T open a real new tab. Turn off **Cmd/Ctrl+T and + New Tab open a real tab** to get Zen's floating address bar back.
 
 </details>
 
