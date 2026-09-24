@@ -451,9 +451,9 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
  * the folder's colour, or a soft white for white and uncoloured folders.
  * (A folder emptied by moving its last tab out collapses, zia.uc.js.)
  * While a tab is dragged in, open or collapsed, the tab wears the dashes.
- * The slot is drawn on the container so Zen's own
- * folder code never sees an extra element; it shrinks away alongside Zen's
- * collapse (0.18s), and --zia-slot-y moves it with its folder's header
+ * The slot is drawn on the container so Zen's own folder code never sees an
+ * extra element; it shrinks away alongside the folder's collapse (the same
+ * spring, zia.uc.js), and --zia-slot-y moves it with its folder's header
  * while rows slide aside for a drag. */
 :root[zen-sidebar-expanded="true"] zen-folder[zia-empty] {
   --zia-slot-border: 1.5px dashed rgba(255, 255, 255, 0.28);
@@ -481,9 +481,9 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
     translate: 0 var(--zia-slot-y, 0px);
     pointer-events: none;
     transition:
-      height 180ms ease-in-out,
-      margin 180ms ease-in-out,
-      border-width 180ms ease-in-out,
+      height var(--zia-spring-time) var(--zia-spring),
+      margin var(--zia-spring-time) var(--zia-spring),
+      border-width var(--zia-spring-time) var(--zia-spring),
       opacity 180ms ease-in-out,
       translate 100ms ease-out;
   }

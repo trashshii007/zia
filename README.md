@@ -100,7 +100,7 @@ Multiview works with **YouTube, Twitch** (live, videos and clips), **Kick, Vimeo
 
 ### The sidebar
 
-Essentials sit as tiles, four to a row, or six when the sidebar is wide. Folders get hover boxes, a small bounce when they open, icon or emoji covers, an × to delete them, and a colour of their own from the right-click menu that tints the whole folder:
+Essentials sit as tiles, four to a row, or six when the sidebar is wide. Folders get hover boxes, a gentle spring when they open and close, icon or emoji covers, an × to delete them, and a colour of their own from the right-click menu that tints the whole folder:
 
 ![A tinted empty folder with its Drag tabs here slot](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/folder-empty.png>)
 
@@ -157,7 +157,7 @@ Almost every part of Zia can be switched on or off on its own. The settings are 
 | Cmd/Ctrl+T and **+ New Tab** open a real tab (off: Zen's floating address bar) | on |
 | New tabs open your default search engine's page | on |
 | **Folders** | |
-| Small bounce when folders open or close | on |
+| Folders open and close with a gentle spring | on |
 | **Loading bar** | |
 | Use Zen's accent colour for the loading bar (off: Zia blue) | off |
 | **Picture-in-picture** | |

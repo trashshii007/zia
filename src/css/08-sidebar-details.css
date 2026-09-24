@@ -78,8 +78,13 @@
   }
 }
 
-#navigator-toolbox :is(arrowscrollbox, .workspace-arrowscrollbox, #tabbrowser-arrowscrollbox)::part(scrollbox),
-#navigator-toolbox :is(.workspace-arrowscrollbox, #tabbrowser-arrowscrollbox, .zen-essentials-container, #tabbrowser-tabs) {
+/* No scrollbars anywhere in the sidebar; it still scrolls */
+#navigator-toolbox,
+#navigator-toolbox *,
+#navigator-toolbox arrowscrollbox::part(scrollbox),
+zen-workspace,
+zen-workspace *,
+zen-workspace arrowscrollbox::part(scrollbox) {
   scrollbar-width: none !important;
 }
 
