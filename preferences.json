@@ -156,6 +156,50 @@
     "defaultValue": true
   },
   {
+    "type": "dropdown",
+    "label": "Picture-in-picture tucks into",
+    "property": "zia.pip.tuck-spot",
+    "defaultValue": "nearest",
+    "options": [
+      {
+        "label": "The nearest side",
+        "value": "nearest"
+      },
+      {
+        "label": "Left side",
+        "value": "left"
+      },
+      {
+        "label": "Right side",
+        "value": "right"
+      },
+      {
+        "label": "Top",
+        "value": "top"
+      },
+      {
+        "label": "Bottom",
+        "value": "bottom"
+      },
+      {
+        "label": "Top-left corner",
+        "value": "top-left"
+      },
+      {
+        "label": "Top-right corner",
+        "value": "top-right"
+      },
+      {
+        "label": "Bottom-left corner",
+        "value": "bottom-left"
+      },
+      {
+        "label": "Bottom-right corner",
+        "value": "bottom-right"
+      }
+    ]
+  },
+  {
     "type": "separator",
     "label": "Multiview"
   },
