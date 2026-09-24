@@ -1175,6 +1175,9 @@
             continue;
           }
           known.add(node);
+          if (node.hasAttribute("zia-to-essential")) {
+            continue;
+          }
           node.setAttribute("zia-essential-enter", "true");
           setTimeout(() => node.removeAttribute("zia-essential-enter"), 450);
         }
@@ -6176,6 +6179,12 @@
       setTimeout(
         () =>
           whenEssential(() => {
+            tab.removeAttribute("zia-essential-enter");
+            for (const animation of tab.querySelector(".tab-stack")?.getAnimations?.() || []) {
+              if (animation.effect?.getComputedTiming().endTime !== Infinity) {
+                animation.finish();
+              }
+            }
             const own = tab.getBoundingClientRect();
             const drawn = tab.querySelector(".tab-background")?.getBoundingClientRect() || own;
             const box = { left: own.left, width: own.width, top: drawn.top, height: drawn.height };
