@@ -1236,8 +1236,11 @@ zen-essentials-promo {
     rotate: -90deg;
   }
 
+  /* Open, the box stops a tab gap above whatever's below, the same gap as
+   * between two tabs, and the padding inside makes up for it. */
   &:is(:not([collapsed]), [collapsed]:is([has-active], :has(tab[selected], tab[atg-folder-active]))) {
-    padding-bottom: max(0px, calc(var(--zia-folder-inner-gap) - var(--tab-margin-block))) !important;
+    --zia-folder-box-bottom: var(--tab-margin-block);
+    padding-bottom: var(--zia-folder-inner-gap) !important;
   }
 
   & :is(zen-folder, tab-group:not([split-view-group])) {
@@ -1561,22 +1564,24 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
 }
 
 
-/* An empty folder: a dashed "Drag tabs here" slot exactly where the first
- * tab will sit (sized from a real tab by zia.uc.js), outlined in the
- * folder's colour, or Zia blue for white and uncoloured folders. When a tab
- * is dragged in, the slot steps aside at once and the tab takes its place.
- * Drawn on the container so Zen's own folder code never sees an extra
- * element. Collapsing shrinks it away alongside Zen's slide (0.18s);
- * --zia-slot-y moves it with its folder's header while rows slide aside for
- * a drag. */
+/* An empty folder you've just made shows a dashed "Drag tabs here" slot
+ * exactly where the first tab will sit (sized from a real tab by zia.uc.js),
+ * outlined in the folder's colour, or Zia blue for white and uncoloured
+ * folders, until its first tab arrives. Any other empty folder shows the
+ * slot only while a tab is dragged into it, below its header in the room
+ * the drag opens. The slot is drawn on the container so Zen's own folder
+ * code never sees an extra element; it shrinks away alongside Zen's
+ * collapse (0.18s), and --zia-slot-y moves it with its folder's header
+ * while rows slide aside for a drag. */
 :root[zen-sidebar-expanded="true"] zen-folder[zia-empty] {
   --zia-slot-color: rgb(90, 185, 245);
+  --zia-slot-border: 1.5px dashed color-mix(in srgb, color-mix(in srgb, var(--zia-slot-color), white 45%) 70%, transparent);
 
   &[zia-folder-color]:not([zia-folder-color="white"]) {
     --zia-slot-color: var(--zia-folder-swatch);
   }
 
-  & > .tab-group-container::after {
+  &[zia-fresh] > .tab-group-container::after {
     content: url("chrome://sine/content/zia/icons/folder-drop.svg") "\2002 Drag tabs here";
     display: flex;
     align-items: center;
@@ -1587,7 +1592,7 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
     margin-inline: var(--zia-slot-ms, 16px) var(--zia-slot-me, 7px);
     overflow: hidden;
     /* lightened, so it still stands out against the folder's own tint */
-    border: 1.5px dashed color-mix(in srgb, color-mix(in srgb, var(--zia-slot-color), white 45%) 70%, transparent);
+    border: var(--zia-slot-border);
     border-radius: var(--zia-tab-radius);
     color: rgba(255, 255, 255, 0.5);
     font-size: 12.5px;
@@ -1602,7 +1607,7 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
       translate 100ms ease-out;
   }
 
-  &[collapsed] > .tab-group-container::after {
+  &[zia-fresh][collapsed] > .tab-group-container::after {
     height: 0;
     margin-block: 0;
     border-width: 0;
@@ -1611,14 +1616,18 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
 
   /* A tab dragged in takes the slot's place: the slot fades but keeps its
    * room (the layout never changes mid-drag), and the tab sits in it. */
-  &[zia-drop-slot]:not([collapsed]) > .tab-group-container::after {
+  &[zia-fresh][zia-drop-slot]:not([collapsed]) > .tab-group-container::after {
     opacity: 0;
     transition: opacity 100ms ease;
   }
 
-  /* Collapsed, the slot shows as a tab is dragged in, below the header in
-   * the room the drag opens up. */
-  &[collapsed][zia-drop-slot] > .tab-group-label-container {
+  &:has(> .tab-group-label-container[zia-dragging]) > .tab-group-container::after {
+    transition: none;
+  }
+
+  /* Collapsed, or not just made: the slot shows as a tab is dragged in,
+   * below the header in the room the drag opens up. */
+  &[zia-drop-slot]:is([collapsed], :not([zia-fresh])) > .tab-group-label-container {
     position: relative;
 
     &::after {
@@ -1629,14 +1638,10 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
       right: var(--zia-slot-me, 7px);
       height: var(--zia-slot-h, var(--tab-min-height, 35px));
       box-sizing: border-box;
-      border: 1.5px dashed color-mix(in srgb, color-mix(in srgb, var(--zia-slot-color), white 45%) 70%, transparent);
+      border: var(--zia-slot-border);
       border-radius: var(--zia-tab-radius);
       pointer-events: none;
     }
-  }
-
-  &:has(> .tab-group-label-container[zia-dragging]) > .tab-group-container::after {
-    transition: none;
   }
 }
 
