@@ -5983,10 +5983,42 @@
     const cardUp = () => [card, folderCard].some((each) => each && !each.hidden && !each.hasAttribute("zia-closing"));
     const cardHovered = () => [card, folderCard].some((each) => each && !each.hidden && each.matches(":hover"));
 
+    // In compact mode the sidebar hides once the pointer leaves it, and the
+    // cards sit outside it, so while the pointer is on a card Zia holds the
+    // sidebar open the way Zen does while one of its own menus is open.
+    // Leaving the card, the sidebar gets Zen's usual moment before it hides.
+    let holding = false;
+    const holdSidebar = (on) => {
+      if (on === holding) {
+        return;
+      }
+      if (on) {
+        holding = !toolbox.hasAttribute("has-popup-menu");
+        if (holding) {
+          toolbox.setAttribute("has-popup-menu", "true");
+        }
+        return;
+      }
+      holding = false;
+      toolbox.removeAttribute("has-popup-menu");
+      try {
+        const manager = window.gZenCompactModeManager;
+        if (manager?.preference && !toolbox.matches(":hover")) {
+          const keep = Services.prefs.getIntPref("zen.view.compact.sidebar-keep-hover.duration", 0);
+          if (keep > 0) {
+            manager.flashElement(toolbox, keep, `has-hover${toolbox.id}`, "zen-has-hover");
+          }
+        }
+      } catch (err) {
+        noteError("hover cards: release sidebar", err);
+      }
+    };
+
     const hide = (force = false) => {
       if (force !== true && cardHovered()) {
         return;
       }
+      holdSidebar(false);
       clearTimeout(showTimer);
       clearTimeout(hideTimer);
       current = null;
@@ -6060,8 +6092,14 @@
             console.error("[Zia] Folder card action failed:", err);
           }
         });
-        folderCard.addEventListener("mouseenter", () => clearTimeout(hideTimer));
-        folderCard.addEventListener("mouseleave", hideSoon);
+        folderCard.addEventListener("mouseenter", () => {
+          clearTimeout(hideTimer);
+          holdSidebar(true);
+        });
+        folderCard.addEventListener("mouseleave", () => {
+          holdSidebar(false);
+          hideSoon();
+        });
         folderCard.addEventListener("zia-card-acting", () => {
           keepCardUntil = Date.now() + 1200;
           clearTimeout(hideTimer);
@@ -6106,8 +6144,14 @@
             console.error(`[Zia] ${action.label} failed:`, err);
           }
         });
-        card.addEventListener("mouseenter", () => clearTimeout(hideTimer));
-        card.addEventListener("mouseleave", hideSoon);
+        card.addEventListener("mouseenter", () => {
+          clearTimeout(hideTimer);
+          holdSidebar(true);
+        });
+        card.addEventListener("mouseleave", () => {
+          holdSidebar(false);
+          hideSoon();
+        });
       }
       current = tab;
       fillTabCard(card, tab);
