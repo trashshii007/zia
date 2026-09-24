@@ -170,5 +170,21 @@
     "label": "\"Add to Multiview\" on videos and tabs: a tab that grids up videos and live streams",
     "property": "zia.multiview",
     "defaultValue": true
+  },
+  {
+    "type": "dropdown",
+    "label": "Multiview tab icon colour",
+    "property": "zia.multiview.icon-color",
+    "defaultValue": "zia",
+    "options": [
+      {
+        "label": "Zia blue",
+        "value": "zia"
+      },
+      {
+        "label": "Space colour",
+        "value": "space"
+      }
+    ]
   }
 ]
