@@ -2599,9 +2599,12 @@ zen-workspace arrowscrollbox::part(scrollbox) {
   opacity: 0;
   scale: 0.94;
   pointer-events: none;
+  /* Size springs (--zia-spring): a tab dragged in, it grows a touch past its
+   * new size and settles back; dragged off, it shrinks a touch past and
+   * settles back */
   transition:
-    width 0.26s var(--zia-zone-ease),
-    height 0.26s var(--zia-zone-ease),
+    width var(--zia-spring-time) var(--zia-spring),
+    height var(--zia-spring-time) var(--zia-spring),
     translate 0.2s var(--zia-zone-ease),
     background-color 0.15s ease,
     opacity 0.18s ease,
@@ -2650,7 +2653,7 @@ zen-workspace arrowscrollbox::part(scrollbox) {
   transition: border-color 0.15s ease, color 0.15s ease;
 
   & > * {
-    transition: scale 0.26s cubic-bezier(0.2, 0.9, 0.3, 1);
+    transition: scale var(--zia-spring-time) var(--zia-spring);
   }
 
   .zia-split-zone[active] & > * {

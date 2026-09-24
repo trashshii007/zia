@@ -4,6 +4,15 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.46.0] — 2026-09-24
+
+### Changed
+
+- The split view drop cards spring. Drag a tab onto one and it grows a touch
+  past its bigger size before settling; drag it off and it shrinks a touch
+  past its smaller size before settling. The icon and label inside spring
+  with it.
+
 ## [2.45.0] — 2026-09-24
 
 ### Changed
