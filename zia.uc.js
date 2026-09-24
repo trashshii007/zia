@@ -3255,6 +3255,23 @@
       }
     }
     setFlag("zia-space-colored", colored);
+    tintPipWindows();
+  }
+
+  // Tucked picture-in-picture strips take on the space's colour, when it has
+  // one of its own, and follow it as you switch spaces.
+  function tintPipWindows() {
+    const tint = root.getAttribute("zia-space-colored") === "true"
+      ? getComputedStyle(root).getPropertyValue("--zen-primary-color").trim()
+      : "";
+    for (const win of Services.wm.getEnumerator("Toolkit:PictureInPicture")) {
+      const style = win.document?.documentElement?.style;
+      if (tint) {
+        style?.setProperty("--zia-space-tint", tint);
+      } else {
+        style?.removeProperty("--zia-space-tint");
+      }
+    }
   }
 
   function watchSpaceColor() {
@@ -3895,6 +3912,7 @@
         return;
       }
       Services.scriptloader.loadSubScript(PIP_SCRIPT_URL, win);
+      tintPipWindows();
     } catch (err) {
       console.error("[Zia] Couldn't set up picture-in-picture:", err);
     }

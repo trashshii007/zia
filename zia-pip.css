@@ -396,7 +396,10 @@
   width: 36px;
   display: flex;
   align-items: center;
-  background: rgb(24, 24, 27);
+  /* A see-through tint of the space's colour (set by zia.uc.js) over the
+   * blurred video (below), fading along when you switch spaces. */
+  background-color: color-mix(in srgb, var(--zia-space-tint, rgb(24, 24, 27)) 30%, rgba(24, 24, 27, 0.5));
+  transition: background-color 400ms ease;
   cursor: pointer;
   -moz-window-dragging: no-drag;
 }
@@ -427,6 +430,17 @@
 
 :root[zia-tucked="left"] .zia-pip-sliver::after {
   scale: -1 1;
+}
+
+/* Tucked, the video itself is blurred (a backdrop blur can't see the video,
+ * but a filter on it works, as in Firefox's own see-through mode), so the
+ * strip reads as frosted glass. It clears as the video comes back out. */
+.player-holder {
+  transition: filter 280ms ease;
+}
+
+:root[zia-tucked]:not([zia-emerging]) .player-holder {
+  filter: blur(8px) brightness(0.85);
 }
 
 /* Coming back out: the strip fades as the window slides in */
