@@ -212,6 +212,15 @@ Changed at the default level only. If you've set either yourself in `about:confi
 
 ---
 
+## Source layout
+
+`zia.uc.js` and `chrome.css` are built from per-feature parts, so each feature can be read and changed on its own:
+
+- `src/js/`: the script, one file per feature (address bar, sidebar edges, split panes, picture-in-picture, Multiview, tab dragging and so on)
+- `src/css/`: the styles, in the order they apply
+
+Edit the parts, then run `scripts/build.sh` to rebuild both files. `scripts/build.sh --check` (also run on every push) fails if the built files and the parts ever disagree. The parts, the build script and the Multiview page aren't part of what Sine installs.
+
 ## About the name and the look
 
 Zia is an independent, unofficial project. It isn't affiliated with, endorsed by, or connected to Dia or The Browser Company, and it contains none of their code or assets. It's a Zen Browser theme built by eye, taking design inspiration from a browser I liked the look of.

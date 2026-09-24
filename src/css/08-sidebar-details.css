@@ -1,0 +1,138 @@
+#urlbar:not([breakout-extend]) .urlbar-input {
+  color: rgb(255, 255, 255) !important;
+}
+:root[zia-site-dark="true"] #urlbar:not([breakout-extend]) .urlbar-input {
+  color: var(--zia-dark-ink, rgb(251, 251, 254)) !important;
+}
+
+:root[zia-site-light="true"] #urlbar:not([breakout-extend]) .urlbar-input {
+  color: rgb(28, 28, 30) !important;
+}
+
+:is(zen-folder, tab-group:not([split-view-group])) > .tab-group-label-container > label,
+:is(zen-folder, tab-group:not([split-view-group]))[collapsed] > .tab-group-label-container > label {
+  color: rgb(255, 255, 255) !important;
+  opacity: 1 !important;
+}
+
+:root:not(#zia-none) zen-folder[zia-folder-color] > .tab-group-label-container > label {
+  color: color-mix(in srgb, var(--zia-folder-swatch, white) var(--zia-folder-name-tint), white) !important;
+}
+
+:root:not(#zia-none) zen-folder[zia-folder-color]:hover > .tab-group-label-container > label {
+  color: color-mix(in srgb, var(--zia-folder-swatch, white) var(--zia-folder-name-tint-hover), white) !important;
+}
+
+#zen-workspaces-button {
+  gap: 0 !important;
+
+  & toolbarbutton:has(> .zen-workspace-icon[no-icon="true"]) {
+    min-width: 0 !important;
+    width: 12px !important;
+    max-width: 12px !important;
+    height: 20px !important;
+    filter: none !important;
+    opacity: 1 !important;
+    background: transparent !important;
+
+    & > .zen-workspace-icon[no-icon="true"] {
+      width: 6px !important;
+      height: 6px !important;
+      background: rgba(255, 255, 255, 0.28) !important;
+    }
+
+    &[active="true"] > .zen-workspace-icon[no-icon="true"] {
+      background: rgba(255, 255, 255, 0.92) !important;
+    }
+
+    &:hover:not([active="true"]) > .zen-workspace-icon[no-icon="true"] {
+      background: rgba(255, 255, 255, 0.5) !important;
+    }
+  }
+}
+
+.pinned-tabs-container-separator toolbarseparator {
+  background: rgba(255, 255, 255, 0.13) !important;
+}
+
+.tabbrowser-tab:not([zen-essential], [visuallyselected]):hover > .tab-stack > .tab-background {
+  background: var(--zia-tab-hover-bg) !important;
+}
+
+:root[zen-sidebar-expanded="true"] #tabbrowser-tabs {
+  overflow-clip-margin: 16px !important;
+}
+
+:root[zen-sidebar-expanded="true"]:is([swipe-gesture="true"], [animating-background="true"]) #tabbrowser-tabs {
+  overflow-clip-margin: var(--zen-toolbox-padding) !important;
+}
+
+@media (-moz-platform: windows) {
+  :is(.workspace-arrowscrollbox, #tabbrowser-tabs, #tabbrowser-arrowscrollbox) {
+    padding-bottom: calc(var(--zia-active-glow-blur) + var(--zia-active-glow-spread) + var(--zia-active-glow-reach)) !important;
+  }
+
+  :is(.workspace-arrowscrollbox, #tabbrowser-arrowscrollbox)::part(scrollbox) {
+    padding-bottom: calc(var(--zia-active-glow-blur) + var(--zia-active-glow-spread) + var(--zia-active-glow-reach)) !important;
+    overflow-clip-margin: calc(var(--zia-active-glow-blur) + var(--zia-active-glow-spread) + var(--zia-active-glow-reach)) !important;
+  }
+}
+
+#navigator-toolbox :is(arrowscrollbox, .workspace-arrowscrollbox, #tabbrowser-arrowscrollbox)::part(scrollbox),
+#navigator-toolbox :is(.workspace-arrowscrollbox, #tabbrowser-arrowscrollbox, .zen-essentials-container, #tabbrowser-tabs) {
+  scrollbar-width: none !important;
+}
+
+:is(zen-folder, tab-group:not([split-view-group])) > .tab-group-label-container {
+  font-weight: var(--zia-folder-weight) !important;
+}
+
+:root[zen-sidebar-expanded="true"] .tabbrowser-tab:not([zen-essential]) > .tab-stack > .tab-background {
+  margin-inline-end: var(--zia-tab-right-fix, 0px) !important;
+}
+
+:root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group])) .tabbrowser-tab:not([zen-essential]) > .tab-stack > .tab-background {
+  margin-inline-end: calc(var(--zia-folder-right-fix, 0px) + var(--zia-folder-inner-gap, 5px)) !important;
+}
+
+:root[zen-sidebar-expanded="true"] .tabbrowser-tab:not([zen-essential]) > .tab-stack > .tab-content {
+  margin-inline-end: var(--zia-tab-right-fix, 0px) !important;
+}
+
+:root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group])) .tabbrowser-tab:not([zen-essential]) > .tab-stack > .tab-content {
+  margin-inline-end: calc(var(--zia-folder-right-fix, 0px) + var(--zia-folder-inner-gap, 5px)) !important;
+}
+
+:root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group])) :is(zen-folder, tab-group:not([split-view-group])) .tabbrowser-tab:not([zen-essential]) > .tab-stack > .tab-content {
+  margin-inline-end: calc(var(--zia-folder-right-fix, 0px) + 2 * var(--zia-folder-inner-gap, 5px)) !important;
+}
+
+:root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group])) :is(zen-folder, tab-group:not([split-view-group])) :is(zen-folder, tab-group:not([split-view-group])) .tabbrowser-tab:not([zen-essential]) > .tab-stack > .tab-content {
+  margin-inline-end: calc(var(--zia-folder-right-fix, 0px) + 3 * var(--zia-folder-inner-gap, 5px)) !important;
+}
+
+:root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group])) > .tab-group-label-container {
+  padding-inline-end: calc(var(--zia-folder-right-fix, 0px) + var(--zia-folder-inner-gap, 5px)) !important;
+}
+
+:root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group])) :is(zen-folder, tab-group:not([split-view-group])) > .tab-group-label-container {
+  padding-inline-end: calc(var(--zia-folder-right-fix, 0px) + 2 * var(--zia-folder-inner-gap, 5px)) !important;
+}
+
+:root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group])) :is(zen-folder, tab-group:not([split-view-group])) .tabbrowser-tab:not([zen-essential]) > .tab-stack > .tab-background {
+  margin-inline-end: calc(var(--zia-folder-right-fix, 0px) + 2 * var(--zia-folder-inner-gap, 5px)) !important;
+}
+
+:root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group])) :is(zen-folder, tab-group:not([split-view-group])) :is(zen-folder, tab-group:not([split-view-group])) .tabbrowser-tab:not([zen-essential]) > .tab-stack > .tab-background {
+  margin-inline-end: calc(var(--zia-folder-right-fix, 0px) + 3 * var(--zia-folder-inner-gap, 5px)) !important;
+}
+
+.tabbrowser-tab:not([zen-essential]) .tab-label-container {
+  color: rgba(255, 255, 255, 0.9) !important;
+  opacity: 1 !important;
+}
+
+.tabbrowser-tab:not([zen-essential])[visuallyselected] .tab-label-container {
+  color: rgb(255, 255, 255) !important;
+}
+

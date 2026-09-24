@@ -1,0 +1,7 @@
+# Left out of the zip GitHub makes of the repo, which is what Sine installs:
+# the mod doesn't need its source parts, build script or GitHub Pages site.
+/src export-ignore
+/scripts export-ignore
+/docs export-ignore
+/.github export-ignore
+/.gitattributes export-ignore

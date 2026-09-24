@@ -1,0 +1,63 @@
+:root:not([inDOMFullscreen="true"]):not([popup-window]) {
+  & #zen-appcontent-wrapper {
+    margin: var(--zia-card-top-gap) var(--zia-card-gap) var(--zia-card-gap) 0 !important;
+    border-radius: var(--zia-card-radius) !important;
+    background: transparent !important;
+    box-shadow: var(--zia-card-shadow) !important;
+    border: none !important;
+    outline: none !important;
+  }
+
+  &[zen-compact-mode="true"] #zen-appcontent-wrapper {
+    margin-left: var(--zia-card-gap) !important;
+  }
+
+  &[zen-right-side="true"] #zen-appcontent-wrapper {
+    margin-left: var(--zia-card-gap) !important;
+  }
+
+  & :is(#zen-appcontent-wrapper, #zen-appcontent-navbar-wrapper, #tabbrowser-tabpanels .browserSidebarContainer, #tabbrowser-tabpanels .browserStack, #tabbrowser-tabpanels browser) {
+    corner-shape: round !important;
+  }
+
+  & #zen-tabbox-wrapper {
+    margin: 0 !important;
+  }
+
+  & #tabbrowser-tabbox #tabbrowser-tabpanels .browserSidebarContainer {
+    border-radius: 0 0 var(--zia-card-radius) var(--zia-card-radius) !important;
+    box-shadow: none !important;
+    border: none !important;
+    outline: none !important;
+  }
+
+  & #tabbrowser-tabpanels :is(.browserSidebarContainer, .browserStack, browser) {
+    clip-path: inset(0 round 0 0 var(--zia-card-radius) var(--zia-card-radius));
+  }
+
+  & #tabbrowser-tabpanels browser[type="content"]:not([transparent="true"]) {
+    background: var(--zia-page-loading-bg) !important;
+  }
+
+  & #zen-appcontent-navbar-wrapper {
+    background-color: var(--zia-site-bg, var(--zia-fallback-bg)) !important;
+    border-radius: var(--zia-card-radius) var(--zia-card-radius) 0 0 !important;
+    border-bottom: 1px solid var(--zia-separator) !important;
+    transition: background-color var(--zia-color-fade) ease, border-color var(--zia-color-fade) ease !important;
+  }
+
+  &[zia-color-snap="true"] #zen-appcontent-navbar-wrapper {
+    transition: none !important;
+  }
+
+  & #nav-bar {
+    padding-inline: var(--zia-toolbar-end-gap) !important;
+    --zen-toolbar-height: var(--zia-toolbar-height) !important;
+    --urlbar-height: var(--zia-urlbar-height) !important;
+  }
+
+  & #urlbar-container {
+    margin-inline-start: 8px !important;
+  }
+}
+
