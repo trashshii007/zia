@@ -108,7 +108,18 @@
       return rows;
     };
 
+    // An empty folder's "Drag tabs here" slot is drawn on its tab container,
+    // so it follows the folder's header when that moves aside.
+    const slotFolderOf = (node) =>
+      node?.classList?.contains("tab-group-label-container") && node.parentElement?.hasAttribute("zia-empty")
+        ? node.parentElement
+        : null;
+
     const clearNode = (node) => {
+      const slotFolder = slotFolderOf(node);
+      if (slotFolder) {
+        slotFolder.style.removeProperty("--zia-slot-y");
+      }
       node.style.removeProperty("top");
       node.style.removeProperty("position");
       node.style.removeProperty("z-index");
@@ -136,6 +147,7 @@
         return;
       }
       node.style.setProperty("--zia-drag-y", `${Math.round(y)}px`);
+      slotFolderOf(node)?.style.setProperty("--zia-slot-y", `${Math.round(y)}px`);
       node.style.removeProperty("top");
       node.style.setProperty("transform", `translateY(${Math.round(y)}px)`, "important");
       node.style.setProperty("position", "relative", "important");
@@ -154,6 +166,24 @@
       !!el && (el.localName === "zen-folder" || el.isZenFolder || (el.localName === "tab-group" && !el.hasAttribute("split-view-group")));
     const headerOf = (folder) => folder?.querySelector?.(":scope > .tab-group-label-container") || null;
     const isCollapsed = (folder) => !!folder && (folder.collapsed === true || folder.hasAttribute("collapsed"));
+
+    // An open empty folder's "Drag tabs here" slot takes a tab's room under its
+    // header without being a row. Its height, measured once per drag (the
+    // layout never changes mid-drag), counts toward the folder's size, and a
+    // tab dragged into the folder takes its place instead of more room.
+    const slotPitchOf = (folder) => {
+      if (!drag || !folder?.hasAttribute?.("zia-empty") || isCollapsed(folder)) {
+        return 0;
+      }
+      drag.slotPitch ||= new Map();
+      if (!drag.slotPitch.has(folder)) {
+        const container = folder.querySelector(":scope > .tab-group-container");
+        drag.slotPitch.set(folder, container ? window.windowUtils.getBoundsWithoutFlushing(container).height : 0);
+      }
+      return drag.slotPitch.get(folder);
+    };
+    const slotAfterHeader = (row) =>
+      row?.node?.classList?.contains("tab-group-label-container") ? slotPitchOf(row.node.parentElement) : 0;
 
     const rowFolder = (row) => {
       const node = row?.node;
@@ -189,6 +219,14 @@
       drag.slot?.removeAttribute("zia-drop-slot");
       drag.slot = folder || null;
       folder?.setAttribute("zia-drop-slot", "true");
+      // Over an empty folder the tab covers its slot, so the tab carries the
+      // slot's dashes instead (chrome.css), in the folder's colour.
+      const tab = drag.moving === drag.tab ? drag.tab : null;
+      const into = !!tab && !!folder?.hasAttribute("zia-empty");
+      if (into) {
+        tab.style.setProperty("--zia-slot-border", getComputedStyle(folder).getPropertyValue("--zia-slot-border"));
+      }
+      tab?.toggleAttribute("zia-into-empty", into);
     };
 
     const updateTarget = (visualMid) => {
@@ -277,12 +315,14 @@
             if (row.node === f || !f.contains(row.node)) {
               continue;
             }
-            origBottom = Math.max(origBottom, row.top + row.height);
+            const slot = slotAfterHeader(row);
+            origBottom = Math.max(origBottom, row.top + row.height + slot);
             if (row.node === headerOf(f)) {
               top = row.delta || 0;
             }
             if (!notARow(row)) {
-              shownBottom = Math.max(shownBottom, row.top + (row.delta || 0) + row.height);
+              const intoThisSlot = slot && into && target.folder === row.node.parentElement;
+              shownBottom = Math.max(shownBottom, row.top + (row.delta || 0) + row.height + (intoThisSlot ? 0 : slot));
             }
           }
           if (into && target.slotTop != null) {
@@ -433,6 +473,7 @@
       const sep = currentSeparator();
       if (sep && drag.sepDelta !== sepDelta) {
         drag.sepDelta = sepDelta;
+        drag.sepShownY = sepDelta;
         place(sep, sepDelta, false);
 
         const onTop = Services.prefs.getBoolPref("zen.view.show-newtab-button-top", false);
@@ -463,8 +504,9 @@
             drag.shifted.delete(row.node);
           }
           const delta = gone ? -drag.pitch : 0;
-          if (row.delta !== delta) {
+          if ((row.shownY ?? row.delta) !== delta) {
             row.delta = delta;
+            row.shownY = delta;
             place(row.node, delta, false);
           }
         }
@@ -473,6 +515,7 @@
         }
         drag.target = null;
         setDropSlot(null);
+        takeEmptySlot();
         paintFolders();
         return;
       }
@@ -499,6 +542,7 @@
           continue;
         }
         row.delta = delta;
+        row.shownY = delta;
         place(row.node, delta, false);
         rowsMoved = true;
       }
@@ -516,8 +560,42 @@
         tap();
       }
       updateTarget(visualMid);
+      takeEmptySlot();
       paintFolders();
       morphWidth(drag.target?.folder || null);
+    };
+
+    // Dropping into an open empty folder uses its slot as the tab's room, so
+    // everything after the folder moves up by the slot's height on top of the
+    // usual shift, and the slot itself fades (chrome.css).
+    const takeEmptySlot = () => {
+      const folder = drag.target?.folder;
+      const pitch = slotPitchOf(folder);
+      const headerRow = pitch ? drag.rows.find((row) => row.node === headerOf(folder)) : null;
+      const after = (row) => !!headerRow && row.index > headerRow.index && !folder.contains(row.node);
+      for (const row of drag.rows) {
+        if (notARow(row)) {
+          continue;
+        }
+        const want = (row.delta || 0) + (after(row) ? -pitch : 0);
+        if ((row.shownY ?? row.delta ?? 0) !== want) {
+          place(row.node, want, false);
+        }
+        row.shownY = want;
+      }
+      const sep = currentSeparator();
+      if (sep && drag.sepTop != null) {
+        const sepAfter = !!headerRow && drag.sepTop > headerRow.top;
+        const want = (drag.sepDelta || 0) + (sepAfter ? -pitch : 0);
+        if ((drag.sepShownY ?? drag.sepDelta ?? 0) !== want) {
+          place(sep, want, false);
+          const button = Services.prefs.getBoolPref("zen.view.show-newtab-button-top", false) ? newTabButton() : null;
+          if (button) {
+            place(button, want, false);
+          }
+        }
+        drag.sepShownY = want;
+      }
     };
 
     const pinFor = (tab, pinned) => {
@@ -1844,6 +1922,10 @@
       muteZenHaptics(false);
       reclip();
       document.querySelectorAll("[zia-drop-slot]").forEach((folder) => folder.removeAttribute("zia-drop-slot"));
+      document.querySelectorAll("[zia-into-empty]").forEach((tab) => {
+        tab.removeAttribute("zia-into-empty");
+        tab.style.removeProperty("--zia-slot-border");
+      });
       clearFolderPaint();
       dropProxy();
       hideThumb(true);

@@ -5613,6 +5613,124 @@
     header.appendChild(button);
   }
 
+  // Zia lets you make a folder before it has any tabs (Dia doesn't), so an
+  // empty one says so: open, it shows a dashed "Drag tabs here" slot, which
+  // steps aside for a tab dragged into it (chrome.css).
+  // Zen keeps a hidden placeholder tab in every empty folder, so a folder
+  // counts as empty when that's all it holds.
+  function isEmptyFolder(folder) {
+    const container = folder.querySelector(":scope > .tab-group-container");
+    if (!container) {
+      return false;
+    }
+    return ![...container.children].some(
+      (child) => child.localName === "zen-folder" || (child.classList.contains("tabbrowser-tab") && !child.hasAttribute("zen-empty-tab"))
+    );
+  }
+
+  // The slot is sized from a real tab in the sidebar (its background, the gaps
+  // around it and how far it's inset in a folder), so it's exactly where the
+  // first tab will sit, and a tab dragged in replaces it without anything
+  // moving. Measured from a tab inside an open folder when there is one.
+  const FOLDER_SLOT_INSET = { start: 14, end: 5 };
+  let slotSize = "";
+  function measureFolderSlot() {
+    const visible = (tab) => tab.getBoundingClientRect().height > 8 && !tab.hasAttribute("zen-empty-tab");
+    const inFolder = [...document.querySelectorAll("zen-folder:not([collapsed]) > .tab-group-container > .tabbrowser-tab")].find(visible);
+    const tab =
+      inFolder || [...document.querySelectorAll("#tabbrowser-tabs .tabbrowser-tab:not([zen-essential])")].find(visible);
+    const bg = tab?.querySelector(":scope > .tab-stack > .tab-background");
+    if (!tab || !bg) {
+      return;
+    }
+    const t = tab.getBoundingClientRect();
+    const b = bg.getBoundingClientRect();
+    const style = getComputedStyle(tab);
+    const top = (parseFloat(style.marginTop) || 0) + (b.top - t.top);
+    const bottom = (parseFloat(style.marginBottom) || 0) + (t.bottom - b.bottom);
+    let start;
+    let end;
+    if (inFolder) {
+      const box = tab.parentElement.getBoundingClientRect();
+      start = b.left - box.left;
+      end = box.right - b.right;
+    } else {
+      start = FOLDER_SLOT_INSET.start + (b.left - t.left);
+      end = FOLDER_SLOT_INSET.end + (t.right - b.right);
+    }
+    // Same gap on the right as at the bottom, inside an open empty folder's box
+    const probe = document.querySelector("zen-folder[zia-empty]:not([collapsed])");
+    const container = probe?.querySelector(":scope > .tab-group-container");
+    if (probe && container) {
+      const box = getComputedStyle(probe, "::before");
+      const folderBox = probe.getBoundingClientRect();
+      const inner = container.getBoundingClientRect();
+      const boxRight = folderBox.right - (parseFloat(box.right) || 0);
+      const boxBottom = folderBox.bottom - (parseFloat(box.bottom) || 0);
+      const gap = boxBottom - (inner.bottom - bottom);
+      if (gap > 0 && gap < 20) {
+        end = inner.right - (boxRight - gap);
+      }
+    }
+    const next = [top, bottom, start, end, b.height].map((n) => `${Math.round(n * 2) / 2}px`).join(" ");
+    if (next === slotSize) {
+      return;
+    }
+    slotSize = next;
+    const [mt, mb, ms, me, h] = next.split(" ");
+    for (const [name, value] of [["--zia-slot-mt", mt], ["--zia-slot-mb", mb], ["--zia-slot-ms", ms], ["--zia-slot-me", me], ["--zia-slot-h", h]]) {
+      root.style.setProperty(name, value);
+    }
+  }
+
+  // A folder emptied by moving its last tab out collapses; an open empty
+  // folder (new, or opened by hand) shows the slot.
+  const wasEmpty = new WeakMap();
+
+  function markEmptyFolders() {
+    let open = false;
+    for (const folder of document.querySelectorAll("zen-folder")) {
+      const empty = isEmptyFolder(folder);
+      folder.toggleAttribute("zia-empty", empty);
+      if (empty && wasEmpty.get(folder) === false && !folder.hasAttribute("collapsed")) {
+        try {
+          folder.collapsed = true;
+        } catch (err) {
+          noteError("folder empty: collapse", err);
+        }
+      }
+      wasEmpty.set(folder, empty);
+      open ||= empty && !folder.hasAttribute("collapsed");
+    }
+    if (open) {
+      measureFolderSlot();
+    }
+  }
+
+  function watchEmptyFolders() {
+    const tabs = document.getElementById("tabbrowser-tabs");
+    if (!tabs) {
+      return;
+    }
+    let frame = 0;
+    const schedule = () => {
+      if (!frame) {
+        frame = requestAnimationFrame(() => {
+          frame = 0;
+          markEmptyFolders();
+        });
+      }
+    };
+    new MutationObserver(schedule).observe(tabs, { childList: true, subtree: true });
+    for (const type of ["TabGroupCreate", "TabGrouped", "TabUngrouped", "TabClose", "TabMove", "TabGroupExpand"]) {
+      gBrowser.tabContainer.addEventListener(type, schedule);
+    }
+    window.addEventListener("ZenWorkspacesUIUpdate", schedule);
+    // The sidebar's width changes a tab's size
+    new ResizeObserver(schedule).observe(tabs);
+    schedule();
+  }
+
   // Optional: the last essential stretches across whatever's left of its row.
   // The grid can't span "to the end of the row" by itself, so Zia counts the
   // columns and sets the span.
@@ -6594,7 +6712,18 @@
       return rows;
     };
 
+    // An empty folder's "Drag tabs here" slot is drawn on its tab container,
+    // so it follows the folder's header when that moves aside.
+    const slotFolderOf = (node) =>
+      node?.classList?.contains("tab-group-label-container") && node.parentElement?.hasAttribute("zia-empty")
+        ? node.parentElement
+        : null;
+
     const clearNode = (node) => {
+      const slotFolder = slotFolderOf(node);
+      if (slotFolder) {
+        slotFolder.style.removeProperty("--zia-slot-y");
+      }
       node.style.removeProperty("top");
       node.style.removeProperty("position");
       node.style.removeProperty("z-index");
@@ -6622,6 +6751,7 @@
         return;
       }
       node.style.setProperty("--zia-drag-y", `${Math.round(y)}px`);
+      slotFolderOf(node)?.style.setProperty("--zia-slot-y", `${Math.round(y)}px`);
       node.style.removeProperty("top");
       node.style.setProperty("transform", `translateY(${Math.round(y)}px)`, "important");
       node.style.setProperty("position", "relative", "important");
@@ -6640,6 +6770,24 @@
       !!el && (el.localName === "zen-folder" || el.isZenFolder || (el.localName === "tab-group" && !el.hasAttribute("split-view-group")));
     const headerOf = (folder) => folder?.querySelector?.(":scope > .tab-group-label-container") || null;
     const isCollapsed = (folder) => !!folder && (folder.collapsed === true || folder.hasAttribute("collapsed"));
+
+    // An open empty folder's "Drag tabs here" slot takes a tab's room under its
+    // header without being a row. Its height, measured once per drag (the
+    // layout never changes mid-drag), counts toward the folder's size, and a
+    // tab dragged into the folder takes its place instead of more room.
+    const slotPitchOf = (folder) => {
+      if (!drag || !folder?.hasAttribute?.("zia-empty") || isCollapsed(folder)) {
+        return 0;
+      }
+      drag.slotPitch ||= new Map();
+      if (!drag.slotPitch.has(folder)) {
+        const container = folder.querySelector(":scope > .tab-group-container");
+        drag.slotPitch.set(folder, container ? window.windowUtils.getBoundsWithoutFlushing(container).height : 0);
+      }
+      return drag.slotPitch.get(folder);
+    };
+    const slotAfterHeader = (row) =>
+      row?.node?.classList?.contains("tab-group-label-container") ? slotPitchOf(row.node.parentElement) : 0;
 
     const rowFolder = (row) => {
       const node = row?.node;
@@ -6675,6 +6823,14 @@
       drag.slot?.removeAttribute("zia-drop-slot");
       drag.slot = folder || null;
       folder?.setAttribute("zia-drop-slot", "true");
+      // Over an empty folder the tab covers its slot, so the tab carries the
+      // slot's dashes instead (chrome.css), in the folder's colour.
+      const tab = drag.moving === drag.tab ? drag.tab : null;
+      const into = !!tab && !!folder?.hasAttribute("zia-empty");
+      if (into) {
+        tab.style.setProperty("--zia-slot-border", getComputedStyle(folder).getPropertyValue("--zia-slot-border"));
+      }
+      tab?.toggleAttribute("zia-into-empty", into);
     };
 
     const updateTarget = (visualMid) => {
@@ -6763,12 +6919,14 @@
             if (row.node === f || !f.contains(row.node)) {
               continue;
             }
-            origBottom = Math.max(origBottom, row.top + row.height);
+            const slot = slotAfterHeader(row);
+            origBottom = Math.max(origBottom, row.top + row.height + slot);
             if (row.node === headerOf(f)) {
               top = row.delta || 0;
             }
             if (!notARow(row)) {
-              shownBottom = Math.max(shownBottom, row.top + (row.delta || 0) + row.height);
+              const intoThisSlot = slot && into && target.folder === row.node.parentElement;
+              shownBottom = Math.max(shownBottom, row.top + (row.delta || 0) + row.height + (intoThisSlot ? 0 : slot));
             }
           }
           if (into && target.slotTop != null) {
@@ -6919,6 +7077,7 @@
       const sep = currentSeparator();
       if (sep && drag.sepDelta !== sepDelta) {
         drag.sepDelta = sepDelta;
+        drag.sepShownY = sepDelta;
         place(sep, sepDelta, false);
 
         const onTop = Services.prefs.getBoolPref("zen.view.show-newtab-button-top", false);
@@ -6949,8 +7108,9 @@
             drag.shifted.delete(row.node);
           }
           const delta = gone ? -drag.pitch : 0;
-          if (row.delta !== delta) {
+          if ((row.shownY ?? row.delta) !== delta) {
             row.delta = delta;
+            row.shownY = delta;
             place(row.node, delta, false);
           }
         }
@@ -6959,6 +7119,7 @@
         }
         drag.target = null;
         setDropSlot(null);
+        takeEmptySlot();
         paintFolders();
         return;
       }
@@ -6985,6 +7146,7 @@
           continue;
         }
         row.delta = delta;
+        row.shownY = delta;
         place(row.node, delta, false);
         rowsMoved = true;
       }
@@ -7002,8 +7164,42 @@
         tap();
       }
       updateTarget(visualMid);
+      takeEmptySlot();
       paintFolders();
       morphWidth(drag.target?.folder || null);
+    };
+
+    // Dropping into an open empty folder uses its slot as the tab's room, so
+    // everything after the folder moves up by the slot's height on top of the
+    // usual shift, and the slot itself fades (chrome.css).
+    const takeEmptySlot = () => {
+      const folder = drag.target?.folder;
+      const pitch = slotPitchOf(folder);
+      const headerRow = pitch ? drag.rows.find((row) => row.node === headerOf(folder)) : null;
+      const after = (row) => !!headerRow && row.index > headerRow.index && !folder.contains(row.node);
+      for (const row of drag.rows) {
+        if (notARow(row)) {
+          continue;
+        }
+        const want = (row.delta || 0) + (after(row) ? -pitch : 0);
+        if ((row.shownY ?? row.delta ?? 0) !== want) {
+          place(row.node, want, false);
+        }
+        row.shownY = want;
+      }
+      const sep = currentSeparator();
+      if (sep && drag.sepTop != null) {
+        const sepAfter = !!headerRow && drag.sepTop > headerRow.top;
+        const want = (drag.sepDelta || 0) + (sepAfter ? -pitch : 0);
+        if ((drag.sepShownY ?? drag.sepDelta ?? 0) !== want) {
+          place(sep, want, false);
+          const button = Services.prefs.getBoolPref("zen.view.show-newtab-button-top", false) ? newTabButton() : null;
+          if (button) {
+            place(button, want, false);
+          }
+        }
+        drag.sepShownY = want;
+      }
     };
 
     const pinFor = (tab, pinned) => {
@@ -8330,6 +8526,10 @@
       muteZenHaptics(false);
       reclip();
       document.querySelectorAll("[zia-drop-slot]").forEach((folder) => folder.removeAttribute("zia-drop-slot"));
+      document.querySelectorAll("[zia-into-empty]").forEach((tab) => {
+        tab.removeAttribute("zia-into-empty");
+        tab.style.removeProperty("--zia-slot-border");
+      });
       clearFolderPaint();
       dropProxy();
       hideThumb(true);
@@ -8694,6 +8894,7 @@
     safely("watchFolderColors", watchFolderColors);
     safely("addFolderColorPicker", addFolderColorPicker);
     safely("watchFolderCloseButtons", watchFolderCloseButtons);
+    safely("watchEmptyFolders", watchEmptyFolders);
     safely("watchEssentialRows", watchEssentialRows);
     safely("watchSidebarPaint", watchSidebarPaint);
     safely("watchWindowButtonsSide", watchWindowButtonsSide);
