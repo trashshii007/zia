@@ -54,9 +54,13 @@ The page and toolbar sit together in one rounded card. The toolbar takes the col
 
 Opened, the panel follows Dia's shape: short rows with air around them, one size and weight of text throughout, and none of Firefox's chips, row menus or one-off engine bars. What you type stays lined up with the results underneath it.
 
+Type an address and the site's own icon replaces the magnifying glass. A paperclip beside site settings copies the page's link. The address bar can also sit at the **bottom**, under the page, with the pop-up opening upwards from it, in a single page or in split view:
+
+<!-- screenshot: address-bar-bottom -->
+
 ### The sidebar
 
-Essentials sit as tiles, four to a row and six when the sidebar is wide. Folders get hover boxes, a bounce when they open, icon or emoji covers, a colour of their own from the right-click menu, and an × to delete them. Plain tab groups, like the ones [Advanced Tab Groups](https://github.com/Vertex-Mods/Advanced-Tab-Groups) makes, get the same folder treatment. Downloads live next to the space name with a progress ring around them. Closing a tab by accident is undone with Cmd/Ctrl+Z for ten seconds afterwards.
+Essentials sit as tiles, four to a row and six when the sidebar is wide. Folders get hover boxes, a bounce when they open, icon or emoji covers, a colour of their own from the right-click menu, and an × to delete them. Plain tab groups, like the ones [Advanced Tab Groups](https://github.com/Vertex-Mods/Advanced-Tab-Groups) makes, get the same folder treatment. Downloads live next to the space name with a progress ring around them. Closing a tab by accident is undone with Cmd/Ctrl+Z for ten seconds afterwards, and closing a folder, a split or a handful of tabs brings the whole lot back: a split goes back into its split and a deleted folder comes back with its name. Drag an essential off the essentials and it turns back into a tab. An option lets the last essential stretch across the rest of its row.
 
 Tabs drag the way they do in Dia: the tab itself follows the pointer and the rows it passes slide aside. A folder opens up by a row to take it, and over the essentials a tab turns into the tile it will become. Hovering a tab shows a card with its title, address and a few actions; hovering a collapsed folder lists the tabs inside it.
 
@@ -83,6 +87,30 @@ Split view gives each pane its own toolbar. Dragging a tab over the page brings 
 Drop it and both sites sit side by side, each with its own address and controls:
 
 ![Two sites in split view](https://github.com/user-attachments/assets/5318d0ce-d6b3-4adb-aef9-56ffbed72ae9)
+
+### Picture-in-picture
+
+Picture-in-picture looks like Dia's. At rest it's just the video; hover it and the video dims to show **Back to Tab** and **Close** at the top with the site between them, big 15-second skip and play/pause buttons in the middle, and a thin progress line along the bottom.
+
+<!-- screenshot: pip-hover -->
+
+It can also get out of the way. Press the tuck button beside Close, or drag the window against the left or right side of the screen (a blue edge says *Let go to tuck away*), and it slides off, leaving a thin strip. Point at the strip and the video slides back out; move away and it tucks again.
+
+<!-- screenshot: pip-tucked -->
+
+The music player's picture-in-picture button shows for every video, YouTube included.
+
+### Multiview
+
+Right-click a video, a video's page or its tab and choose **Add to Multiview**. The first one opens a Multiview tab and the rest join it, in a grid that re-tiles itself to fill the tab as videos come and go. It's made for watching several live streams at once.
+
+<!-- screenshot: multiview-grid -->
+
+Hover a tile to drag it somewhere else, give it the sound (one tile plays sound at a time, marked with a white ring), open it on its site or remove it. Videos carry on from where they were and live streams join live.
+
+<!-- screenshot: multiview-tile-hover -->
+
+It works with **YouTube, Twitch** (live, videos and clips), **Kick, Vimeo, Dailymotion** and plain video files. Sites with copy protection, such as Netflix or sports services, can't be added. The Multiview page lives on this repo's [GitHub Pages](https://z1n-k.github.io/zia/multiview/), because YouTube and Twitch only play embedded videos on a real web address. The list of videos is kept in the page's own address, so it survives a restart, and it isn't sent anywhere.
 
 ---
 
