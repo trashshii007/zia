@@ -231,6 +231,11 @@
   background-image: url("chrome://sine/content/zia/icons/pip/forward15.svg") !important;
 }
 
+/* Live streams: no progress line or time (zia-pip.js) */
+:root[zia-live] :is(#scrubber, .scrubber-no-drag, #timestamp) {
+  display: none !important;
+}
+
 /* a thin progress line along the bottom */
 :root[zia-dia] .controls-bottom-upper {
   position: absolute !important;
@@ -323,61 +328,6 @@
   pointer-events: none;
 }
 
-/* While dragging near a side: a glowing edge and "Let go to tuck away" */
-.zia-pip-drop-hint {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 14px;
-  color: #fff;
-  font: 600 13px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 140ms ease;
-}
-
-.zia-pip-drop-hint::before {
-  content: "";
-  width: 16px;
-  height: 16px;
-  background: url("chrome://sine/content/zia/icons/pip/tuck.svg") center / contain no-repeat;
-}
-
-:root[zia-drop-hint] .zia-pip-drop-hint {
-  opacity: 1;
-}
-
-/* the controls step aside while the hint shows */
-:root[zia-drop-hint] #controls {
-  opacity: 0;
-  transition: opacity 140ms ease;
-}
-
-:root[zia-drop-hint="right"] .zia-pip-drop-hint {
-  right: 0;
-  flex-direction: row-reverse;
-  background: linear-gradient(to left, rgba(10, 132, 255, 0.7), rgba(10, 132, 255, 0.25) 40%, rgba(0, 0, 0, 0.3));
-  left: 0;
-  box-shadow: inset -4px 0 0 rgb(10, 132, 255);
-}
-
-:root[zia-drop-hint="left"] .zia-pip-drop-hint {
-  left: 0;
-  background: linear-gradient(to right, rgba(10, 132, 255, 0.7), rgba(10, 132, 255, 0.25) 40%, rgba(0, 0, 0, 0.3));
-  right: 0;
-  box-shadow: inset 4px 0 0 rgb(10, 132, 255);
-}
-
-:root[zia-drop-hint="left"] .zia-pip-drop-hint::before {
-  scale: -1 1;
-}
-
 /* Tucked: only a strip of the window shows, with an arrow pointing back
  * out. Hovering it nudges the window out 12px (zia-pip.js); clicking brings
  * it back. The strip is always as wide as the nudged view (24px + 12px), so
@@ -454,15 +404,18 @@
   cursor: grabbing;
 }
 
-/* Pulled out by hand: the video clears and the strip fades as it comes, but
- * the strip still takes the drag */
-:root[zia-dragging="out"] .zia-pip-sliver {
-  opacity: 0;
-  transition: opacity 200ms ease;
+/* Thrown at a side, or pulled back out by hand: the video frosts over in
+ * step with how far past the side it is (--zia-veil, 0 to 1, from
+ * zia-pip.js), fully frosted where it would tuck. Pulling out, the strip
+ * fades the same way but still takes the drag. */
+:root:is([zia-leaving], [zia-dragging="out"]):not([zia-emerging]) .player-holder {
+  filter: blur(calc(var(--zia-veil, 0) * 16px)) brightness(calc(1 - var(--zia-veil, 0) * 0.15));
+  transition: filter 80ms linear;
 }
 
-:root[zia-dragging="out"] .player-holder {
-  filter: none;
+:root[zia-dragging="out"] .zia-pip-sliver {
+  opacity: var(--zia-veil, 0);
+  transition: opacity 80ms linear;
 }
 
 :root[zia-tucked] #controls {

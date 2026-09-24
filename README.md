@@ -78,7 +78,7 @@ Picture-in-picture looks like Dia's. At rest it's just the video, with nothing l
 
 ![Picture-in-picture with its controls](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/pip-controls.webp>)
 
-When you need the screen back, tuck it away. Press the tuck button beside Close, or drag the window against the left or right edge of the screen (a blue edge says *Let go to tuck away*), and it slides off, leaving a slim strip. Hover the strip and the video peeks out a little, so passing over it never gets in your way. Click it, or hold it and drag it out sideways, and the video comes back out and stays out until you tuck it again. Drag the strip up or down to park it anywhere along the side.
+When you need the screen back, tuck it away. Press the tuck button beside Close, or throw the window at the left or right edge of the screen: let go with a good part of it off the side, or flick it at a side, and it springs the rest of the way off, leaving a slim frosted strip. The video frosts over as it goes, and clears again as it comes back. Hover the strip and the video peeks out a little, so passing over it never gets in your way. Click it, or hold it and drag it out sideways, and the video comes back out and stays out until you tuck it again. Drag the strip up or down to park it anywhere along the side.
 
 <img src="https://raw.githubusercontent.com/z1n-k/zia/readme-images/pip-tucked.png" alt="Picture-in-picture tucked into the side of the screen" width="180">
 
