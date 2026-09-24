@@ -102,7 +102,7 @@ Multiview works with **YouTube, Twitch** (live, videos and clips), **Kick, Vimeo
 
 Essentials sit as tiles, four to a row, or six when the sidebar is wide. Folders get hover boxes, a small bounce when they open, icon or emoji covers, an × to delete them, and a colour of their own from the right-click menu that tints the whole folder:
 
-![A tinted folder](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/folder-tint.png>)
+![A tinted empty folder with its Drag tabs here slot](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/folder-empty.png>)
 
 Spaces with a colour of their own carry it through the whole sidebar. An empty folder shows a dashed *Drag tabs here* slot until its first tab arrives. Plain tab groups, like the ones [Advanced Tab Groups](https://github.com/Vertex-Mods/Advanced-Tab-Groups) makes, get the same folder treatment. Downloads sit next to the space name with a progress ring around them.
 
@@ -114,7 +114,7 @@ Cmd/Ctrl+Z reopens what you just closed for ten seconds afterwards. That include
 
 Covers come from an icon picker Zia adds as a third tab beside Zen's own: 5,166 [Tabler](https://tabler.io/icons) icons, in outline or, for about a thousand of them, solid. Switch between the two at the top of the picker. The search knows each icon's tags as well as its name, so *money* finds cash, coins and wallets. Zen's emojis are still there if you'd rather use one.
 
-![The icon picker](https://github.com/user-attachments/assets/07c2baf3-9af4-4d7f-a6c9-b9701070312a)
+<img src="https://raw.githubusercontent.com/z1n-k/zia/readme-images/icon-picker.png" alt="The icon picker with Tabler icons in solid style" width="474">
 
 ### Split view
 
