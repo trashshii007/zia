@@ -302,8 +302,138 @@
   background-image: url("chrome://sine/content/zia/icons/pip/tuck.svg");
 }
 
-:root[zia-edge="left"] .zia-pip-tuck-button::before {
-  scale: -1 1;
+/* the arrow points at the spot the button will use */
+#controls .zia-pip-tuck-button::before {
+  rotate: var(--zia-tuck-button-turn, 0deg);
+}
+
+/* Nowhere to tuck on this screen (other screens all round) */
+:root[zia-no-tuck] #controls :is(.zia-pip-tuck-button, .zia-pip-pick-button) {
+  display: none !important;
+}
+
+/* Beside it, a small arrow opens the picker */
+#controls .zia-pip-pick-button {
+  display: none;
+  position: relative;
+  width: 20px;
+  padding: 0;
+  justify-content: center;
+  margin-inline-start: -4px;
+}
+
+:root[zia-tuck-on] #controls .zia-pip-pick-button {
+  display: inline-flex;
+}
+
+#controls .zia-pip-pick-button::before {
+  background-image: url("chrome://sine/content/zia/icons/pip/chevron.svg");
+  rotate: -90deg;
+  scale: 0.8;
+}
+
+#controls .zia-pip-pick-button:is(:hover, :focus-visible)::after {
+  content: attr(tooltip);
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font: 500 12px/16px -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* The picker: a map of the screen with its five spots */
+.zia-pip-picker {
+  display: none;
+}
+
+:root[zia-picking] .zia-pip-picker {
+  position: fixed;
+  top: 44px;
+  right: 10px;
+  z-index: 40;
+  display: block;
+  width: 168px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(34, 34, 38, 0.94);
+  backdrop-filter: blur(16px);
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.16), 0 12px 30px rgba(0, 0, 0, 0.5);
+  color: rgba(255, 255, 255, 0.75);
+  font: 500 11.5px/1.3 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  -moz-window-dragging: no-drag;
+  animation: zia-pip-pop 0.3s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+@keyframes zia-pip-pop {
+  from { opacity: 0; scale: 0.94; }
+}
+
+.zia-pip-picker-title {
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.zia-pip-picker-map {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 26px);
+  gap: 6px;
+  padding: 6px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* left and right either side of the screen, then the bottom row */
+.zia-pip-spot[data-spot="right"] {
+  grid-column: 3;
+}
+
+.zia-pip-spot {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: background-color 0.15s ease, scale 0.2s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+.zia-pip-spot::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  background: url("chrome://sine/content/zia/icons/pip/chevron.svg") center / contain no-repeat;
+  rotate: var(--zia-spot-turn);
+}
+
+.zia-pip-spot:hover:not(:disabled) {
+  background-color: rgba(90, 185, 245, 0.45);
+  scale: 1.08;
+}
+
+.zia-pip-spot[zia-default] {
+  background-color: rgba(90, 185, 245, 0.7);
+}
+
+.zia-pip-spot:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.zia-pip-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 9px;
 }
 
 #controls .zia-pip-tuck-button {
@@ -328,23 +458,21 @@
   pointer-events: none;
 }
 
-/* Tucked: only a strip of the window shows, with an arrow pointing back
- * out. Hovering it nudges the window out 12px (zia-pip.js); clicking brings
- * it back. The strip is always as wide as the nudged view (24px + 12px), so
- * no video ever shows beside it. The arrow sits by the strip's inner edge,
- * the one nearest the page, and moves out with the window. */
+/* Tucked: only a strip of the window shows (a side or the bottom), or a
+ * small square (a bottom corner), frosted, with an arrow pointing back out. Hovering nudges the
+ * window out 12px (zia-pip.js); clicking brings it back. The strip covers
+ * the nudged view too (24px + 12px, or 44px + 12px in a corner), so no video
+ * ever shows beside it. */
 .zia-pip-sliver {
   display: none;
 }
 
 :root[zia-tucked] .zia-pip-sliver {
   position: fixed;
-  top: 0;
-  bottom: 0;
   z-index: 30;
-  width: 36px;
   display: flex;
   align-items: center;
+  justify-content: center;
   /* A see-through tint of the space's colour (set by zia.uc.js) over the
    * blurred video (below), fading along when you switch spaces. */
   background-color: color-mix(in srgb, var(--zia-space-tint, rgb(24, 24, 27)) 30%, rgba(24, 24, 27, 0.5));
@@ -353,7 +481,19 @@
   -moz-window-dragging: no-drag;
 }
 
-/* Tucked on the right, the window's left edge shows */
+/* Sides: the window's opposite edge shows */
+:root:is([zia-tucked="left"], [zia-tucked="right"]) .zia-pip-sliver {
+  top: 0;
+  bottom: 0;
+  width: 36px;
+}
+
+:root[zia-tucked="bottom"] .zia-pip-sliver {
+  left: 0;
+  right: 0;
+  height: 36px;
+}
+
 :root[zia-tucked="right"] .zia-pip-sliver {
   left: 0;
   justify-content: flex-start;
@@ -368,6 +508,33 @@
   box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.12);
 }
 
+:root[zia-tucked="bottom"] .zia-pip-sliver {
+  top: 0;
+  align-items: flex-start;
+  padding-top: 5px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Corners: the window's opposite corner shows, rounded on the inside */
+:root[zia-tucked*="-"] .zia-pip-sliver {
+  width: 56px;
+  height: 56px;
+}
+
+:root[zia-tucked="bottom-right"] .zia-pip-sliver {
+  left: 0;
+  top: 0;
+  border-bottom-right-radius: 16px;
+  box-shadow: inset -1px -1px 0 rgba(255, 255, 255, 0.12);
+}
+
+:root[zia-tucked="bottom-left"] .zia-pip-sliver {
+  right: 0;
+  top: 0;
+  border-bottom-left-radius: 16px;
+  box-shadow: inset 1px -1px 0 rgba(255, 255, 255, 0.12);
+}
+
 .zia-pip-sliver::after {
   content: "";
   flex: none;
@@ -375,10 +542,8 @@
   height: 14px;
   background: url("chrome://sine/content/zia/icons/pip/chevron.svg") center / contain no-repeat;
   opacity: 0.7;
-}
-
-:root[zia-tucked="left"] .zia-pip-sliver::after {
-  scale: -1 1;
+  rotate: var(--zia-tuck-turn, 0deg);
+  transition: rotate 0.25s cubic-bezier(0.3, 1.4, 0.5, 1);
 }
 
 /* Tucked, the video itself is blurred (a backdrop blur can't see the video,

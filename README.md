@@ -78,7 +78,7 @@ Picture-in-picture looks like Dia's. At rest it's just the video, with nothing l
 
 ![Picture-in-picture with its controls](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/pip-controls.webp>)
 
-When you need the screen back, tuck it away. Press the tuck button beside Close, or throw the window at the left or right edge of the screen: let go with a good part of it off the side, or flick it at a side, and it springs the rest of the way off, leaving a slim frosted strip. The video frosts over as it goes, and clears again as it comes back. Hover the strip and the video peeks out a little, so passing over it never gets in your way. Click it, or hold it and drag it out sideways, and the video comes back out and stays out until you tuck it again. Drag the strip up or down to park it anywhere along the side.
+When you need the screen back, tuck it away, into the left or right side, the bottom, or a bottom corner of the screen. Throw the window at one: let go with a good part of it off the edge, or flick it, and it springs the rest of the way off, leaving a slim frosted strip (or a small frosted corner). The video frosts over as it goes, and a throw that lands near a corner is pulled into the corner. The tuck button beside Close tucks into your default spot, and the small arrow beside it opens a map of the screen to pick one, or make it the default. With more than one screen, the edges your screens share are skipped, so it never hides onto another screen. Hover the strip and the video peeks out a little; click it, or hold it and drag it out, and the video comes back and stays out until you tuck it again. Drag the strip along its side to move it, and near the bottom of a side it snaps into the corner. (There are no top spots: macOS won't move a window up past the top of the screen.)
 
 <img src="https://raw.githubusercontent.com/z1n-k/zia/readme-images/pip-tucked.png" alt="Picture-in-picture tucked into the side of the screen" width="180">
 
@@ -163,6 +163,7 @@ Almost every part of Zia can be switched on or off on its own. The settings are 
 | **Picture-in-picture** | |
 | Dia-style picture-in-picture controls (off: Firefox's own) | on |
 | Tuck picture-in-picture into the side of the screen | on |
+| Picture-in-picture tucks into (the nearest side, a side, the bottom or a bottom corner) | the nearest side |
 | **Multiview** | |
 | **Add to Multiview** on videos and tabs | on |
 | Multiview tab icon colour: Zia blue or the space's colour | Zia blue |
