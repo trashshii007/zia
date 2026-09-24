@@ -167,12 +167,12 @@
     const headerOf = (folder) => folder?.querySelector?.(":scope > .tab-group-label-container") || null;
     const isCollapsed = (folder) => !!folder && (folder.collapsed === true || folder.hasAttribute("collapsed"));
 
-    // A new empty folder's "Drag tabs here" slot takes a tab's room under its
+    // An open empty folder's "Drag tabs here" slot takes a tab's room under its
     // header without being a row. Its height, measured once per drag (the
     // layout never changes mid-drag), counts toward the folder's size, and a
     // tab dragged into the folder takes its place instead of more room.
     const slotPitchOf = (folder) => {
-      if (!drag || !folder?.hasAttribute?.("zia-fresh") || isCollapsed(folder)) {
+      if (!drag || !folder?.hasAttribute?.("zia-empty") || isCollapsed(folder)) {
         return 0;
       }
       drag.slotPitch ||= new Map();

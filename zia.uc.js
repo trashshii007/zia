@@ -5659,7 +5659,7 @@
       end = FOLDER_SLOT_INSET.end + (t.right - b.right);
     }
     // Same gap on the right as at the bottom, inside an open empty folder's box
-    const probe = document.querySelector("zen-folder[zia-fresh]:not([collapsed])");
+    const probe = document.querySelector("zen-folder[zia-empty]:not([collapsed])");
     const container = probe?.querySelector(":scope > .tab-group-container");
     if (probe && container) {
       const box = getComputedStyle(probe, "::before");
@@ -5683,22 +5683,16 @@
     }
   }
 
-  // "Drag tabs here" shows on a folder you've just made (zia-fresh) until its
-  // first tab arrives. A folder emptied by moving its last tab out collapses
-  // instead, and shows the slot again only while a tab is dragged into it.
-  const freshFolders = new WeakSet();
+  // A folder emptied by moving its last tab out collapses; an open empty
+  // folder (new, or opened by hand) shows the slot.
   const wasEmpty = new WeakMap();
 
   function markEmptyFolders() {
-    let fresh = false;
+    let open = false;
     for (const folder of document.querySelectorAll("zen-folder")) {
       const empty = isEmptyFolder(folder);
       folder.toggleAttribute("zia-empty", empty);
-      if (!empty) {
-        freshFolders.delete(folder);
-      }
-      folder.toggleAttribute("zia-fresh", empty && freshFolders.has(folder));
-      if (empty && wasEmpty.get(folder) === false && !freshFolders.has(folder) && !folder.hasAttribute("collapsed")) {
+      if (empty && wasEmpty.get(folder) === false && !folder.hasAttribute("collapsed")) {
         try {
           folder.collapsed = true;
         } catch (err) {
@@ -5706,9 +5700,9 @@
         }
       }
       wasEmpty.set(folder, empty);
-      fresh ||= empty && freshFolders.has(folder);
+      open ||= empty && !folder.hasAttribute("collapsed");
     }
-    if (fresh) {
+    if (open) {
       measureFolderSlot();
     }
   }
@@ -5728,15 +5722,7 @@
       }
     };
     new MutationObserver(schedule).observe(tabs, { childList: true, subtree: true });
-    // Folders restored with the session at startup aren't new
-    const readyAt = Date.now() + 4000;
-    gBrowser.tabContainer.addEventListener("TabGroupCreate", (event) => {
-      if (event.target?.localName === "zen-folder" && Date.now() > readyAt) {
-        freshFolders.add(event.target);
-      }
-      schedule();
-    });
-    for (const type of ["TabGrouped", "TabUngrouped", "TabClose", "TabMove"]) {
+    for (const type of ["TabGroupCreate", "TabGrouped", "TabUngrouped", "TabClose", "TabMove", "TabGroupExpand"]) {
       gBrowser.tabContainer.addEventListener(type, schedule);
     }
     window.addEventListener("ZenWorkspacesUIUpdate", schedule);
@@ -6785,12 +6771,12 @@
     const headerOf = (folder) => folder?.querySelector?.(":scope > .tab-group-label-container") || null;
     const isCollapsed = (folder) => !!folder && (folder.collapsed === true || folder.hasAttribute("collapsed"));
 
-    // A new empty folder's "Drag tabs here" slot takes a tab's room under its
+    // An open empty folder's "Drag tabs here" slot takes a tab's room under its
     // header without being a row. Its height, measured once per drag (the
     // layout never changes mid-drag), counts toward the folder's size, and a
     // tab dragged into the folder takes its place instead of more room.
     const slotPitchOf = (folder) => {
-      if (!drag || !folder?.hasAttribute?.("zia-fresh") || isCollapsed(folder)) {
+      if (!drag || !folder?.hasAttribute?.("zia-empty") || isCollapsed(folder)) {
         return 0;
       }
       drag.slotPitch ||= new Map();

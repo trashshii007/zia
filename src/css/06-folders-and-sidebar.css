@@ -443,13 +443,13 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
 }
 
 
-/* An empty folder you've just made shows a dashed "Drag tabs here" slot
- * exactly where the first tab will sit (sized from a real tab by zia.uc.js),
- * outlined in the folder's colour, or Zia blue for white and uncoloured
- * folders, until its first tab arrives. Any other empty folder shows the
- * slot only while a tab is dragged into it, below its header in the room
- * the drag opens. The slot is drawn on the container so Zen's own folder
- * code never sees an extra element; it shrinks away alongside Zen's
+/* An open empty folder shows a dashed "Drag tabs here" slot exactly where
+ * the first tab will sit (sized from a real tab by zia.uc.js), outlined in
+ * the folder's colour, or Zia blue for white and uncoloured folders.
+ * (A folder emptied by moving its last tab out collapses, zia.uc.js.)
+ * Collapsed, it shows only while a tab is dragged in, below the header in
+ * the room the drag opens. The slot is drawn on the container so Zen's own
+ * folder code never sees an extra element; it shrinks away alongside Zen's
  * collapse (0.18s), and --zia-slot-y moves it with its folder's header
  * while rows slide aside for a drag. */
 :root[zen-sidebar-expanded="true"] zen-folder[zia-empty] {
@@ -460,7 +460,7 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
     --zia-slot-color: var(--zia-folder-swatch);
   }
 
-  &[zia-fresh] > .tab-group-container::after {
+  & > .tab-group-container::after {
     content: url("chrome://sine/content/zia/icons/folder-drop.svg") "\2002 Drag tabs here";
     display: flex;
     align-items: center;
@@ -486,7 +486,7 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
       translate 100ms ease-out;
   }
 
-  &[zia-fresh][collapsed] > .tab-group-container::after {
+  &[collapsed] > .tab-group-container::after {
     height: 0;
     margin-block: 0;
     border-width: 0;
@@ -495,7 +495,7 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
 
   /* A tab dragged in takes the slot's place: the slot fades but keeps its
    * room (the layout never changes mid-drag), and the tab sits in it. */
-  &[zia-fresh][zia-drop-slot]:not([collapsed]) > .tab-group-container::after {
+  &[zia-drop-slot]:not([collapsed]) > .tab-group-container::after {
     opacity: 0;
     transition: opacity 100ms ease;
   }
@@ -504,9 +504,9 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
     transition: none;
   }
 
-  /* Collapsed, or not just made: the slot shows as a tab is dragged in,
-   * below the header in the room the drag opens up. */
-  &[zia-drop-slot]:is([collapsed], :not([zia-fresh])) > .tab-group-label-container {
+  /* Collapsed: the slot shows as a tab is dragged in, below the header in
+   * the room the drag opens up. */
+  &[zia-drop-slot][collapsed] > .tab-group-label-container {
     position: relative;
 
     &::after {
@@ -524,8 +524,9 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
   }
 }
 
-/* A coloured folder keeps its colour while a tab is dragged into it, rather
- * than the plain hover wash. */
+/* A coloured folder keeps its usual colour while a tab is dragged into it
+ * (its shine marks it as the target): not the plain hover wash, and not the
+ * hover tint either, which flickered off and on again as the tab dropped. */
 :root[zen-sidebar-expanded="true"] zen-folder[zia-folder-color]:not([zia-folder-color="white"])[zia-drop-slot]::before {
-  background-color: color-mix(in srgb, var(--zia-folder-swatch) var(--zia-folder-tint), transparent) !important;
+  background-color: color-mix(in srgb, var(--zia-folder-swatch) var(--zia-folder-wash), transparent) !important;
 }
