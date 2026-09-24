@@ -56,6 +56,34 @@
     "defaultValue": false
   },
   {
+    "type": "checkbox",
+    "label": "The last essential stretches across the rest of its row",
+    "property": "zia.essentials.fill-row",
+    "defaultValue": false
+  },
+  {
+    "type": "separator",
+    "label": "Page"
+  },
+  {
+    "type": "checkbox",
+    "label": "Toolbar takes the colour of the site (off: the theme's colour)",
+    "property": "zia.toolbar.site-color",
+    "defaultValue": true
+  },
+  {
+    "type": "checkbox",
+    "label": "Zia's rounded page corners (off: Zen's own)",
+    "property": "zia.page.rounding",
+    "defaultValue": true
+  },
+  {
+    "type": "checkbox",
+    "label": "Split view drop cards when dragging a tab onto the page (off: Zen's own)",
+    "property": "zia.split.drop-cards",
+    "defaultValue": true
+  },
+  {
     "type": "separator",
     "label": "Address bar"
   },

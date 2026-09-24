@@ -14,7 +14,8 @@
   --zia-urlbar-radius: 6px;
   --zia-urlbar-open-offset: 0px;
   --zia-urlbar-open-top: 0px;
-  --zia-card-radius: 10.5px;
+  /* Zen's own corner radius; Zia's rounding below replaces it unless it's switched off */
+  --zia-card-radius: var(--zen-native-inner-radius, 10.5px);
 
   --zia-shine-layers:
     linear-gradient(to right, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.2) 35%, rgba(255, 255, 255, 0.2) 65%, rgba(255, 255, 255, 0.08)),
@@ -817,6 +818,19 @@
     display: none !important;
   }
 }
+}
+
+@media -moz-pref("zia.page.rounding") {
+  :root {
+    --zia-card-radius: 10.5px;
+  }
+}
+
+/* The last essential stretches across whatever's left of its row */
+@media -moz-pref("zia.essentials.fill-row") {
+  :root[zen-sidebar-expanded="true"] .zen-essentials-container > .tabbrowser-tab[zen-essential][zia-fill-row] {
+    max-width: none !important;
+  }
 }
 
 :root[zen-sidebar-expanded="true"] .zen-essentials-container {
