@@ -3863,6 +3863,7 @@
     set("zia.essentials.fill-row", false);
     set("zia.pip.dia-style", true);
     set("zia.pip.tuck", true);
+    set("zia.multiview", true);
     // Dia's picture-in-picture has skip buttons and a progress line, which
     // Firefox only shows with its improved controls.
     set("media.videocontrols.picture-in-picture.improved-video-controls.enabled", true);
@@ -3916,6 +3917,219 @@
     window.addEventListener("unload", () => Services.ww.unregisterNotification(observer));
     for (const win of Services.wm.getEnumerator("Toolkit:PictureInPicture")) {
       decoratePipWindow(win);
+    }
+  }
+
+  // ---------- Multiview: a tab that grids up videos and live streams
+  // "Add to Multiview" (on a video, the page or a tab) turns the site's video
+  // into an embeddable player and adds it to the Multiview tab, a small page
+  // on the repo's GitHub Pages (YouTube and Twitch only play embeds on a real
+  // web address). The videos live in the page's address, so it survives
+  // restarts.
+  const MULTIVIEW_URL = "https://z1n-k.github.io/zia/multiview/";
+  const MULTIVIEW_PREF = "zia.multiview";
+  const TWITCH_RESERVED = new Set([
+    "directory", "videos", "settings", "search", "p", "downloads", "jobs", "turbo",
+    "subscriptions", "inventory", "wallet", "drops", "friends", "messages", "login", "signup",
+  ]);
+  const KICK_RESERVED = new Set(["categories", "browse", "following", "search", "dashboard", "settings", "category"]);
+
+  // A video (the page it's on, its own file, where it's up to) as a Multiview
+  // entry: [kind, id, seconds or 0].
+  function multiviewEntry(pageSpec, mediaSpec, seconds) {
+    let url;
+    try {
+      url = new URL(pageSpec);
+    } catch (err) {
+      return null;
+    }
+    const host = url.hostname.replace(/^(www|m|music)\./, "");
+    const parts = url.pathname.split("/").filter(Boolean);
+    const at = Math.max(0, Math.floor(seconds || 0));
+    if (host === "youtube.com" || host === "youtube-nocookie.com") {
+      const id =
+        url.searchParams.get("v") ||
+        (["shorts", "live", "embed"].includes(parts[0]) ? parts[1] : null);
+      return id && /^[\w-]{6,}$/.test(id) ? ["yt", id, at] : null;
+    }
+    if (host === "youtu.be") {
+      return parts[0] ? ["yt", parts[0], at] : null;
+    }
+    if (host === "clips.twitch.tv" && parts[0]) {
+      return ["twc", parts[0] === "embed" ? url.searchParams.get("clip") : parts[0], 0];
+    }
+    if (host === "player.twitch.tv") {
+      const channel = url.searchParams.get("channel");
+      const video = url.searchParams.get("video");
+      return channel ? ["tw", channel, 0] : video ? ["twv", video.replace(/^v/, ""), at] : null;
+    }
+    if (host === "twitch.tv") {
+      if (parts[0] === "videos" && /^\d+$/.test(parts[1] || "")) {
+        return ["twv", parts[1], at];
+      }
+      if (parts[1] === "clip" && parts[2]) {
+        return ["twc", parts[2], 0];
+      }
+      if (parts[0] && !TWITCH_RESERVED.has(parts[0].toLowerCase())) {
+        return ["tw", parts[0].toLowerCase(), 0];
+      }
+      return null;
+    }
+    if (host === "kick.com" || host === "player.kick.com") {
+      return parts[0] && !KICK_RESERVED.has(parts[0].toLowerCase()) ? ["kick", parts[0].toLowerCase(), 0] : null;
+    }
+    if (host === "vimeo.com" || host === "player.vimeo.com") {
+      const id = parts.find((part) => /^\d+$/.test(part));
+      return id ? ["vm", id, at] : null;
+    }
+    if (host === "dailymotion.com" || host === "dai.ly") {
+      const id = host === "dai.ly" ? parts[0] : parts.includes("video") ? parts[parts.indexOf("video") + 1] : null;
+      return id ? ["dm", id.split("_")[0], at] : null;
+    }
+    // Anything else: the video's own file, if it's a whole video file (not
+    // one chunk of a stream, which is all many sites' players load at once).
+    if (/^https?:\/\/[^?#]+\.(mp4|m4v|webm|ogv|ogg|mov)([?#]|$)/i.test(mediaSpec || "")) {
+      return ["file", mediaSpec, at];
+    }
+    return null;
+  }
+
+  // Where the tab's playing video is up to (0 for live streams).
+  function multiviewPosition(browser) {
+    try {
+      const state = browser?.browsingContext?.mediaController?.getPositionState();
+      if (state && Number.isFinite(state.duration) && state.duration > 0 && state.duration < 1e7) {
+        return state.position;
+      }
+    } catch (err) {}
+    return 0;
+  }
+
+  const multiviewKey = (entry) => `${entry[0]}:${entry[1]}`;
+
+  function multiviewEntries(spec) {
+    const hash = (spec.split("#")[1] || "").trim();
+    return hash
+      .split(",")
+      .filter(Boolean)
+      .map((item) => {
+        const [head, at] = item.split("@");
+        const [kind, id] = head.split(":");
+        return kind && id ? [kind, decodeURIComponent(id), Number(at) || 0] : null;
+      })
+      .filter(Boolean);
+  }
+
+  function multiviewSpec(entries) {
+    const items = entries.map(([kind, id, at]) => `${kind}:${encodeURIComponent(id)}${at ? `@${Math.floor(at)}` : ""}`);
+    return `${MULTIVIEW_URL}#${items.join(",")}`;
+  }
+
+  function isMultiviewTab(tab) {
+    return tab?.linkedBrowser?.currentURI?.spec?.startsWith(MULTIVIEW_URL);
+  }
+
+  function addToMultiview(entry) {
+    const tab = gBrowser.visibleTabs.find(isMultiviewTab);
+    const system = Services.scriptSecurityManager.getSystemPrincipal();
+    if (!tab) {
+      gBrowser.selectedTab = gBrowser.addTrustedTab(multiviewSpec([entry]), { triggeringPrincipal: system });
+      return;
+    }
+    const entries = multiviewEntries(tab.linkedBrowser.currentURI.spec);
+    if (!entries.some((item) => multiviewKey(item) === multiviewKey(entry))) {
+      entries.push(entry);
+      // Only the address's # part changes, so the page adds the tile without
+      // reloading the others.
+      tab.linkedBrowser.fixupAndLoadURIString(multiviewSpec(entries), { triggeringPrincipal: system });
+    }
+    gBrowser.selectedTab = tab;
+  }
+
+  function tabMultiviewEntry(tab) {
+    const browser = tab?.linkedBrowser;
+    if (!browser || isMultiviewTab(tab)) {
+      return null;
+    }
+    return multiviewEntry(browser.currentURI?.spec, null, multiviewPosition(browser));
+  }
+
+  function makeMultiviewItem(id, onCommand) {
+    const item = document.createXULElement("menuitem");
+    item.id = id;
+    item.setAttribute("label", "Add to Multiview");
+    item.setAttribute("accesskey", "M");
+    item.addEventListener("command", onCommand);
+    return item;
+  }
+
+  function watchMultiview() {
+    const enabled = () => Services.prefs.getBoolPref(MULTIVIEW_PREF, true);
+
+    // Right-clicking a video, or the page of a video site. (YouTube shows its
+    // own menu first; right-click again for this one.)
+    const pageMenu = document.getElementById("contentAreaContextMenu");
+    if (pageMenu) {
+      let pending = null;
+      const item = makeMultiviewItem("zia-context-multiview", () => pending && addToMultiview(pending));
+      const pipItem = document.getElementById("context-video-pictureinpicture");
+      if (pipItem) {
+        pipItem.after(item);
+      } else {
+        pageMenu.appendChild(item);
+      }
+      pageMenu.addEventListener("popupshowing", (event) => {
+        if (event.target !== pageMenu) {
+          return;
+        }
+        pending = null;
+        const context = window.gContextMenu;
+        if (enabled() && context && !context.isTextSelected && !context.onLink && !context.onImage) {
+          const browser = context.browser;
+          const framePage = context.contentData?.docLocation;
+          const topPage = browser?.currentURI?.spec;
+          const media = context.onVideo ? context.mediaURL : null;
+          const at = multiviewPosition(browser);
+          if (topPage?.startsWith(MULTIVIEW_URL)) {
+            pending = null;
+          } else if (context.onVideo) {
+            // The site first (the frame the video is in, then the page), and
+            // only then the video's own file.
+            pending =
+              (framePage && multiviewEntry(framePage, null, at)) ||
+              multiviewEntry(topPage, null, at) ||
+              multiviewEntry(topPage, media, at);
+          } else {
+            const entry = multiviewEntry(topPage, null, at);
+            pending = entry && entry[0] !== "file" ? entry : null;
+          }
+        }
+        item.hidden = !pending;
+      });
+    }
+
+    // Right-clicking a tab
+    const tabMenu = document.getElementById("tabContextMenu");
+    if (tabMenu) {
+      const item = makeMultiviewItem("zia-tab-multiview", () => {
+        const entry = tabMultiviewEntry(window.TabContextMenu?.contextTab);
+        if (entry) {
+          addToMultiview(entry);
+        }
+      });
+      const anchor = document.getElementById("context_duplicateTab") || document.getElementById("context_reloadTab");
+      if (anchor) {
+        anchor.after(item);
+      } else {
+        tabMenu.appendChild(item);
+      }
+      tabMenu.addEventListener("popupshowing", (event) => {
+        if (event.target !== tabMenu) {
+          return;
+        }
+        const entry = enabled() && tabMultiviewEntry(window.TabContextMenu?.contextTab);
+        item.hidden = !entry || entry[0] === "file";
+      });
     }
   }
 
@@ -8141,6 +8355,7 @@
     safely("watchOptions", watchOptions);
     safely("watchUrlbarPosition", watchUrlbarPosition);
     safely("watchPipWindows", watchPipWindows);
+    safely("watchMultiview", watchMultiview);
     safely("watchNewTabPage", watchNewTabPage);
     safely("createWorkspaceSlot", createWorkspaceSlot);
     safely("watchTabAnimations", watchTabAnimations);

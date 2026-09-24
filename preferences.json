@@ -160,5 +160,15 @@
     "label": "Push picture-in-picture against the side of the screen to tuck it away",
     "property": "zia.pip.tuck",
     "defaultValue": true
+  },
+  {
+    "type": "separator",
+    "label": "Multiview"
+  },
+  {
+    "type": "checkbox",
+    "label": "\"Add to Multiview\" on videos and tabs: a tab that grids up videos and live streams",
+    "property": "zia.multiview",
+    "defaultValue": true
   }
 ]

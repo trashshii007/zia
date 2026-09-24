@@ -1,16 +1,16 @@
 # Zia
 
-**Zen Browser, with a Dia-inspired face.**
+**Zen Browser, rebuilt with a Dia-inspired finish.**
 
-A [Sine](https://github.com/CosmoCreeper/Sine) mod that reworks Zen's frame, taking its cues from [Dia](https://www.diabrowser.com): the page in a rounded card, a toolbar that takes the colour of the site under it, and a sidebar and address bar in the same spirit. Some of it goes its own way — the music player is Zia's own design, and Dia has nothing like it.
+Zia is a [Sine](https://github.com/CosmoCreeper/Sine) mod that reworks Zen from the frame in. The page sits in a rounded card, the toolbar takes on the colour of whatever site you're on, and the sidebar, address bar, media and picture-in-picture are all redesigned to match. It takes its cues from [Dia](https://www.diabrowser.com) and then keeps going: the music player, Multiview and picture-in-picture tucking are Zia's own, and Dia has nothing like them.
 
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![Platform](https://img.shields.io/badge/tested%20on-macOS%20%C2%B7%20dark%20mode-informational)
 ![Licence](https://img.shields.io/badge/licence-MIT-blue)
 
-What's changed in each release: [CHANGELOG.md](CHANGELOG.md).
+What's new in each release: [CHANGELOG.md](CHANGELOG.md).
 
-> **Alpha.** Built and tested on macOS, dark mode, **Sidebar and Top Toolbar** layout. Light mode, the other layouts, Windows and Linux are untested and will likely need work. Feedback on those is exactly what's wanted.
+> **Alpha.** Built and tuned on macOS, dark mode, with the **Sidebar and Top Toolbar** layout. Light mode, the other layouts, Windows and Linux haven't been tested yet and will likely need work. Feedback on those is very welcome.
 
 ---
 
@@ -34,11 +34,11 @@ Zia is a JavaScript mod, so Sine needs permission to load scripts from outside i
 
 **Set Look and Feel → Sidebar and Top Toolbar**, and use dark mode.
 
-Other mods may conflict, and Zia won't be adjusted to accommodate them. If something looks wrong, turn your other mods off and add them back one at a time.
+Other mods may conflict, and Zia won't be adjusted around them. If something looks off, turn your other mods off and add them back one at a time.
 
 ## Workspace icons
 
-The workspace and folder icons carry a lot of the Dia look, and they're worth setting up.
+Workspace and folder icons do a lot of the work in the Dia look, so they're worth five minutes.
 
 ▶ **[Zia: setting up workspace icons](https://vimeo.com/1228144298)**
 
@@ -48,17 +48,23 @@ The workspace and folder icons carry a lot of the Dia look, and they're worth se
 
 ### The page and the toolbar
 
-The page and toolbar sit together in one rounded card. The toolbar takes the colour of the site under it and follows that colour as you scroll, switching to dark text on light sites. Colours are remembered per host, so a page opens in the right colour rather than fading into it. A glow travels along the address bar while a page loads, and the address itself reads as `domain / title`, showing the full URL when you hover it.
+The page and toolbar sit together in one rounded card. The toolbar picks up the colour of the site underneath and follows it as you scroll, switching to dark text on light sites. Colours are remembered per site, so pages open already in their colour instead of fading into it. While a page loads, a glow runs along the address bar. The address itself reads as `domain / title`, and hovering it shows the full URL.
 
 ### The address bar
 
-Opened, the panel follows Dia's shape: short rows with air around them, one size and weight of text throughout, and none of Firefox's chips, row menus or one-off engine bars. What you type stays lined up with the results underneath it.
+The address pop-up follows Dia's shape: short rows with room around them, one size and weight of text throughout, and none of Firefox's chips, row menus or extra engine bars. What you type lines up exactly with the results underneath. As you type an address, the site's own icon takes the place of the magnifying glass. A paperclip beside site settings copies the page's link. The whole bar can also move to the **bottom**, under the page, with the pop-up opening upwards, in a single page or a split.
 
 ### The sidebar
 
-Essentials sit as tiles, four to a row and six when the sidebar is wide. Folders get hover boxes, a bounce when they open, icon or emoji covers, a colour of their own from the right-click menu, and an × to delete them. Plain tab groups, like the ones [Advanced Tab Groups](https://github.com/Vertex-Mods/Advanced-Tab-Groups) makes, get the same folder treatment. Downloads live next to the space name with a progress ring around them. Closing a tab by accident is undone with Cmd/Ctrl+Z for ten seconds afterwards.
+Essentials sit as tiles, four to a row, or six when the sidebar is wide. Folders get hover boxes, a small bounce when they open, icon or emoji covers, an × to delete them, and a colour of their own from the right-click menu that tints the whole folder:
 
-Tabs drag the way they do in Dia: the tab itself follows the pointer and the rows it passes slide aside. A folder opens up by a row to take it, and over the essentials a tab turns into the tile it will become. Hovering a tab shows a card with its title, address and a few actions; hovering a collapsed folder lists the tabs inside it.
+![A tinted folder](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/folder-tint.png>)
+
+Plain tab groups, like the ones [Advanced Tab Groups](https://github.com/Vertex-Mods/Advanced-Tab-Groups) makes, get the same folder treatment. Downloads sit next to the space name with a progress ring around them.
+
+Tabs drag the way they do in Dia. The tab itself follows the pointer while the rows it passes slide aside, a folder opens up by a row to make room, and over the essentials a tab turns into the tile it's about to become. Drag an essential back off and it's a tab again. Hovering a tab shows a card with its title, address and a few actions; hovering a collapsed folder lists what's inside.
+
+Cmd/Ctrl+Z reopens what you just closed for ten seconds afterwards. That includes whole folders, splits and groups of tabs: a split comes back as a split, and a deleted folder comes back with its name.
 
 ![Essentials and folders in the sidebar](https://github.com/user-attachments/assets/0c439e9d-651e-414c-8b85-d5bc8308aef4)
 
@@ -66,23 +72,49 @@ Spaces with a colour of their own carry it through the sidebar:
 
 ![A coloured space](https://github.com/user-attachments/assets/2b8748a4-d7fc-4ef0-a5b3-41ab3243e83b)
 
-Covers come from an icon picker Zia adds as a third tab beside Zen's own: 1,512 Phosphor icons with their own search, and Zen's emojis still there if you'd rather use one of those.
+Covers come from an icon picker Zia adds as a third tab beside Zen's own: 1,512 Phosphor icons with their own search, and Zen's emojis are still there if you'd rather use one.
 
 ![The icon picker](https://github.com/user-attachments/assets/07c2baf3-9af4-4d7f-a6c9-b9701070312a)
 
-### Media and split view
+### Music and split view
 
-Playing music gives you a card with the track's artwork and a glow in its colours. Sound bars replace Zen's speaker on playing tabs and appear on essentials, turning to dots when muted, and clicking them toggles the sound. They're white; turn on the tint option to colour the tabs' bars with the site's colours. It handles livestreams as well as ordinary videos.
+Playing music brings up a card with the track's artwork and a soft glow in its colours. It handles live streams as well as ordinary videos. Playing tabs get sound bars instead of Zen's speaker, and so do essentials. The bars turn to dots when muted and toggle the sound when clicked.
 
 ![The music player card](https://github.com/user-attachments/assets/5b4e2542-61a9-4fd6-b2ee-7fb58970ef5b)
 
-Split view gives each pane its own toolbar. Dragging a tab over the page brings up drop cards for either side, growing and turning blue as you get near the edge:
+In split view, each pane gets its own toolbar. Drag a tab over the page and drop cards rise on either side, growing and turning blue as you near the edge:
 
 ![Dragging a tab into a split](https://github.com/user-attachments/assets/50fed722-962c-4af6-9979-18800ae01a50)
 
-Drop it and both sites sit side by side, each with its own address and controls:
+Let go and both sites sit side by side, each with its own address and controls:
 
 ![Two sites in split view](https://github.com/user-attachments/assets/5318d0ce-d6b3-4adb-aef9-56ffbed72ae9)
+
+### Picture-in-picture
+
+Picture-in-picture looks like Dia's. At rest it's just the video, with nothing laid over it. Hover it and the video dims to show **Back to Tab** and **Close** at the top with the site between them, big 15-second skip and play/pause buttons in the middle, and a thin progress line along the bottom.
+
+![Picture-in-picture over the browser](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/pip.webp>)
+
+When you need the screen back, tuck it away. Press the tuck button beside Close, or drag the window against the left or right edge of the screen (a blue edge says *Let go to tuck away*), and it slides off, leaving a slim strip. Point at the strip and the video glides back out; move away and it tucks itself away again.
+
+<img src="https://raw.githubusercontent.com/z1n-k/zia/readme-images/pip-tucked.png" alt="Picture-in-picture tucked into the side of the screen" width="180">
+
+### Multiview
+
+Multiview turns a tab into a wall of videos. Right-click any video, a video's page or its tab and choose **Add to Multiview**:
+
+<img src="https://raw.githubusercontent.com/z1n-k/zia/readme-images/multiview-menu.webp" alt="Add to Multiview in a video's right-click menu" width="360">
+
+The first video opens the Multiview tab and the rest join it. The grid re-tiles itself to fill the tab, always at the biggest size that fits, as videos come and go. It's made for following several live streams at once.
+
+![Multiview with three videos](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/multiview-grid.webp>)
+
+Hover a tile to drag it to a new spot, give it the sound (one tile plays at a time, marked with a white ring), open it on its site or remove it. Videos pick up from where you were, and live streams join live.
+
+![A Multiview tile on hover](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/multiview-tile.webp>)
+
+Multiview works with **YouTube, Twitch** (live, videos and clips), **Kick, Vimeo, Dailymotion** and plain video files. Sites with copy protection, such as Netflix or sports services, can't be added. The Multiview page is hosted on this repo's [GitHub Pages](https://z1n-k.github.io/zia/multiview/), because YouTube and Twitch only play embedded videos on a real web address. Your list of videos lives in the page's own address, so it survives a restart, and it's never sent anywhere.
 
 ---
 
@@ -90,7 +122,7 @@ Drop it and both sites sit side by side, each with its own address and controls:
 
 **Settings → Sine Mods → Zia**
 
-Parts of the theme can be switched on or off individually.
+Almost every part of Zia can be switched on or off on its own.
 
 | Feature | Default |
 | --- | --- |
@@ -112,6 +144,7 @@ Parts of the theme can be switched on or off individually.
 | Small bounce when folders open or close | on |
 | Dia-style picture-in-picture controls (off: Firefox's own) | on |
 | Tuck picture-in-picture into the side of the screen | on |
+| **Add to Multiview**: grid videos and live streams in one tab | on |
 
 More features become switchable with each release. The styling toggles apply straight away; the ones that change behaviour need a restart.
 
@@ -127,7 +160,7 @@ Changed at the default level only. If you've set either yourself in `about:confi
 
 ## Folder names and icons from a local model
 
-Make a folder and Zia can name it and pick its icon for you, using a model that
+Make a folder and Zia can name it and choose its icon for you, with a model that
 runs on your machine. Three tabs from Levi's, Gucci and Louis Vuitton become a
 folder called **Clothing** with a clothing icon; PayPal, Stripe and Cash App
 become **Financial**. Nothing is sent anywhere.
