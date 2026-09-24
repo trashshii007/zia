@@ -50,6 +50,10 @@ Workspace and folder icons do a lot of the work in the Dia look, so they're wort
 
 The page and toolbar sit together in one rounded card. The toolbar picks up the colour of the site underneath and follows it as you scroll, switching to dark text on light sites. Colours are remembered per site, so pages open already in their colour instead of fading into it. While a page loads, a glow runs along the address bar. The address itself reads as `domain / title`, and hovering it shows the full URL.
 
+![The toolbar on a light page](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/toolbar-light.webp>)
+
+![The toolbar on a dark page](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/toolbar-dark.webp>)
+
 ### The address bar
 
 The address pop-up follows Dia's shape: short rows with room around them, one size and weight of text throughout, and none of Firefox's chips, row menus or extra engine bars. What you type lines up exactly with the results underneath. As you type an address, the site's own icon takes the place of the magnifying glass. A paperclip beside site settings copies the page's link. The whole bar can also move to the **bottom**, under the page, with the pop-up opening upwards, in a single page or a split.
