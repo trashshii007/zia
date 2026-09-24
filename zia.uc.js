@@ -1571,6 +1571,147 @@
     });
   }
 
+  // The favicon's own colours, strongest first: up to three hues it has a
+  // fair amount of, so the selected tab's glow can blend them. Grey, white and
+  // black icons give null and the glow stays white.
+  function readFaviconPalette(url) {
+    return new Promise((resolve) => {
+      if (!url) {
+        resolve(null);
+        return;
+      }
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const size = 32;
+          const canvas = document.createElementNS("http://www.w3.org/1999/xhtml", "canvas");
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext("2d", { willReadFrequently: true });
+          ctx.drawImage(img, 0, 0, size, size);
+          const { data } = ctx.getImageData(0, 0, size, size);
+          const bins = Array.from({ length: 12 }, () => [0, 0, 0, 0]);
+          for (let i = 0; i < data.length; i += 4) {
+            const [r, g, b, a] = [data[i], data[i + 1], data[i + 2], data[i + 3]];
+            if (a < 128) {
+              continue;
+            }
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            const sat = max ? (max - min) / max : 0;
+            if (sat < 0.3 || max < 60) {
+              continue;
+            }
+            let hue;
+            if (max === r) {
+              hue = ((g - b) / (max - min) + 6) % 6;
+            } else if (max === g) {
+              hue = (b - r) / (max - min) + 2;
+            } else {
+              hue = (r - g) / (max - min) + 4;
+            }
+            const bin = bins[Math.floor(hue * 2) % 12];
+            bin[0] += r * sat;
+            bin[1] += g * sat;
+            bin[2] += b * sat;
+            bin[3] += sat;
+          }
+          const ranked = bins.filter((bin) => bin[3] >= 6).sort((x, y) => y[3] - x[3]);
+          if (!ranked.length) {
+            resolve(null);
+            return;
+          }
+          const top = ranked[0][3];
+          const colors = ranked
+            .filter((bin) => bin[3] >= top * 0.12)
+            .slice(0, 3)
+            .map((bin) => bin.slice(0, 3).map((v) => Math.round(v / bin[3])));
+          // One colour: blend a lighter and a deeper shade of it instead.
+          if (colors.length === 1) {
+            const [r, g, b] = colors[0];
+            colors.push([r, g, b].map((v) => Math.round(v + (255 - v) * 0.35)));
+            colors.push([r, g, b].map((v) => Math.round(v * 0.7)));
+          } else if (colors.length === 2) {
+            colors.push(colors[0].map((v, k) => Math.round((v + colors[1][k]) / 2)));
+          }
+          resolve(colors.map((c) => `rgb(${c.join(", ")})`));
+        } catch (err) {
+          resolve(null);
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = url;
+    });
+  }
+
+  const faviconPaletteCache = new Map();
+
+  async function faviconPalette(tab) {
+    const url = tab.getAttribute("image") || "";
+    let palette = faviconPaletteCache.get(url);
+    if (palette === undefined) {
+      palette = await readFaviconPalette(url);
+      faviconPaletteCache.set(url, palette);
+    }
+    return (tab.getAttribute("image") || "") === url ? palette : undefined;
+  }
+
+  async function glowSelectedTab() {
+    const tab = gBrowser.selectedTab;
+    if (!tab || tab.hasAttribute("zen-essential") || !Services.prefs.getBoolPref("zia.tabs.favicon-glow", false)) {
+      return;
+    }
+    // A split is one pill: its left side glows in the left tab's colours and
+    // its right side in the right tab's.
+    const split = tab.closest("tab-group[split-view-group]");
+    if (split) {
+      const tabs = [...split.querySelectorAll(".tabbrowser-tab")];
+      const palettes = await Promise.all(tabs.map(faviconPalette));
+      if (!tabs.length || palettes.every((palette) => !palette)) {
+        split.removeAttribute("zia-glow");
+        return;
+      }
+      const white = "rgba(255, 255, 255, 0.23)";
+      const left = palettes[0]?.[0] || white;
+      const right = palettes[palettes.length - 1]?.[0] || white;
+      split.style.setProperty("--zia-glow-1", left);
+      split.style.setProperty("--zia-glow-2", right);
+      split.style.setProperty("--zia-glow-3", palettes[0]?.[1] || palettes[palettes.length - 1]?.[1] || white);
+      split.setAttribute("zia-glow", "true");
+      return;
+    }
+    const palette = await faviconPalette(tab);
+    if (palette === undefined) {
+      return;
+    }
+    if (palette) {
+      palette.forEach((color, i) => tab.style.setProperty(`--zia-glow-${i + 1}`, color));
+      tab.setAttribute("zia-glow", "true");
+    } else {
+      tab.removeAttribute("zia-glow");
+    }
+  }
+
+  function watchSelectedTabGlow() {
+    gBrowser.tabContainer.addEventListener("TabSelect", glowSelectedTab);
+    gBrowser.tabContainer.addEventListener("TabAttrModified", (event) => {
+      if (!event.detail?.changed?.includes("image")) {
+        return;
+      }
+      const split = gBrowser.selectedTab?.closest("tab-group[split-view-group]");
+      if (event.target === gBrowser.selectedTab || (split && split.contains(event.target))) {
+        glowSelectedTab();
+      }
+    });
+    for (const type of ["TabGrouped", "TabUngrouped"]) {
+      window.addEventListener(type, () => setTimeout(glowSelectedTab, 50));
+    }
+    const onPref = () => glowSelectedTab();
+    Services.prefs.addObserver("zia.tabs.favicon-glow", onPref);
+    window.addEventListener("unload", () => Services.prefs.removeObserver("zia.tabs.favicon-glow", onPref));
+    glowSelectedTab();
+  }
+
   const ARTWORK_WAIT_MS = 1500;
 
   async function updateCardGlow(card) {
@@ -1624,12 +1765,13 @@
   }
 
   let soundBarToken = 0;
-  const BAR_X = [1.6, 5.2, 8.8, 12.4];
+  // Three bars in the artwork's colours; they shrink into three dots when muted.
+  const BAR_X = [3.3, 6.8, 10.3];
+  const BAR_W = 2.4;
   const BAR_REST = [
     [4.5, 7],
     [2.5, 11],
-    [3.5, 9],
-    [5.25, 5.5],
+    [5.5, 5],
   ];
 
   function soundBarImages(colors) {
@@ -1640,8 +1782,8 @@
     }
     const a = colors ? lighten(colors[0]) : "rgb(255, 255, 255)";
     const b = colors ? lighten(colors[1]) : "rgb(255, 255, 255)";
-    const gradient = `<defs><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="1.6" y1="0" x2="14.4" y2="0"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>`;
-    const moving = [[0.55], [0.68], [0.5], [0.74]];
+    const gradient = `<defs><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="3.3" y1="0" x2="12.7" y2="0"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>`;
+    const moving = [[0.55], [0.68], [0.5]];
     const wave =
       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">${gradient}` +
       `<style>rect{transform-box:fill-box;transform-origin:center;animation:grow .26s cubic-bezier(.2,.9,.3,1) both,z .6s .26s ease-in-out infinite alternate}` +
@@ -1650,17 +1792,22 @@
       `@keyframes z{from{transform:scaleY(.22)}to{transform:scaleY(1)}}` +
       `@media (prefers-reduced-motion:reduce){rect{animation:none;transform:scaleY(.6)}}</style>` +
       `<g fill="url(#g)">` +
-      BAR_X.map((x, i) => `<rect class="b${i}" x="${x}" y="2.5" width="2" height="11" rx="1"/>`).join("") +
+      BAR_X.map((x, i) => `<rect class="b${i}" x="${x}" y="2.5" width="${BAR_W}" height="11" rx="1.2"/>`).join("") +
       `</g></svg>`;
     const dots =
       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">${gradient}` +
-      `<style>rect{animation:shrink .28s cubic-bezier(.4,0,.2,1) forwards}@keyframes shrink{to{height:2px;y:7px}}` +
+      `<style>rect{animation:shrink .28s cubic-bezier(.4,0,.2,1) forwards}@keyframes shrink{to{height:${BAR_W}px;y:${8 - BAR_W / 2}px}}` +
       `@media (prefers-reduced-motion:reduce){rect{animation-duration:1ms}}</style>` +
       `<g fill="url(#g)">` +
-      BAR_X.map((x, i) => `<rect x="${x}" y="${BAR_REST[i][0]}" width="2" height="${BAR_REST[i][1]}" rx="1"/>`).join("") +
+      BAR_X.map((x, i) => `<rect x="${x}" y="${BAR_REST[i][0]}" width="${BAR_W}" height="${BAR_REST[i][1]}" rx="1.2"/>`).join("") +
+      `</g></svg>`;
+    const still =
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">${gradient}` +
+      `<g fill="url(#g)">` +
+      BAR_X.map((x, i) => `<rect x="${x}" y="${BAR_REST[i][0]}" width="${BAR_W}" height="${BAR_REST[i][1]}" rx="1.2"/>`).join("") +
       `</g></svg>`;
     const encoded = (svg) => `data:image/svg+xml,${encodeURIComponent(svg)}`;
-    images = { waveData: encoded(wave), dotsData: encoded(dots) };
+    images = { waveData: encoded(wave), dotsData: encoded(dots), stillData: encoded(still) };
     soundBarCache.set(key, images);
     return images;
   }
@@ -1668,13 +1815,17 @@
   function freshSoundBars(colors) {
     const images = soundBarImages(colors);
     const n = ++soundBarToken;
-    return { wave: `url("${images.waveData}#${n}")`, dots: `url("${images.dotsData}#${n}")` };
+    return {
+      wave: `url("${images.waveData}#${n}")`,
+      dots: `url("${images.dotsData}#${n}")`,
+      still: `url("${images.stillData}")`,
+    };
   }
 
   function applyCardSoundBars(element) {
     const fresh = freshSoundBars(element.__ziaColors ?? null);
     element.style.setProperty("--zia-sound-wave", fresh.wave);
-    element.style.setProperty("--zia-sound-still", fresh.dots);
+    element.style.setProperty("--zia-sound-still", fresh.still);
     element.style.setProperty("--zia-sound-muted", fresh.dots);
   }
 
@@ -1697,17 +1848,87 @@
     card.__ziaColors = colors;
     applyCardSoundBars(card);
     watchCardSoundState(card);
+    repaintSoundTabs();
+  }
+
+  // A tab's bars are drawn before its player has read the artwork's colours
+  // (or before Zia knows which player is the tab's), so recolour them as soon
+  // as either arrives. Tabs whose colours haven't changed are left alone.
+  function repaintSoundTabs() {
+    for (const tab of gBrowser.tabs) {
+      paintTabSoundBars(tab);
+    }
+  }
+
+  // The colours of the artwork playing in this tab, from its player card.
+  function tabMediaColors(tab) {
+    const toolbar = document.getElementById("zen-media-controls-toolbar");
+    for (const element of toolbar?.querySelectorAll(".zen-media-card") || []) {
+      if (element.__ziaCard?.browser === tab.linkedBrowser) {
+        return element.__ziaColors ?? null;
+      }
+    }
+    return null;
+  }
+
+  // Until the player has the artwork's colours, the site's own colours stand in.
+  function tabFallbackColors(tab) {
+    const url = tab.getAttribute("image") || "";
+    const palette = faviconPaletteCache.get(url);
+    if (palette === undefined) {
+      readFaviconPalette(url).then((result) => {
+        faviconPaletteCache.set(url, result);
+        if (result) {
+          paintTabSoundBars(tab);
+        }
+      });
+      return null;
+    }
+    return palette ? [palette[0], palette[1] || palette[0]] : null;
   }
 
   function applyTabSoundBars(tab) {
-    const fresh = freshSoundBars(null);
+    // Essentials keep white bars; tabs take the artwork's colours.
+    const essential = tab.hasAttribute("zen-essential");
+    const colors = essential ? null : tabMediaColors(tab) || tabFallbackColors(tab);
+    const key = `${colors ? colors.join("|") : "white"}|${essential}|${tab.hasAttribute("soundplaying")}|${tab.hasAttribute("muted")}`;
+    if (tab.__ziaSoundKey === key) {
+      return;
+    }
+    tab.__ziaSoundKey = key;
+    const fresh = freshSoundBars(colors);
     tab.style.setProperty("--zia-sound-wave", fresh.wave);
     tab.style.setProperty("--zia-sound-muted", fresh.dots);
   }
 
+  // Zen's speaker button makes way for the bars, in the same spot.
+  function ensureTabSound(tab) {
+    if (tab.querySelector(".zia-tab-sound")) {
+      return;
+    }
+    const content = tab.querySelector(".tab-content");
+    if (!content) {
+      return;
+    }
+    const bars = document.createElementNS(XHTML_NS, "span");
+    bars.className = "zia-tab-sound";
+    bars.setAttribute("role", "button");
+    bars.addEventListener("mousedown", (event) => event.stopPropagation());
+    bars.addEventListener("click", (event) => {
+      event.stopPropagation();
+      tab.toggleMuteAudio();
+    });
+    const before =
+      content.querySelector(":scope > .tab-audio-button") || content.querySelector(":scope > .tab-label-container");
+    content.insertBefore(bars, before);
+  }
+
   function paintTabSoundBars(tab) {
     if (tab?.hasAttribute("soundplaying") || tab?.hasAttribute("muted")) {
+      ensureTabSound(tab);
       applyTabSoundBars(tab);
+      const bars = tab.querySelector(".zia-tab-sound");
+      bars?.setAttribute("title", tab.hasAttribute("muted") ? "Unmute tab" : "Mute tab");
     }
   }
 
@@ -1936,9 +2157,13 @@
       proto.updatePosition = function (...args) {
         const result = originalPosition.apply(this, args);
         try {
+          const known = this.element.__ziaCard === this;
           this.element.__ziaCard = this;
           watchTimeLeft(this);
           showTimeLeft(this);
+          if (!known) {
+            repaintSoundTabs();
+          }
         } catch (err) {
         }
         return result;
@@ -1948,8 +2173,9 @@
     const original = proto.updateIcon;
     const patched = function () {
       original.call(this);
-      if (this.element) {
+      if (this.element && this.element.__ziaCard !== this) {
         this.element.__ziaCard = this;
+        repaintSoundTabs();
       }
       const button = this.focusButton;
       let art = "";
@@ -3307,6 +3533,9 @@
     const results = document.getElementById("urlbar-results");
     if (results) {
       new MutationObserver(() => {
+        if (urlbar.hasAttribute("zia-classic")) {
+          return;
+        }
         shortenEngineActions(results);
         alignTypedTextWithRows(results);
         fitPopoverBottom();
@@ -3334,7 +3563,7 @@
       }
     };
     set("zen.widget.mac.mono-window-controls", false);
-    set("zen.urlbar.replace-newtab", false);
+    set("zen.urlbar.replace-newtab", !Services.prefs.getBoolPref("zia.newtab.real-tab", true));
     set("zen.splitView.enable-tab-drop", false);
     set("browser.urlbar.trimHttps", true);
     set("browser.urlbar.untrimOnUserInteraction.featureGate", false);
@@ -3349,6 +3578,36 @@
     }
 
     set("zia.features.folder-icon-suggest", false);
+    for (const name of ZIA_OPTIONS) {
+      set(name, true);
+    }
+    set("zia.tabs.favicon-glow", false);
+  }
+
+  // Options in Sine's settings. All on, except the favicon glow.
+  const ZIA_OPTIONS = ["zia.urlbar.dia-style", "zia.newtab.real-tab", "zia.tabs.sound-bars"];
+
+  function watchOptions() {
+    const urlbar = gURLBar?.textbox || document.getElementById("urlbar");
+    const apply = () => {
+      urlbar?.toggleAttribute("zia-classic", !Services.prefs.getBoolPref("zia.urlbar.dia-style", true));
+      // Off gives Cmd/Ctrl+T back to Zen's floating address bar.
+      try {
+        Services.prefs
+          .getDefaultBranch("")
+          .setBoolPref("zen.urlbar.replace-newtab", !Services.prefs.getBoolPref("zia.newtab.real-tab", true));
+      } catch (err) {
+      }
+    };
+    apply();
+    for (const name of ["zia.urlbar.dia-style", "zia.newtab.real-tab"]) {
+      Services.prefs.addObserver(name, apply);
+    }
+    window.addEventListener("unload", () => {
+      for (const name of ["zia.urlbar.dia-style", "zia.newtab.real-tab"]) {
+        Services.prefs.removeObserver(name, apply);
+      }
+    });
   }
 
   const FEATURES = ["media-player", "find-bar", "icon-picker", "undo-close", "folder-icon-suggest", "tab-hover-cards"];
@@ -7459,6 +7718,7 @@
     const urlbar = gURLBar.textbox || document.getElementById("urlbar");
 
     safely("applyZenDefaults", applyZenDefaults);
+    safely("watchOptions", watchOptions);
     safely("watchNewTabPage", watchNewTabPage);
     safely("createWorkspaceSlot", createWorkspaceSlot);
     safely("watchTabAnimations", watchTabAnimations);
@@ -7469,6 +7729,7 @@
     safely("watchRightEdges", watchRightEdges);
     ifOn("media-player", "watchMediaGlow", watchMediaGlow);
     safely("watchTabSoundBars", watchTabSoundBars);
+    safely("watchSelectedTabGlow", watchSelectedTabGlow);
     safely("watchSplitDrop", watchSplitDrop);
     safely("watchSplitPanes", watchSplitPanes);
     ifOn("find-bar", "watchFindBars", watchFindBars);

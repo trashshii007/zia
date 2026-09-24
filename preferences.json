@@ -41,7 +41,39 @@
   },
   {
     "type": "separator",
+    "label": "Tabs"
+  },
+  {
+    "type": "checkbox",
+    "label": "Sound bars on playing tabs (off: Zen's speaker)",
+    "property": "zia.tabs.sound-bars",
+    "defaultValue": true
+  },
+  {
+    "type": "checkbox",
+    "label": "Selected tab glows faintly in its favicon's colours",
+    "property": "zia.tabs.favicon-glow",
+    "defaultValue": false
+  },
+  {
+    "type": "separator",
+    "label": "Address bar"
+  },
+  {
+    "type": "checkbox",
+    "label": "Dia-style address bar pop-up (off: Zen's own)",
+    "property": "zia.urlbar.dia-style",
+    "defaultValue": true
+  },
+  {
+    "type": "separator",
     "label": "New tabs"
+  },
+  {
+    "type": "checkbox",
+    "label": "Cmd/Ctrl+T and + New Tab open a real tab (off: Zen's floating address bar)",
+    "property": "zia.newtab.real-tab",
+    "defaultValue": true
   },
   {
     "type": "checkbox",
