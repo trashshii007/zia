@@ -146,7 +146,9 @@
   }
 }
 
-:root[zia-dia] :is(#unpip, #close) {
+/* Firefox's corner buttons, and the minimize button Zen adds, make way for
+ * the top bar */
+:root[zia-dia] :is(#unpip, #close, #minimize) {
   display: none !important;
 }
 
