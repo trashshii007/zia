@@ -4010,15 +4010,18 @@
 
   const multiviewKey = (entry) => `${entry[0]}:${entry[1]}`;
 
+  // Entries are [kind, id, seconds, title]. In the address:
+  // #~colour,kind:id@seconds;title,...
   function multiviewEntries(spec) {
     const hash = (spec.split("#")[1] || "").trim();
     return hash
       .split(",")
       .filter((item) => item && !item.startsWith("~"))
       .map((item) => {
-        const [head, at] = item.split("@");
+        const [body, title] = item.split(";");
+        const [head, at] = body.split("@");
         const [kind, id] = head.split(":");
-        return kind && id ? [kind, decodeURIComponent(id), Number(at) || 0] : null;
+        return kind && id ? [kind, decodeURIComponent(id), Number(at) || 0, title ? decodeURIComponent(title) : ""] : null;
       })
       .filter(Boolean);
   }
@@ -4043,7 +4046,10 @@
   }
 
   function multiviewSpec(entries) {
-    const items = entries.map(([kind, id, at]) => `${kind}:${encodeURIComponent(id)}${at ? `@${Math.floor(at)}` : ""}`);
+    const items = entries.map(
+      ([kind, id, at, title]) =>
+        `${kind}:${encodeURIComponent(id)}${at ? `@${Math.floor(at)}` : ""}${title ? `;${encodeURIComponent(title)}` : ""}`
+    );
     return `${MULTIVIEW_URL}#${[`~${multiviewColor()}`, ...items].join(",")}`;
   }
 
@@ -4059,9 +4065,9 @@
 
   const findMultiviewTab = () => gBrowser.visibleTabs.find(isMultiviewTab);
 
-  function multiviewFull() {
+  function currentMultiview() {
     const tab = findMultiviewTab();
-    return !!tab && multiviewEntries(tab.linkedBrowser.currentURI.spec).length >= MULTIVIEW_MAX;
+    return tab ? multiviewEntries(tab.linkedBrowser.currentURI.spec) : [];
   }
 
   function recolorMultiview(tab) {
@@ -4075,7 +4081,9 @@
     return tab?.linkedBrowser?.currentURI?.spec?.startsWith(MULTIVIEW_URL);
   }
 
-  function addToMultiview(entry) {
+  // Adds a video, or with `replace` puts it in that video's place; the other
+  // tiles keep playing.
+  function addToMultiview(entry, replace = -1) {
     const tab = findMultiviewTab();
     if (!tab) {
       gBrowser.selectedTab = gBrowser.addTrustedTab(multiviewSpec([entry]), {
@@ -4084,11 +4092,58 @@
       return;
     }
     const entries = multiviewEntries(tab.linkedBrowser.currentURI.spec);
-    if (!entries.some((item) => multiviewKey(item) === multiviewKey(entry)) && entries.length < MULTIVIEW_MAX) {
-      entries.push(entry);
+    if (!entries.some((item) => multiviewKey(item) === multiviewKey(entry))) {
+      if (replace >= 0 && replace < entries.length) {
+        entries[replace] = entry;
+      } else if (entries.length < MULTIVIEW_MAX) {
+        entries.push(entry);
+      }
     }
     setMultiviewSpec(tab, multiviewSpec(entries));
     gBrowser.selectedTab = tab;
+  }
+
+  // A tab's title without its site's name or unread count, for labels.
+  function multiviewTitle(tab) {
+    return (tab?.label || "")
+      .replace(/^\(\d+\+?\)\s*/, "")
+      .replace(/\s*[-–|•]\s*(YouTube|Twitch|Kick|Vimeo|Dailymotion)\s*$/i, "")
+      .trim()
+      .slice(0, 120);
+  }
+
+  function multiviewSite([kind, id]) {
+    switch (kind) {
+      case "yt":
+        return "YouTube";
+      case "tw":
+        return `twitch.tv/${id}`;
+      case "twv":
+        return "Twitch video";
+      case "twc":
+        return "Twitch clip";
+      case "kick":
+        return `kick.com/${id}`;
+      case "vm":
+        return "Vimeo";
+      case "dm":
+        return "Dailymotion";
+      default:
+        try {
+          return new URL(id).hostname.replace(/^www\./, "");
+        } catch (err) {
+          return "Video";
+        }
+    }
+  }
+
+  function multiviewLabel(entry) {
+    const site = multiviewSite(entry);
+    const title = entry[3];
+    if (!title || title.toLowerCase() === site.toLowerCase()) {
+      return site;
+    }
+    return `${title.length > 60 ? `${title.slice(0, 59)}…` : title} — ${site}`;
   }
 
   function tabMultiviewEntry(tab) {
@@ -4096,24 +4151,55 @@
     if (!browser || isMultiviewTab(tab)) {
       return null;
     }
-    return multiviewEntry(browser.currentURI?.spec, null, multiviewPosition(browser));
+    const entry = multiviewEntry(browser.currentURI?.spec, null, multiviewPosition(browser));
+    return entry && [...entry, multiviewTitle(tab)];
   }
 
-  // Up to four videos; after that the item says so instead.
-  function showMultiviewItem(item, entry) {
-    item.hidden = !entry;
-    const full = !!entry && multiviewFull();
-    item.disabled = full;
-    item.setAttribute("label", full ? "Multiview is full (4 videos)" : "Add to Multiview");
-  }
-
-  function makeMultiviewItem(id, onCommand) {
+  // "Add to Multiview", or once it holds four, "Replace in Multiview" with
+  // the four videos to choose from.
+  function attachMultiviewMenu(menu, anchor, idPrefix, readEntry) {
+    let pending = null;
     const item = document.createXULElement("menuitem");
-    item.id = id;
+    item.id = `${idPrefix}-multiview`;
     item.setAttribute("label", "Add to Multiview");
     item.setAttribute("accesskey", "M");
-    item.addEventListener("command", onCommand);
-    return item;
+    item.addEventListener("command", () => pending && addToMultiview(pending));
+
+    const replaceMenu = document.createXULElement("menu");
+    replaceMenu.id = `${idPrefix}-multiview-replace`;
+    replaceMenu.setAttribute("label", "Replace in Multiview");
+    replaceMenu.setAttribute("accesskey", "M");
+    const replacePopup = document.createXULElement("menupopup");
+    replaceMenu.appendChild(replacePopup);
+
+    if (anchor) {
+      anchor.after(item, replaceMenu);
+    } else {
+      menu.append(item, replaceMenu);
+    }
+
+    menu.addEventListener("popupshowing", (event) => {
+      if (event.target !== menu) {
+        return;
+      }
+      pending = readEntry();
+      const current = currentMultiview();
+      const already = !!pending && current.some((entry) => multiviewKey(entry) === multiviewKey(pending));
+      const full = !!pending && !already && current.length >= MULTIVIEW_MAX;
+      item.hidden = !pending || full;
+      replaceMenu.hidden = !full;
+      if (!full) {
+        return;
+      }
+      replacePopup.replaceChildren(
+        ...current.map((entry, index) => {
+          const choice = document.createXULElement("menuitem");
+          choice.setAttribute("label", multiviewLabel(entry));
+          choice.addEventListener("command", () => addToMultiview(pending, index));
+          return choice;
+        })
+      );
+    });
   }
 
   function watchMultiview() {
@@ -4123,65 +4209,41 @@
     // own menu first; right-click again for this one.)
     const pageMenu = document.getElementById("contentAreaContextMenu");
     if (pageMenu) {
-      let pending = null;
-      const item = makeMultiviewItem("zia-context-multiview", () => pending && addToMultiview(pending));
-      const pipItem = document.getElementById("context-video-pictureinpicture");
-      if (pipItem) {
-        pipItem.after(item);
-      } else {
-        pageMenu.appendChild(item);
-      }
-      pageMenu.addEventListener("popupshowing", (event) => {
-        if (event.target !== pageMenu) {
-          return;
-        }
-        pending = null;
+      attachMultiviewMenu(pageMenu, document.getElementById("context-video-pictureinpicture"), "zia-context", () => {
         const context = window.gContextMenu;
-        if (enabled() && context && !context.isTextSelected && !context.onLink && !context.onImage) {
-          const browser = context.browser;
-          const framePage = context.contentData?.docLocation;
-          const topPage = browser?.currentURI?.spec;
-          const media = context.onVideo ? context.mediaURL : null;
-          const at = multiviewPosition(browser);
-          if (topPage?.startsWith(MULTIVIEW_URL)) {
-            pending = null;
-          } else if (context.onVideo) {
-            // The site first (the frame the video is in, then the page), and
-            // only then the video's own file.
-            pending =
-              (framePage && multiviewEntry(framePage, null, at)) ||
-              multiviewEntry(topPage, null, at) ||
-              multiviewEntry(topPage, media, at);
-          } else {
-            const entry = multiviewEntry(topPage, null, at);
-            pending = entry && entry[0] !== "file" ? entry : null;
-          }
+        if (!enabled() || !context || context.isTextSelected || context.onLink || context.onImage) {
+          return null;
         }
-        showMultiviewItem(item, pending);
+        const browser = context.browser;
+        const framePage = context.contentData?.docLocation;
+        const topPage = browser?.currentURI?.spec;
+        if (!topPage || topPage.startsWith(MULTIVIEW_URL)) {
+          return null;
+        }
+        const at = multiviewPosition(browser);
+        let entry;
+        if (context.onVideo) {
+          // The site first (the frame the video is in, then the page), and
+          // only then the video's own file.
+          entry =
+            (framePage && multiviewEntry(framePage, null, at)) ||
+            multiviewEntry(topPage, null, at) ||
+            multiviewEntry(topPage, context.mediaURL, at);
+        } else {
+          entry = multiviewEntry(topPage, null, at);
+          entry = entry && entry[0] !== "file" ? entry : null;
+        }
+        return entry && [...entry, multiviewTitle(gBrowser.getTabForBrowser(browser))];
       });
     }
 
     // Right-clicking a tab
     const tabMenu = document.getElementById("tabContextMenu");
     if (tabMenu) {
-      const item = makeMultiviewItem("zia-tab-multiview", () => {
-        const entry = tabMultiviewEntry(window.TabContextMenu?.contextTab);
-        if (entry) {
-          addToMultiview(entry);
-        }
-      });
       const anchor = document.getElementById("context_duplicateTab") || document.getElementById("context_reloadTab");
-      if (anchor) {
-        anchor.after(item);
-      } else {
-        tabMenu.appendChild(item);
-      }
-      tabMenu.addEventListener("popupshowing", (event) => {
-        if (event.target !== tabMenu) {
-          return;
-        }
+      attachMultiviewMenu(tabMenu, anchor, "zia-tab", () => {
         const entry = enabled() && tabMultiviewEntry(window.TabContextMenu?.contextTab);
-        showMultiviewItem(item, entry && entry[0] !== "file" ? entry : null);
+        return entry && entry[0] !== "file" ? entry : null;
       });
     }
 
