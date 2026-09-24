@@ -621,14 +621,14 @@
     wall.style.setProperty("--tile-h", `${Math.floor(best.h)}px`);
   }
 
-  // The tab's icon: a 2×2 grid of white squares, one coloured in per video.
+  // The tab's icon: a 2×2 grid of faint white squares, one coloured in per video.
   function drawIcon() {
     const spots = [[1, 2], [9, 2], [1, 9], [9, 9]];
     const squares = spots
       .map(([x, y], i) =>
         i < order.length
           ? `<rect x="${x}" y="${y}" width="6" height="5" rx="1.5" fill="#${color}"/>`
-          : `<rect x="${x}" y="${y}" width="6" height="5" rx="1.5" fill="#fff"/>`
+          : `<rect x="${x}" y="${y}" width="6" height="5" rx="1.5" fill="#fff" fill-opacity="0.35"/>`
       )
       .join("");
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">${squares}</svg>`;
