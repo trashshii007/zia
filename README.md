@@ -16,7 +16,11 @@ What's new in each release: [CHANGELOG.md](CHANGELOG.md).
 
 ![Zia](https://github.com/user-attachments/assets/998f92b8-74ea-4bac-8131-6ab4a9993ab7)
 
-Two sites side by side in split view, each with its own toolbar:
+Split view: drag a tab over the page and drop cards rise on either side, growing and turning blue as you near the edge.
+
+![Dragging a tab into a split](https://github.com/user-attachments/assets/50fed722-962c-4af6-9979-18800ae01a50)
+
+Let go and both sites sit side by side, each with its own toolbar, address and controls:
 
 ![Two sites in split view](https://github.com/user-attachments/assets/5318d0ce-d6b3-4adb-aef9-56ffbed72ae9)
 
@@ -68,38 +72,6 @@ The page and toolbar sit together in one rounded card. The toolbar picks up the 
 
 The address pop-up follows Dia's shape: short rows with room around them, one size and weight of text throughout, and none of Firefox's chips, row menus or extra engine bars. What you type lines up exactly with the results underneath. As you type an address, the site's own icon takes the place of the magnifying glass. A paperclip beside site settings copies the page's link. The whole bar can also move to the **bottom**, under the page, with the pop-up opening upwards, in a single page or a split.
 
-### The sidebar
-
-Essentials sit as tiles, four to a row, or six when the sidebar is wide. Folders get hover boxes, a small bounce when they open, icon or emoji covers, an × to delete them, and a colour of their own from the right-click menu that tints the whole folder:
-
-![A tinted folder](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/folder-tint.png>)
-
-Plain tab groups, like the ones [Advanced Tab Groups](https://github.com/Vertex-Mods/Advanced-Tab-Groups) makes, get the same folder treatment. Downloads sit next to the space name with a progress ring around them.
-
-Tabs drag the way they do in Dia. The tab itself follows the pointer while the rows it passes slide aside, a folder opens up by a row to make room, and over the essentials a tab turns into the tile it's about to become. Drag an essential back off and it's a tab again. Hovering a tab shows a card with its title, address and a few actions; hovering a collapsed folder lists what's inside.
-
-Cmd/Ctrl+Z reopens what you just closed for ten seconds afterwards. That includes whole folders, splits and groups of tabs: a split comes back as a split, and a deleted folder comes back with its name.
-
-![Essentials and folders in the sidebar](https://github.com/user-attachments/assets/0c439e9d-651e-414c-8b85-d5bc8308aef4)
-
-Spaces with a colour of their own carry it through the whole sidebar.
-
-Covers come from an icon picker Zia adds as a third tab beside Zen's own: 1,512 Phosphor icons with their own search, and Zen's emojis are still there if you'd rather use one.
-
-![The icon picker](https://github.com/user-attachments/assets/07c2baf3-9af4-4d7f-a6c9-b9701070312a)
-
-### Music and split view
-
-Playing music brings up a card with the track's artwork and a soft glow in its colours. It handles live streams as well as ordinary videos. Playing tabs get sound bars instead of Zen's speaker, and so do essentials. The bars turn to dots when muted and toggle the sound when clicked.
-
-![The music player card](https://github.com/user-attachments/assets/5b4e2542-61a9-4fd6-b2ee-7fb58970ef5b)
-
-In split view, each pane gets its own toolbar. Drag a tab over the page and drop cards rise on either side, growing and turning blue as you near the edge:
-
-![Dragging a tab into a split](https://github.com/user-attachments/assets/50fed722-962c-4af6-9979-18800ae01a50)
-
-Let go and both sites sit side by side, each with its own address and controls.
-
 ### Picture-in-picture
 
 Picture-in-picture looks like Dia's. At rest it's just the video, with nothing laid over it. Hover it and the video dims to show **Back to Tab** and **Close** at the top with the site between them, big 15-second skip and play/pause buttons in the middle, and a thin progress line along the bottom.
@@ -125,6 +97,32 @@ Hover a tile to drag it to a new spot, give it the sound (one tile plays at a ti
 ![A Multiview tile on hover](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/multiview-tile.webp>)
 
 Multiview works with **YouTube, Twitch** (live, videos and clips), **Kick, Vimeo, Dailymotion** and plain video files. Sites with copy protection, such as Netflix or sports services, can't be added. The Multiview page is hosted on this repo's [GitHub Pages](https://z1n-k.github.io/zia/multiview/), because YouTube and Twitch only play embedded videos on a real web address. Your list of videos lives in the page's own address, so it survives a restart, and it's never sent anywhere.
+
+### The sidebar
+
+Essentials sit as tiles, four to a row, or six when the sidebar is wide. Folders get hover boxes, a small bounce when they open, icon or emoji covers, an × to delete them, and a colour of their own from the right-click menu that tints the whole folder:
+
+![A tinted folder](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/folder-tint.png>)
+
+Plain tab groups, like the ones [Advanced Tab Groups](https://github.com/Vertex-Mods/Advanced-Tab-Groups) makes, get the same folder treatment. Downloads sit next to the space name with a progress ring around them.
+
+Tabs drag the way they do in Dia. The tab itself follows the pointer while the rows it passes slide aside, a folder opens up by a row to make room, and over the essentials a tab turns into the tile it's about to become. Drag an essential back off and it's a tab again. Hovering a tab shows a card with its title, address and a few actions; hovering a collapsed folder lists what's inside.
+
+Cmd/Ctrl+Z reopens what you just closed for ten seconds afterwards. That includes whole folders, splits and groups of tabs: a split comes back as a split, and a deleted folder comes back with its name.
+
+![Essentials and folders in the sidebar](https://github.com/user-attachments/assets/0c439e9d-651e-414c-8b85-d5bc8308aef4)
+
+Spaces with a colour of their own carry it through the whole sidebar.
+
+Covers come from an icon picker Zia adds as a third tab beside Zen's own: 1,512 Phosphor icons with their own search, and Zen's emojis are still there if you'd rather use one.
+
+![The icon picker](https://github.com/user-attachments/assets/07c2baf3-9af4-4d7f-a6c9-b9701070312a)
+
+### Music
+
+Playing music brings up a card with the track's artwork and a soft glow in its colours. It handles live streams as well as ordinary videos. Playing tabs get sound bars instead of Zen's speaker, and so do essentials. The bars turn to dots when muted and toggle the sound when clicked.
+
+![The music player card](https://github.com/user-attachments/assets/5b4e2542-61a9-4fd6-b2ee-7fb58970ef5b)
 
 ---
 
