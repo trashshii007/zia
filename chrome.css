@@ -1569,7 +1569,7 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
 
 /* An open empty folder shows a dashed "Drag tabs here" slot exactly where
  * the first tab will sit (sized from a real tab by zia.uc.js), outlined in
- * the folder's colour, or Zia blue for white and uncoloured folders.
+ * the folder's colour, or a soft white for white and uncoloured folders.
  * (A folder emptied by moving its last tab out collapses, zia.uc.js.)
  * While a tab is dragged in, open or collapsed, the tab wears the dashes.
  * The slot is drawn on the container so Zen's own
@@ -1577,11 +1577,11 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
  * collapse (0.18s), and --zia-slot-y moves it with its folder's header
  * while rows slide aside for a drag. */
 :root[zen-sidebar-expanded="true"] zen-folder[zia-empty] {
-  --zia-slot-color: rgb(90, 185, 245);
-  --zia-slot-border: 1.5px dashed color-mix(in srgb, color-mix(in srgb, var(--zia-slot-color), white 45%) 70%, transparent);
+  --zia-slot-border: 1.5px dashed rgba(255, 255, 255, 0.28);
 
+  /* lightened, so it still stands out against the folder's own tint */
   &[zia-folder-color]:not([zia-folder-color="white"]) {
-    --zia-slot-color: var(--zia-folder-swatch);
+    --zia-slot-border: 1.5px dashed color-mix(in srgb, color-mix(in srgb, var(--zia-folder-swatch), white 45%) 70%, transparent);
   }
 
   & > .tab-group-container::after {
@@ -1594,7 +1594,6 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
     margin-block: var(--zia-slot-mt, 2px) var(--zia-slot-mb, 2px);
     margin-inline: var(--zia-slot-ms, 16px) var(--zia-slot-me, 7px);
     overflow: hidden;
-    /* lightened, so it still stands out against the folder's own tint */
     border: var(--zia-slot-border);
     border-radius: var(--zia-tab-radius);
     color: rgba(255, 255, 255, 0.5);
