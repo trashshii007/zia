@@ -440,29 +440,70 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
 }
 
 
-/* An empty folder, open: a dashed, tab-sized "Drag tabs here" slot where the
- * first tab would go, lit up as "Drop to add" while a tab is dragged into
- * the folder. Drawn on the container so Zen's own folder code never sees an
- * extra element. */
-:root[zen-sidebar-expanded="true"] zen-folder[zia-empty]:not([collapsed]) > .tab-group-container::after {
-  content: url("chrome://sine/content/zia/icons/folder-drop.svg") "\2002 Drag tabs here";
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  height: 32px;
-  margin: 2px 8px 6px var(--zen-folder-indent, 14px);
-  border: 1.5px dashed rgba(255, 255, 255, 0.22);
-  border-radius: 9px;
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 12.5px;
-  pointer-events: none;
-  transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease;
+/* An empty folder: a dashed "Drag tabs here" slot the size of a tab where
+ * the first tab would go, lit up as "Drop to add" while a tab is dragged in.
+ * Outlined in the folder's colour, or Zia blue for white and uncoloured
+ * folders. Drawn on the container so Zen's own folder code never sees an
+ * extra element. Collapsing shrinks it away alongside Zen's slide (0.18s);
+ * zia-slot-shift moves it with its folder's header while rows slide aside
+ * for a drag (zia.uc.js). */
+:root[zen-sidebar-expanded="true"] zen-folder[zia-empty] {
+  --zia-slot-color: rgb(90, 185, 245);
+
+  &[zia-folder-color]:not([zia-folder-color="white"]) {
+    --zia-slot-color: var(--zia-folder-swatch);
+  }
+
+  & > .tab-group-container::after {
+    content: url("chrome://sine/content/zia/icons/folder-drop.svg") "\2002 Drag tabs here";
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    height: var(--tab-min-height, 35px);
+    margin-block: var(--tab-margin-block, 2px);
+    margin-inline: calc(var(--zen-folder-indent, 14px) + var(--tab-margin-block, 2px)) var(--tab-margin-block, 2px);
+    overflow: hidden;
+    /* lightened, so it still stands out against the folder's own tint */
+    border: 1.5px dashed color-mix(in srgb, color-mix(in srgb, var(--zia-slot-color), white 45%) 70%, transparent);
+    border-radius: var(--zia-tab-radius);
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12.5px;
+    white-space: nowrap;
+    translate: 0 var(--zia-slot-y, 0px);
+    pointer-events: none;
+    transition:
+      height 180ms ease-in-out,
+      margin 180ms ease-in-out,
+      border-width 180ms ease-in-out,
+      opacity 180ms ease-in-out,
+      translate 100ms ease-out,
+      border-color 120ms ease,
+      background-color 120ms ease,
+      color 120ms ease;
+  }
+
+  &[collapsed] > .tab-group-container::after {
+    height: 0;
+    margin-block: 0;
+    border-width: 0;
+    opacity: 0;
+  }
+
+  &[zia-drop-slot]:not([collapsed]) > .tab-group-container::after {
+    content: url("chrome://sine/content/zia/icons/folder-drop-active.svg") "\2002 Drop to add";
+    border-color: color-mix(in srgb, var(--zia-slot-color), white 35%);
+    background-color: color-mix(in srgb, var(--zia-slot-color) 30%, transparent);
+    color: rgb(255, 255, 255);
+  }
+
+  &:has(> .tab-group-label-container[zia-dragging]) > .tab-group-container::after {
+    transition: none;
+  }
 }
 
-:root[zen-sidebar-expanded="true"] zen-folder[zia-empty][zia-drop-slot]:not([collapsed]) > .tab-group-container::after {
-  content: url("chrome://sine/content/zia/icons/folder-drop-active.svg") "\2002 Drop to add";
-  border-color: rgb(90, 185, 245);
-  background-color: rgba(90, 185, 245, 0.14);
-  color: rgb(191, 224, 245);
+/* A coloured folder keeps its colour while a tab is dragged into it, rather
+ * than the plain hover wash. */
+:root[zen-sidebar-expanded="true"] zen-folder[zia-folder-color]:not([zia-folder-color="white"])[zia-drop-slot]::before {
+  background-color: color-mix(in srgb, var(--zia-folder-swatch) var(--zia-folder-tint), transparent) !important;
 }

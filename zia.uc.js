@@ -6637,7 +6637,18 @@
       return rows;
     };
 
+    // An empty folder's "Drag tabs here" slot is drawn on its tab container,
+    // so it follows the folder's header when that moves aside.
+    const slotFolderOf = (node) =>
+      node?.classList?.contains("tab-group-label-container") && node.parentElement?.hasAttribute("zia-empty")
+        ? node.parentElement
+        : null;
+
     const clearNode = (node) => {
+      const slotFolder = slotFolderOf(node);
+      if (slotFolder) {
+        slotFolder.style.removeProperty("--zia-slot-y");
+      }
       node.style.removeProperty("top");
       node.style.removeProperty("position");
       node.style.removeProperty("z-index");
@@ -6665,6 +6676,7 @@
         return;
       }
       node.style.setProperty("--zia-drag-y", `${Math.round(y)}px`);
+      slotFolderOf(node)?.style.setProperty("--zia-slot-y", `${Math.round(y)}px`);
       node.style.removeProperty("top");
       node.style.setProperty("transform", `translateY(${Math.round(y)}px)`, "important");
       node.style.setProperty("position", "relative", "important");
