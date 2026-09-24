@@ -1,0 +1,49 @@
+@media -moz-pref("zia.features.icon-picker") {
+#PanelUI-zen-emojis-picker[only-svg-icons="true"] :is(#PanelUI-zen-emojis-picker-header, #PanelUI-zen-emojis-picker-search) {
+  display: flex !important;
+  visibility: visible !important;
+}
+
+#zia-icons-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+}
+
+#zia-icons-searchbar {
+  display: flex;
+  width: 100%;
+}
+
+#zia-icons-search {
+  width: 100%;
+  padding: 4px;
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  &:focus,
+  &:focus-visible {
+    outline: none;
+  }
+}
+
+#zia-icons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
+  align-content: start;
+  gap: 5px;
+  padding: 0 10px 10px;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.zia-icon-item {
+  -moz-context-properties: fill, fill-opacity, stroke;
+  fill: rgba(255, 255, 255, 0.85);
+}
+}
+

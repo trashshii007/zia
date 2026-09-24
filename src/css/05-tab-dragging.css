@@ -1,0 +1,204 @@
+.tabbrowser-tab[drag-image] {
+  margin: 0 !important;
+  translate: none !important;
+  scale: none !important;
+
+  animation: none !important;
+  transition: none !important;
+}
+
+.tabbrowser-tab[drag-image] * {
+  animation: none !important;
+  transition: none !important;
+}
+
+.tabbrowser-tab[drag-image] > .tab-stack > .tab-background {
+  box-shadow: none !important;
+}
+
+.tabbrowser-tab[drag-image] > .tab-stack > .tab-background::after {
+  display: none !important;
+}
+#zen-drag-indicator {
+  display: none !important;
+}
+
+#tabbrowser-tabs[movingtab] :is(.tabbrowser-tab, .tab-group-label-container, tab-group, zen-folder):is([zia-dragging], [zia-shift]) {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+:root[zia-dragging-tab] :is(zen-folder, tab-group:not([split-view-group])):has(.tabbrowser-tab[zia-dragging]) {
+  z-index: 41 !important;
+
+  & > .tab-group-container {
+    overflow: visible !important;
+  }
+}
+
+zen-folder[collapsed][has-active] > .tab-group-container {
+  overflow-clip-margin: 12px;
+}
+
+:root[zia-dragging-tab] .tabbrowser-tab[zen-essential] {
+  visibility: inherit !important;
+}
+
+#zia-essential-proxy,
+#zia-essential-proxy > .tab-stack,
+#zia-essential-proxy > .tab-stack > .tab-background,
+#zia-essential-proxy > .tab-stack > .tab-content {
+  opacity: 1 !important;
+}
+
+.tabbrowser-tab[zia-essential-proxy],
+.tabbrowser-tab[zia-essential-proxy] > .tab-stack {
+  overflow: visible !important;
+  contain: none !important;
+}
+
+.tabbrowser-tab[zia-essential-proxy] > .tab-stack,
+.tabbrowser-tab[zia-essential-proxy] > .tab-stack > .tab-background {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+}
+
+.tabbrowser-tab[zia-essential-proxy] :is(.tab-reset-pin-button, .tab-reset-pin-label, .tab-group-line) {
+  display: none !important;
+}
+
+zen-essentials-promo {
+  display: none !important;
+}
+
+:is(#tabs-newtab-button, #vertical-tabs-newtab-button)[zia-shift] {
+  position: relative !important;
+  transform: translateY(var(--zia-drag-y)) !important;
+  transition: transform 100ms ease-out !important;
+}
+
+.zen-essentials-container > vbox:not(.tabbrowser-tab) {
+  min-height: var(--zia-essential-height);
+  min-width: var(--zia-essential-min-width);
+  max-width: var(--zia-essential-max-width);
+}
+
+.tabbrowser-tab[zen-essential][zia-essential-dragged] {
+  opacity: 0 !important;
+}
+
+:is(#zen-sidebar-splitter, #sidebar-splitter, .zen-sidebar-splitter),
+:is(#zen-sidebar-splitter, #sidebar-splitter, .zen-sidebar-splitter)::before,
+:is(#zen-sidebar-splitter, #sidebar-splitter, .zen-sidebar-splitter)::after {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.tabbrowser-tab:is([label=""], :not([label])) .tab-reset-pin-label {
+  display: none !important;
+}
+
+:root[zia-dragging-tab] :is(#zen-essentials, .zen-essentials-container) {
+  transition: min-height 140ms ease-out;
+}
+
+:is(#zen-essentials, .zen-essentials-container)[zia-make-room] {
+  min-height: var(--zia-room) !important;
+}
+
+.tabbrowser-tab[zia-no-glow],
+.tabbrowser-tab[zia-no-glow] > .tab-stack > .tab-background {
+  --zia-active-glow-color: transparent !important;
+}
+
+.pinned-tabs-container-separator[zia-sep-open] {
+  display: flex !important;
+  visibility: visible !important;
+  height: 22px !important;
+  opacity: 1 !important;
+}
+
+.pinned-tabs-container-separator[zia-shift] {
+  position: relative !important;
+  transform: translateY(var(--zia-drag-y)) !important;
+  transition: transform 100ms ease-out !important;
+  z-index: 1 !important;
+}
+
+#tabbrowser-tabs :is(.tabbrowser-tab, .tab-group-label-container, zen-folder)[zia-shift] {
+  position: relative !important;
+  transform: translateY(var(--zia-drag-y)) !important;
+  transition: transform 100ms ease-out !important;
+  z-index: 1 !important;
+}
+
+#tabbrowser-tabs :is(.tabbrowser-tab, .tab-group-label-container, zen-folder)[zia-dragging] {
+  position: relative !important;
+  transform: translateY(var(--zia-drag-y)) !important;
+  transition: none !important;
+  z-index: 40 !important;
+
+  pointer-events: none !important;
+}
+
+[zia-drop-lock]:not([zia-landing]),
+#tabbrowser-tabs[zia-settling] :is(.tabbrowser-tab, .tab-group-label-container, tab-group, zen-folder):not([zia-landing]) {
+  transition: none !important;
+  transform: none !important;
+  translate: none !important;
+  top: 0 !important;
+}
+
+[zia-drop-lock] {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+:root[zia-dragging-tab] .tabbrowser-tab :is(.tab-close-button, .tab-reset-button),
+#tabbrowser-tabs[zia-settling] .tabbrowser-tab :is(.tab-close-button, .tab-reset-button) {
+  opacity: 0 !important;
+  transition: none !important;
+}
+
+#tabbrowser-tabs[zia-settling] .tabbrowser-tab {
+  animation: none !important;
+}
+
+#zia-tab-card[zia-anchor="essential"]::before {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  top: -14px;
+  left: -14px;
+  pointer-events: none;
+}
+
+#zia-tab-card[zia-anchor="essential"][zia-side="right"]::before {
+  left: auto;
+  right: -14px;
+}
+
+.tabbrowser-tab[zia-opening="true"]:not([zen-essential]) {
+  animation: zia-tab-open 0.22s ease-out !important;
+}
+
+@keyframes zia-tab-open {
+  from { max-height: 0; min-height: 0; opacity: 0; }
+  to { max-height: 50px; opacity: 1; }
+}
+
+.tabbrowser-tab[zia-essential-enter="true"] > .tab-stack {
+  animation: zia-essential-enter 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) both !important;
+}
+
+@keyframes zia-essential-enter {
+  from { scale: 0.5; filter: blur(8px); opacity: 0.4; }
+  to { scale: 1; filter: blur(0); opacity: 1; }
+}
+

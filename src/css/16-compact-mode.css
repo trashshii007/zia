@@ -1,0 +1,61 @@
+:root[zen-compact-mode="true"] .zen-toolbar-background {
+  &::before,
+  &::after {
+    outline: var(--zia-flyout-border) !important;
+    outline-offset: -1px !important;
+  }
+}
+
+:root[zen-compact-mode="true"] #zen-appcontent-wrapper {
+  position: relative !important;
+  z-index: 0 !important;
+}
+
+:root[zen-compact-mode="true"] #navigator-toolbox:not([animate="true"]) {
+  z-index: 100 !important;
+}
+
+:root[zen-compact-mode="true"][zia-panel-open="true"] #zen-appcontent-navbar-container {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+:root[zen-compact-mode="true"][zia-panel-open="true"] #urlbar:not([breakout-extend]) {
+  opacity: 0 !important;
+  pointer-events: none !important;
+
+  transition: none !important;
+}
+
+#urlbar {
+  transition: opacity 0.12s ease;
+}
+
+#zen-appcontent-navbar-container {
+  transition: opacity 0.12s ease;
+}
+
+:root[zen-compact-mode="true"] #titlebar > #zen-sidebar-top-buttons {
+  margin-block-start: calc(var(--zia-top-row-space) - 8px) !important;
+}
+@media (-moz-platform: windows) {
+  :root[zen-compact-mode="true"] #zen-sidebar-top-buttons .titlebar-buttonbox-container {
+    display: none !important;
+  }
+}
+
+:root[zen-compact-mode="true"]:not([zen-single-toolbar="true"]) #navigator-toolbox:not([animate="true"]) {
+  margin-top: 0 !important;
+  top: calc(var(--zen-compact-float, 6px) / 2) !important;
+  bottom: calc(var(--zen-compact-float, 6px) / 2) !important;
+  height: auto !important;
+}
+
+#zen-dragover-background {
+  display: none !important;
+}
+
+:root[zen-sidebar-expanded] .zen-current-workspace-indicator:not(#zia-workspace-slot > .zen-current-workspace-indicator) {
+  display: none !important;
+}
+

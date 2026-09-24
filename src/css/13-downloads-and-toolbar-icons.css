@@ -1,0 +1,159 @@
+#downloads-button,
+#downloads-indicator-anchor {
+  list-style-image: url("chrome://sine/content/zia/icons/downloads.svg") !important;
+}
+
+#downloads-button[hidden],
+#downloads-button[hidden="true"] {
+  display: none !important;
+}
+
+#downloads-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: var(--zia-space-pill-height) !important;
+  min-height: var(--zia-space-pill-height) !important;
+  border-radius: 10px !important;
+  corner-shape: round;
+  background-color: transparent !important;
+  background-image: none !important;
+
+  position: relative;
+
+  translate: 0 2px;
+
+  &:hover {
+    background-color: var(--zia-space-pill-bg) !important;
+  }
+
+  & #zia-download-ring {
+    position: absolute;
+    inset: 3px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  &[zia-downloading] #zia-download-ring {
+    opacity: 1;
+  }
+
+  & .zia-download-ring-track {
+    stroke: rgba(255, 255, 255, 0.12);
+  }
+
+  & .zia-download-ring-arc {
+    stroke: var(--zia-loading-color);
+    transition: stroke-dashoffset 0.25s ease;
+  }
+
+  & * {
+    background: none !important;
+    background-color: transparent !important;
+  }
+
+  & > .toolbarbutton-icon {
+    width: 18px !important;
+    height: 18px !important;
+    padding: 0 !important;
+    margin: auto !important;
+  }
+}
+
+#downloads-indicator-icon {
+  width: 18px !important;
+  height: 18px !important;
+  max-height: 18px !important;
+  visibility: visible !important;
+
+  translate: 0 -1px;
+}
+
+#downloads-indicator-start-box,
+#downloads-indicator-finish-box,
+#downloads-indicator-progress-outer {
+  display: none !important;
+}
+
+#downloads-button[animate][notification="start"] #downloads-indicator-icon {
+  animation: zia-download-start 0.5s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+#downloads-button[animate][notification="finish"] #downloads-indicator-icon {
+  animation: zia-download-finish 2.1s ease-in-out;
+}
+
+@keyframes zia-download-start {
+  0% { transform: translateY(0); }
+  35% { transform: translateY(2px) scale(0.92); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes zia-download-finish {
+  0% { list-style-image: url("chrome://sine/content/zia/icons/downloads.svg"); transform: scale(1); opacity: 1; }
+  14% { list-style-image: url("chrome://sine/content/zia/icons/downloads.svg"); transform: scale(0.55); opacity: 0; }
+  15% { list-style-image: url("chrome://sine/content/zia/icons/download-done.svg"); transform: scale(0.55); opacity: 0; }
+  30% { list-style-image: url("chrome://sine/content/zia/icons/download-done.svg"); transform: scale(1); opacity: 1; }
+  70% { list-style-image: url("chrome://sine/content/zia/icons/download-done.svg"); transform: scale(1); opacity: 1; }
+  84% { list-style-image: url("chrome://sine/content/zia/icons/download-done.svg"); transform: scale(0.55); opacity: 0; }
+  85% { list-style-image: url("chrome://sine/content/zia/icons/downloads.svg"); transform: scale(0.55); opacity: 0; }
+  100% { list-style-image: url("chrome://sine/content/zia/icons/downloads.svg"); transform: scale(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #downloads-button[animate] #downloads-indicator-icon {
+    animation: none !important;
+  }
+}
+
+:is(#history-panelmenu, #zen-history-button) {
+  list-style-image: url("chrome://sine/content/zia/icons/history.svg") !important;
+}
+
+#alltabs-button {
+  list-style-image: url("chrome://sine/content/zia/icons/chevron-down.svg") !important;
+}
+
+#zen-sidebar-foot-buttons toolbarbutton:not(#downloads-button) > .toolbarbutton-icon {
+  opacity: 0.4;
+  transition: none !important;
+}
+
+#zen-sidebar-foot-buttons toolbarbutton:not(#downloads-button):hover > .toolbarbutton-icon {
+  opacity: 0.7;
+}
+
+#alltabs-button .toolbarbutton-icon {
+  opacity: 0.4 !important;
+}
+
+#alltabs-button:hover .toolbarbutton-icon {
+  opacity: 0.7 !important;
+}
+
+#urlbar :is(#page-action-buttons, .urlbar-page-action) image,
+#urlbar .urlbar-icon {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+#urlbar #zen-site-data-icon-button image {
+  width: 17px !important;
+  height: 16px !important;
+}
+
+#urlbar-search-mode-indicator,
+#urlbar-search-mode-indicator-title,
+#urlbar-search-mode-indicator-close {
+  display: none !important;
+}
+
+#tabbrowser-tab-tooltip,
+#tab-preview-panel,
+#statuspanel,
+tooltip,
+tooltip[default="true"] {
+  display: none !important;
+}
+

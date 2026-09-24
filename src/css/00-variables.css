@@ -1,0 +1,122 @@
+/* Zia: built from src/css by scripts/build.sh. Edit the parts in src/css, not this file. */
+
+:root {
+  --zia-fallback-bg: #121212;
+  --zia-page-loading-bg: #000;
+  --zia-separator: rgba(255, 255, 255, 0.1);
+  --zia-urlbar-hover-bg: rgba(0, 0, 0, 0.2);
+  --zia-urlbar-open-bg: #2c2c2c;
+  --zia-pop-row-height: 36px;
+  --zia-pop-row-gap: 4px;
+  --zia-pop-row-inset: 8px;
+  --zia-pop-row-radius: 8px;
+  --zia-pop-list-pad: 6px;
+  --zia-pop-bottom-trim: 10px;
+  --zia-loading-color: rgb(90, 185, 245);
+  --zia-urlbar-radius: 6px;
+  --zia-urlbar-open-offset: 0px;
+  --zia-urlbar-open-top: 0px;
+  /* Zen's own corner radius; Zia's rounding below replaces it unless it's switched off */
+  --zia-card-radius: var(--zen-native-inner-radius, 10.5px);
+
+  --zia-shine-layers:
+    linear-gradient(to right, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.2) 35%, rgba(255, 255, 255, 0.2) 65%, rgba(255, 255, 255, 0.08)),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.14) 35%, rgba(255, 255, 255, 0.14) 65%, rgba(255, 255, 255, 0.06));
+
+  --zia-tab-shine-layers:
+    linear-gradient(to bottom right, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.09) 28%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.09) 72%, rgba(255, 255, 255, 0.32));
+  --zia-essential-min-width: 54px;
+  --zia-essential-height: 42px;
+  --zia-essential-inner-tighten: 1;
+  --zia-essential-radius: 12px;
+  --zia-essential-gap: 3px;
+  --zia-essential-bottom-space: 8px;
+  --zia-essential-bg: rgba(255, 255, 255, 0.13);
+  --zia-tab-height: 35px;
+  --zia-tab-gap: 2px;
+  --zia-tab-radius: 9.5px;
+  --zia-close-size: 22px;
+
+  --zia-close-radius: 6px;
+  --zia-close-corner: squircle;
+
+  --zia-close-hover-bg: rgba(255, 255, 255, 0.1);
+
+  --zia-folder-mark-opacity: 0.55;
+  --zia-folder-hover-bg: rgba(255, 255, 255, 0.1);
+
+  --zia-fc-white: #fbfbfb;
+  --zia-fc-green: #008b5d;
+  --zia-fc-blue: #007fbd;
+  --zia-fc-purple: #625da5;
+  --zia-fc-amber: #c98400;
+  --zia-fc-pink: #bd556b;
+  --zia-fc-red: #cc4a55;
+  --zia-fc-orange: #c95125;
+
+  --zia-folder-wash: 31%;
+  --zia-folder-tint: 53%;
+  --zia-folder-name-tint: 77%;
+  --zia-folder-name-tint-hover: 38%;
+  --zia-tab-hover-bg: rgba(255, 255, 255, 0.115);
+  --zia-active-glow-blur: 20px;
+  --zia-active-glow-spread: 4px;
+  --zia-active-glow-reach: 4px;
+  --zia-active-glow-color: rgba(255, 255, 255, 0.05);
+  --zia-top-row-space: 6.5px;
+  --zia-bottom-row-space: 6px;
+  --zia-tab-weight: 400;
+  --zia-folder-weight: 500;
+
+  --zia-tab-card-bg: rgb(38, 38, 38);
+  --zia-tab-card-sub: rgba(255, 255, 255, 0.55);
+  --zia-tab-card-radius: 13px;
+  --zia-tab-card-width: 230px;
+  --zia-media-card-base: light-dark(rgb(235, 235, 235), #1b1b1b);
+  --zia-split-gap: 5px;
+  --zia-split-backdrop: rgb(23, 23, 23);
+  --zia-media-bg: rgba(0, 0, 0, 0.225);
+  --zia-media-card-height: 64px;
+  --zia-media-card-height-open: 124px;
+  --zia-media-radius: 12.5px;
+  --zia-media-ring-size: 46px;
+  --zia-media-art-size: 38px;
+  --zia-toolbar-end-gap: 5px;
+  --zia-space-name-nudge: 4px;
+  --zia-space-name-offset: 1.5px;
+  --zia-space-pill-height: 34px;
+  --zia-space-pill-bg: rgba(255, 255, 255, 0.16);
+  --zia-space-icon-gap: 8px;
+  --zia-folder-icon-offset: 0px;
+  --zia-folder-mark-color: rgba(0, 0, 0, 0.75);
+  --zia-text-size: calc(1.22rem - 0.4px);
+  --zia-shine-width: 0.5px;
+  --zia-essential-max-width: 120px;
+  --zia-card-gap: 6px;
+
+  --zia-flyout-border: 1px solid rgba(255, 255, 255, 0.25);
+  --zia-card-top-gap: 6px;
+  --zia-toolbar-height: 39px;
+  --zia-urlbar-height: 31px;
+  --zia-active-tab-bg: rgba(0, 0, 0, 0.2);
+  --zia-space-name-tint: 42%;
+  --zia-card-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.35), 0 1px 4px rgba(0, 0, 0, 0.3);
+  --zia-hover-card-shadow: none;
+  --zia-color-fade: 0.15s;
+}
+
+@media -moz-pref("zia.loading-bar.accent-color") {
+  :root {
+    --zia-loading-color: var(--zen-primary-color);
+  }
+}
+
+:root[zia-site-dark="true"] {
+  --zia-urlbar-hover-bg: rgba(255, 255, 255, 0.09);
+}
+
+:root[zia-site-light="true"] {
+  --zia-separator: rgba(0, 0, 0, 0.12);
+  --zia-urlbar-hover-bg: rgba(0, 0, 0, 0.06);
+}
+

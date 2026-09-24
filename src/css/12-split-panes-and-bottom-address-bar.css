@@ -1,0 +1,305 @@
+:root[zia-split="true"]:not([inDOMFullscreen="true"]):not([popup-window]) {
+  & #zen-appcontent-wrapper {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  & #tabbrowser-tabpanels[zen-split-view="true"] {
+    background-color: var(--zia-split-backdrop) !important;
+    border-radius: var(--zia-card-radius) !important;
+  }
+
+  & .browserSidebarContainer:is([is-zen-split="true"], [zen-split="true"]) {
+    margin: var(--zia-split-gap) !important;
+  }
+
+  & #zen-appcontent-navbar-wrapper {
+    min-height: 0 !important;
+    height: 0 !important;
+    border-bottom: none !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+
+  & #nav-bar {
+    --zen-toolbar-height: 0px !important;
+  }
+
+  & #nav-bar > :not(#nav-bar-customization-target),
+  & #nav-bar-customization-target > :not(#urlbar-container) {
+    visibility: hidden !important;
+  }
+
+  & #urlbar:not([breakout-extend]) {
+    position: fixed !important;
+    left: var(--zia-pane-url-left, 0px) !important;
+    top: var(--zia-pane-url-top, 0px) !important;
+    width: var(--zia-pane-url-width, 50vw) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  & #tabbrowser-tabbox[zen-split-view="true"] #tabbrowser-tabpanels[zen-split-view="true"] {
+    margin: calc(-1 * var(--zia-split-pad, 3px)) !important;
+
+    & > .browserSidebarContainer[zen-split="true"]:not(.zen-glance-overlay) {
+      box-shadow: var(--zia-card-shadow) !important;
+    }
+  }
+}
+
+.browserContainer:has(> .zia-pane-bar) > .browserStack {
+  grid-area: browserstack !important;
+  position: relative !important;
+  inset: auto !important;
+
+  margin-top: var(--zia-toolbar-height) !important;
+  translate: none !important;
+}
+
+.zia-pane-bar {
+  --zia-pane-fg: rgb(251, 251, 254);
+  --zia-pane-hover: rgba(255, 255, 255, 0.1);
+  grid-area: rdm-toolbar;
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  height: var(--zia-toolbar-height);
+  padding-inline: 8px;
+  background-color: var(--zia-pane-bg, var(--zia-fallback-bg));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--zia-pane-fg);
+  transition: background-color var(--zia-color-fade) ease;
+
+  &[light] {
+    --zia-pane-fg: rgb(28, 28, 30);
+    --zia-pane-hover: rgba(0, 0, 0, 0.07);
+    border-bottom-color: rgba(0, 0, 0, 0.12);
+  }
+
+  &:not([first]) .zia-pane-sidebar {
+    display: none;
+  }
+}
+
+.zia-pane-extensions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+
+.zia-pane-extensions:empty {
+  display: none;
+}
+
+.zia-pane-extensions .unified-extensions-item {
+  display: flex;
+  align-items: center;
+  visibility: visible !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.zia-pane-extensions :is(
+  .unified-extensions-item-contents,
+  .unified-extensions-item-message-deck,
+  .unified-extensions-item-menu-button,
+  .toolbarbutton-text
+) {
+  display: none !important;
+}
+
+.zia-pane-extensions .unified-extensions-item-action-button {
+  appearance: none !important;
+  display: grid !important;
+  place-items: center;
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 7px !important;
+  background: transparent !important;
+
+  &:hover {
+    background: var(--zia-pane-hover) !important;
+  }
+
+  & :is(.toolbarbutton-badge-stack, .toolbarbutton-icon) {
+    width: 16px !important;
+    height: 16px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+.zia-pane-button {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+
+  &:hover:not([disabled]) {
+    background: var(--zia-pane-hover);
+  }
+
+  & img {
+    width: 16px;
+    height: 16px;
+    -moz-context-properties: fill, fill-opacity;
+    fill: currentColor;
+    fill-opacity: 0.85;
+    pointer-events: none;
+  }
+
+  &[disabled] img {
+    fill-opacity: 0.35;
+  }
+}
+
+.zia-pane-sidebar {
+  margin-inline-end: 4px;
+}
+
+.zia-pane-address {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: var(--zia-urlbar-height);
+  display: flex;
+  align-items: center;
+  margin-inline: 6px 2px;
+  padding-inline: 8px;
+  border-radius: var(--zia-urlbar-radius);
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: text;
+  font-size: var(--zia-text-size);
+  font-weight: var(--zia-tab-weight);
+  transition: background-color 0.06s linear;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.2);
+  }
+
+  & .zia-pane-host {
+    white-space: pre;
+    flex: none;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  & .zia-pane-rest {
+    white-space: pre;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0.55;
+  }
+}
+
+.zia-pane-bar[light] .zia-pane-address:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+:root[zia-split="true"]:not([inDOMFullscreen="true"]) #urlbar[breakout-extend]:not([zia-classic]) {
+  position: fixed !important;
+  left: var(--zia-pane-url-left, 0px) !important;
+  top: var(--zia-pane-url-top, 0px) !important;
+  width: var(--zia-pane-url-width, 50vw) !important;
+  max-width: none !important;
+  margin: 0 !important;
+  translate: none !important;
+}
+
+/* Address bar position: bottom (an option). The toolbar sits under the page,
+   the corners and separator swap sides, and the address pop-up grows upwards.
+   Zen's single toolbar keeps its own layout. */
+:root[zia-urlbar-position="bottom"]:not([inDOMFullscreen="true"], [popup-window], [zen-single-toolbar="true"]) {
+  & #zen-appcontent-navbar-wrapper {
+    order: 9;
+    border-radius: 0 0 var(--zia-card-radius) var(--zia-card-radius) !important;
+    border-bottom: none !important;
+    border-top: 1px solid var(--zia-separator) !important;
+  }
+
+  & #tabbrowser-tabbox #tabbrowser-tabpanels .browserSidebarContainer {
+    border-radius: var(--zia-card-radius) var(--zia-card-radius) 0 0 !important;
+  }
+
+  & #tabbrowser-tabpanels :is(.browserSidebarContainer, .browserStack, browser) {
+    clip-path: inset(0 round var(--zia-card-radius) var(--zia-card-radius) 0 0);
+  }
+
+  /* The opened bar is a plain block by default, so make it a reversed
+     column: the typing box at the bottom by the bar, the results above it. */
+  & #urlbar[breakout-extend]:not([zia-classic]) {
+    display: flex !important;
+    flex-direction: column-reverse !important;
+
+    & > .urlbar-background {
+      transform-origin: 50% 100% !important;
+    }
+
+    & .urlbarView {
+      margin-block: 0 !important;
+      clip-path: none !important;
+    }
+  }
+
+  /* split view: each pane's toolbar sits at the bottom of its pane */
+  & .browserContainer:has(> .zia-pane-bar) > .browserStack {
+    margin-top: 0 !important;
+    margin-bottom: var(--zia-toolbar-height) !important;
+  }
+
+  & .zia-pane-bar {
+    grid-area: browserstack !important;
+    align-self: end;
+    border-bottom: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+    &[light] {
+      border-top-color: rgba(0, 0, 0, 0.12);
+    }
+  }
+
+  &[zia-split="true"] #urlbar[breakout-extend]:not([zia-classic]) {
+    top: auto !important;
+    bottom: var(--zia-pane-url-bottom, 8px) !important;
+  }
+
+  /* pinned by its bottom edge where the closed bar sits, including when Zen
+     marks the opened bar as floating */
+  &:not([zia-split="true"]) #urlbar[breakout-extend]:not([zia-classic]) {
+    position: fixed !important;
+    top: auto !important;
+    bottom: var(--zia-url-bottom, 8px) !important;
+    left: var(--zia-url-left, 0px) !important;
+    right: auto !important;
+    width: var(--zia-url-width, 50vw) !important;
+    max-width: none !important;
+    margin: 0 !important;
+    transform: none !important;
+    translate: var(--zia-urlbar-open-offset-x, 0px) var(--zia-urlbar-open-offset, 0px) !important;
+  }
+}
+
+:root[inDOMFullscreen="true"] .zia-pane-bar {
+  display: none !important;
+}
+

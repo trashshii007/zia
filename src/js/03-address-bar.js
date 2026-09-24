@@ -1,0 +1,336 @@
+  let titleEl = null;
+  let plainEl = null;
+
+  function createTitleElement() {
+    const inputBox = gURLBar.inputField?.parentNode;
+    if (!inputBox) {
+      return;
+    }
+    titleEl = document.createElementNS("http://www.w3.org/1999/xhtml", "div");
+    titleEl.id = "zia-url-title";
+    const host = document.createElementNS("http://www.w3.org/1999/xhtml", "span");
+    host.className = "zia-url-title-host";
+    const rest = document.createElementNS("http://www.w3.org/1999/xhtml", "span");
+    rest.className = "zia-url-title-rest";
+    titleEl.append(host, rest);
+    inputBox.append(titleEl);
+
+    plainEl = document.createElementNS("http://www.w3.org/1999/xhtml", "div");
+    plainEl.id = "zia-url-plain";
+    const plainHost = document.createElementNS("http://www.w3.org/1999/xhtml", "span");
+    plainHost.className = "zia-url-title-host";
+    const plainRest = document.createElementNS("http://www.w3.org/1999/xhtml", "span");
+    plainRest.className = "zia-url-title-rest";
+    plainEl.append(plainHost, plainRest);
+    inputBox.append(plainEl);
+  }
+
+  function updateTitle() {
+    if (!titleEl) {
+      return;
+    }
+    const urlbar = gURLBar.textbox || document.getElementById("urlbar");
+    const browser = gBrowser.selectedBrowser;
+    const uri = browser?.currentURI;
+
+    let host = "";
+    try {
+      if (uri && /^https?$/.test(uri.scheme)) {
+        host = uri.displayHost.replace(/^www\./, "");
+      }
+    } catch (err) {
+      host = "";
+    }
+
+    const title = (browser?.contentTitle || "").trim();
+    const valid = urlbar.getAttribute("pageproxystate") === "valid";
+
+    if (!host || !valid || isErrorPage(browser)) {
+      urlbar.removeAttribute("zia-has-title");
+      return;
+    }
+
+    let isHomePage = false;
+    try {
+      const path = uri.filePath || "/";
+      isHomePage = (path === "/" || path === "") && !uri.query && !uri.ref;
+    } catch (err) {
+      isHomePage = false;
+    }
+    titleEl.firstChild.textContent = host;
+
+    const hasTitle = /[\p{L}\p{N}]/u.test(title);
+    titleEl.lastChild.textContent = !isHomePage && hasTitle && title !== host ? ` / ${title}` : "";
+
+    if (plainEl) {
+      let path = "";
+      try {
+        path = uri.pathQueryRef || "";
+      } catch (err) {
+        path = "";
+      }
+      plainEl.firstChild.textContent = host;
+      plainEl.lastChild.textContent = path === "/" ? "" : path;
+    }
+
+    urlbar.setAttribute("zia-has-title", "true");
+  }
+
+  let urlbarTyping = false;
+
+  function plainAddress(value) {
+    return typeof value === "string" ? value.replace(/^https?:\/\//i, "").replace(/^www\./i, "") : value;
+  }
+
+  function neverShowScheme() {
+    const ui = window.gZenUIManager;
+    if (ui && typeof ui.urlbarTrim === "function" && !ui.urlbarTrim.ziaWrapped) {
+      const original = ui.urlbarTrim.bind(ui);
+      const trimmed = (url) => (urlbarTyping && gURLBar.focused ? original(url) : plainAddress(original(url)));
+      trimmed.ziaWrapped = true;
+      ui.urlbarTrim = trimmed;
+    }
+
+    const input = gURLBar?.inputField || document.querySelector("#urlbar .urlbar-input");
+    if (!input || input.ziaSchemeStripped) {
+      return;
+    }
+    const desc = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), "value");
+    if (!desc?.get || !desc?.set) {
+      return;
+    }
+    input.ziaSchemeStripped = true;
+    Object.defineProperty(input, "value", {
+      configurable: true,
+      enumerable: desc.enumerable,
+      get() {
+        return desc.get.call(this);
+      },
+      set(next) {
+        const typing = urlbarTyping && gURLBar.focused;
+        desc.set.call(this, typing ? next : plainAddress(next));
+
+        if (holdWholeSelection && gURLBar.focused) {
+          this.select();
+        }
+      },
+    });
+    input.addEventListener("input", (event) => {
+      if (event.isTrusted) {
+        urlbarTyping = true;
+      }
+    });
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        urlbarTyping = false;
+      }
+    });
+    input.addEventListener("blur", () => {
+      urlbarTyping = false;
+    });
+  }
+
+  let holdWholeSelection = false;
+
+  function holdSelectionOnRewrite(input) {
+    if (input.ziaSelectionHeld) {
+      return;
+    }
+    input.ziaSelectionHeld = true;
+    const setRange = input.setSelectionRange;
+    input.setSelectionRange = function (start, end, direction) {
+      if (holdWholeSelection && gURLBar.focused) {
+        return setRange.call(this, 0, this.value.length, direction);
+      }
+      return setRange.call(this, start, end, direction);
+    };
+  }
+
+  function keepWholeUrlSelected(urlbar) {
+    const input = urlbar.querySelector(".urlbar-input") || gURLBar.inputField;
+    if (!input) {
+      return;
+    }
+    holdSelectionOnRewrite(input);
+    let closedLength = -1;
+    urlbar.addEventListener(
+      "mousedown",
+      (event) => {
+        const opening = !urlbar.hasAttribute("breakout-extend") && !gURLBar.focused;
+        closedLength = opening ? input.value.length : -1;
+
+        holdWholeSelection = opening && event.button === 0;
+      },
+      true
+    );
+    const release = () => {
+      holdWholeSelection = false;
+    };
+    urlbar.addEventListener("keydown", release, true);
+    input.addEventListener("input", release);
+    input.addEventListener("blur", release);
+    const fix = () => {
+      if (closedLength < 0) {
+        return;
+      }
+      const { selectionStart, selectionEnd, value } = input;
+      if (selectionStart === 0 && selectionEnd === closedLength && closedLength < value.length) {
+        input.select();
+        closedLength = -1;
+      }
+    };
+    new MutationObserver(() => {
+      if (!urlbar.hasAttribute("breakout-extend")) {
+        closedLength = -1;
+        return;
+      }
+      requestAnimationFrame(fix);
+      for (const ms of [30, 100, 200]) {
+        setTimeout(fix, ms);
+      }
+      setTimeout(() => {
+        closedLength = -1;
+      }, 400);
+    }).observe(urlbar, { attributes: true, attributeFilter: ["breakout-extend"] });
+  }
+
+  function revertTypedTextOnLeave(urlbar) {
+    const input = urlbar.querySelector(".urlbar-input") || gURLBar.inputField;
+    if (!input || typeof gURLBar.handleRevert !== "function") {
+      return;
+    }
+    let navigatingAt = 0;
+    urlbar.addEventListener(
+      "keydown",
+      (event) => {
+        if (event.key === "Enter") {
+          navigatingAt = Date.now();
+        }
+      },
+      true
+    );
+    urlbar.addEventListener(
+      "mousedown",
+      (event) => {
+        if (event.target.closest?.(".urlbarView, #urlbar-go-button")) {
+          navigatingAt = Date.now();
+        }
+      },
+      true
+    );
+    input.addEventListener("blur", () => {
+      const browser = gBrowser.selectedBrowser;
+      setTimeout(() => {
+        if (gURLBar.focused || !document.hasFocus() || Date.now() - navigatingAt < 1500) {
+          return;
+        }
+        if (urlbar.hasAttribute("zen-newtab")) {
+          return;
+        }
+        try {
+          if (browser && browser !== gBrowser.selectedBrowser) {
+            if (browser.userTypedValue) {
+              browser.userTypedValue = null;
+            }
+            return;
+          }
+          if (gBrowser.userTypedValue == null && !gURLBar.valueIsTyped) {
+            return;
+          }
+          gURLBar.handleRevert();
+          updateTitle();
+        } catch (err) {
+          console.error("[Zia] Could not restore the address:", err);
+        }
+      }, 0);
+    });
+  }
+
+  let openOffset = 0;
+
+  function desiredOpenTop() {
+    return parseFloat(getComputedStyle(root).getPropertyValue("--zia-urlbar-open-top")) || 0;
+  }
+
+  let closedTextRect = null;
+  let openOffsetX = 0;
+
+  let clickedUrlbarAt = 0;
+
+  function rememberClosedText() {
+    const urlbar = gURLBar.textbox || document.getElementById("urlbar");
+    if (!urlbar || urlbar.hasAttribute("breakout-extend") || root.getAttribute("zia-split") === "true") {
+      return;
+    }
+    // At the bottom, the opened pop-up is pinned by its bottom edge to where
+    // the closed bar sits, so it grows upwards instead of off the screen.
+    const bar = urlbar.getBoundingClientRect();
+    if (bar.width) {
+      root.style.setProperty("--zia-url-left", `${Math.round(bar.left)}px`);
+      root.style.setProperty("--zia-url-width", `${Math.round(bar.width)}px`);
+      root.style.setProperty("--zia-url-bottom", `${Math.round(window.innerHeight - bar.bottom)}px`);
+    }
+    const title = document.getElementById("zia-url-title");
+    const input = urlbar.querySelector(".urlbar-input");
+    const titleRect = title?.getBoundingClientRect();
+    const rect = titleRect?.width ? titleRect : input?.getBoundingClientRect();
+    if (rect?.width) {
+      closedTextRect = { left: rect.left, centerY: rect.top + rect.height / 2 };
+    }
+  }
+
+  function alignOpenedUrlbar() {
+    const urlbar = gURLBar.textbox || document.getElementById("urlbar");
+
+    if (urlbar?.getAttribute("zen-floating-urlbar") === "true" && !urlbarAtBottom()) {
+      root.style.setProperty("--zia-urlbar-open-offset", "0px");
+      root.style.setProperty("--zia-urlbar-open-offset-x", "0px");
+      return;
+    }
+    if (!urlbar?.hasAttribute("breakout-extend")) {
+      return;
+    }
+    if (root.getAttribute("zia-split") === "true") {
+      return;
+    }
+    const input = urlbar.querySelector(".urlbar-input");
+    const inputRect = input?.getBoundingClientRect();
+
+    // At the bottom the pop-up grows upwards from the bar, so the text always
+    // stays where it was, however the bar was opened.
+    const openedByClick = urlbarAtBottom() || Date.now() - clickedUrlbarAt < 1500;
+    if (!openedByClick && openOffsetX) {
+      openOffsetX = 0;
+      root.style.setProperty("--zia-urlbar-open-offset-x", "0px");
+    }
+    if (openedByClick && closedTextRect && inputRect?.width) {
+      const dx = closedTextRect.left - inputRect.left;
+      const dy = closedTextRect.centerY - (inputRect.top + inputRect.height / 2);
+      if (Math.abs(dx) > 0.5) {
+        openOffsetX += dx;
+        root.style.setProperty("--zia-urlbar-open-offset-x", `${openOffsetX}px`);
+      }
+      if (Math.abs(dy) > 0.5) {
+        openOffset += dy;
+        root.style.setProperty("--zia-urlbar-open-offset", `${openOffset}px`);
+      }
+      return;
+    }
+
+    const top = urlbar.getBoundingClientRect().top;
+    const diff = desiredOpenTop() - top;
+    if (Math.abs(diff) > 0.5) {
+      openOffset += diff;
+      root.style.setProperty("--zia-urlbar-open-offset", `${openOffset}px`);
+    }
+  }
+
+  function alignOpenedUrlbarSoon() {
+    // Straight away, before the opened bar is first drawn, so the text doesn't
+    // visibly jump; the later passes only catch late layout changes.
+    alignOpenedUrlbar();
+    requestAnimationFrame(alignOpenedUrlbar);
+    setTimeout(alignOpenedUrlbar, 60);
+    setTimeout(alignOpenedUrlbar, 200);
+  }
+

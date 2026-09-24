@@ -1,3 +1,4 @@
+// Zia: built from src/js by scripts/build.sh. Edit the parts in src/js, not this file.
 (() => {
   if (window.__ziaLoaded) {
     return;
