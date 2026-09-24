@@ -90,7 +90,7 @@ Multiview turns a tab into a wall of videos. Right-click any video, a video's pa
 
 The first video opens the Multiview tab and the rest join it. The grid re-tiles itself to fill the tab, always at the biggest size that fits, as videos come and go. It's made for following several live streams at once.
 
-![Multiview with three videos](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/multiview-grid.webp>)
+![Multiview with sport, scenery and two live streams](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/multiview-wall.webp>)
 
 Hover a tile to drag it to a new spot, give it the sound (one tile plays at a time, marked with a white ring), open it on its site or remove it. Videos pick up from where you were, and live streams join live.
 
