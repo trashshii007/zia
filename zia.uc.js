@@ -3684,7 +3684,7 @@
   }
 
   const POP_BOTTOM_WANT = 8;
-  const POP_SCROLL_TRIM = 8;
+  const POP_SCROLL_TRIM = 12;
   let popBottomTrim = null;
 
   function fitPopoverBottom(passesLeft = 8) {

@@ -15,6 +15,11 @@ Every release of Zia, newest first. The format follows
   compact mode the hidden toolbar slides in from the bottom edge. Zen's
   single-toolbar layout keeps the address bar in the sidebar.
 
+### Fixed
+
+- The address pop-up is another 4px shorter when its list scrolls, so the
+  space below the last row matches the space at its sides.
+
 ## [2.32.0] — 2026-09-24
 
 ### Added
