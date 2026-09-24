@@ -5070,7 +5070,7 @@
       row.append(label);
 
       const unloaded = tab.getAttribute("pending") === "true" && tab.getAttribute("folder-active") !== "true";
-      const unload = tab.pinned && !unloaded;
+      const unload = tab.pinned && !unloaded && canUnload(tab);
       const button = folderCardIcon(
         unload ? tabButtonIcon(tab, ".tab-reset-button", "minus") : tabButtonIcon(tab, ".tab-close-button", "x"),
         "zia-folder-card-act"
@@ -7325,6 +7325,29 @@
     }
   }
 
+  function canUnload(tab) {
+    return tab?.linkedBrowser?.isRemoteBrowser !== false;
+  }
+
+  function watchUnloadable() {
+    const mark = (tab) => {
+      if (!tab?.isConnected) {
+        return;
+      }
+      tab.toggleAttribute("zia-no-unload", tab.pinned && !tab.hasAttribute("zen-essential") && !canUnload(tab));
+    };
+    const markAll = () => gBrowser.tabs.forEach(mark);
+    for (const type of ["TabOpen", "TabPinned", "TabUnpinned", "TabSelect", "TabAttrModified"]) {
+      gBrowser.tabContainer.addEventListener(type, (event) => mark(event.target));
+    }
+    gBrowser.addTabsProgressListener({
+      onLocationChange(browser) {
+        mark(gBrowser.getTabForBrowser(browser));
+      },
+    });
+    markAll();
+  }
+
   function currentSeparator() {
     const own = window.gZenWorkspaces?.pinnedTabsContainer?.querySelector?.(".pinned-tabs-container-separator");
     if (own) {
@@ -7572,6 +7595,7 @@
     safely("addCopyLinkButton", addCopyLinkButton);
     safely("watchEdgeGlow", watchEdgeGlow);
     safely("quietZenHaptics", quietZenHaptics);
+    safely("watchUnloadable", watchUnloadable);
     safely("revertTypedTextOnLeave", () => revertTypedTextOnLeave(urlbar));
     safely("neverShowScheme", neverShowScheme);
 

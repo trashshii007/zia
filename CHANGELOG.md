@@ -4,6 +4,13 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.30.3] — 2026-09-24
+
+### Fixed
+
+- Pinned tabs that can't be unloaded, such as Settings, show ✕ to close them
+  instead of a "−" that did nothing, in the sidebar and in the folder card.
+
 ## [2.30.2] — 2026-09-24
 
 ### Added

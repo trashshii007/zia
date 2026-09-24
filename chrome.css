@@ -1720,6 +1720,14 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
   scale: 1 !important;
 }
 
+.tabbrowser-tab[zia-no-unload]:not([zen-essential]) .tab-reset-button {
+  display: none !important;
+}
+
+.tabbrowser-tab[zia-no-unload]:not([zen-essential]):is(:hover, [visuallyselected]) .tab-close-button {
+  display: flex !important;
+}
+
 .tabbrowser-tab .tab-close-button {
   -moz-context-properties: fill, fill-opacity !important;
   fill: rgb(255, 255, 255) !important;
