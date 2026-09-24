@@ -4,6 +4,14 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.39.0] — 2026-09-24
+
+### Changed
+
+- A tucked picture-in-picture's strip takes on your space's colour and
+  fades to the new one when you switch spaces. It's slightly see-through
+  now, too. (The window can't blur what's behind it, so there's no blur.)
+
 ## [2.38.1] — 2026-09-24
 
 ### Fixed

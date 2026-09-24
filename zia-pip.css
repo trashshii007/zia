@@ -396,7 +396,11 @@
   width: 36px;
   display: flex;
   align-items: center;
-  background: rgb(24, 24, 27);
+  /* A see-through tint of the space's colour (set by zia.uc.js) over dark,
+   * fading along when you switch spaces. The window can't blur what's
+   * behind it, or the video under the strip, so there's no blur. */
+  background-color: color-mix(in srgb, var(--zia-space-tint, rgb(24, 24, 27)) 32%, rgba(24, 24, 27, 0.8));
+  transition: background-color 400ms ease;
   cursor: pointer;
   -moz-window-dragging: no-drag;
 }
