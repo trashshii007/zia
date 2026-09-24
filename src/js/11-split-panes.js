@@ -201,7 +201,9 @@
     let host = "";
     try {
       const uri = browser.currentURI;
-      if (uri && /^https?$/.test(uri.scheme)) {
+      if (isMultiviewURI(uri)) {
+        host = "";
+      } else if (uri && /^https?$/.test(uri.scheme)) {
         host = uri.displayHost.replace(/^www\./, "");
       } else if (uri && uri.spec !== "about:blank") {
         host = uri.spec;
