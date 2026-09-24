@@ -3,7 +3,7 @@
   "name": "Zia",
   "description": "Makes Zen's browser frame look like Dia: page card, site-colored toolbar, Dia-style sidebar.",
   "author": "z1n-k",
-  "version": "2.31.2",
+  "version": "2.32.0",
   "style": {
     "chrome": "chrome.css"
   },

@@ -97,6 +97,10 @@ Parts of the theme can be switched on or off individually.
 | Music player card | on |
 | Sound bars on playing tabs (off: Zen's speaker) | on |
 | Tint the selected tab's glow and the sound bars with the site's colours | off |
+| The last essential stretches across the rest of its row | off |
+| Toolbar takes the colour of the site (off: the theme's colour) | on |
+| Zia's rounded page corners (off: Zen's own) | on |
+| Split view drop cards when dragging a tab onto the page (off: Zen's own) | on |
 | Dia-style address bar pop-up (off: Zen's own) | on |
 | Cmd/Ctrl+T and **+ New Tab** open a real tab (off: Zen's floating address bar) | on |
 | Find in page bar | on |

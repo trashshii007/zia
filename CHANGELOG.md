@@ -4,6 +4,32 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.32.0] — 2026-09-24
+
+### Added
+
+- New options in the settings:
+  - **Toolbar takes the colour of the site** (on). Off keeps the toolbar in
+    the theme's colour.
+  - **Zia's rounded page corners** (on). Off uses Zen's own.
+  - **Split view drop cards** (on). Off gives tab drops on the page back to
+    Zen's own split.
+  - **The last essential stretches across the rest of its row** (off).
+
+### Changed
+
+- Cmd/Ctrl+Z after closing a folder, a split or several tabs brings the whole
+  lot back, as Firefox's own "reopen closed tab" does, instead of one tab at a
+  time. Tabs from a split go back into the split, and tabs from a deleted
+  folder go back into a folder with its old name.
+
+### Security
+
+- A Space's SVG icon is only loaded from the browser's or a mod's own files
+  (`chrome:` and `resource:`), and anything in it that could run or load
+  something (scripts, event handlers, outside links) is removed before it
+  goes into the sidebar.
+
 ## [2.31.2] — 2026-09-24
 
 ### Changed

@@ -36,7 +36,13 @@
 
   let appliedColorKey = null;
 
+  // Off leaves the toolbar in the theme's own colour instead of the site's.
+  const siteColorOn = () => Services.prefs.getBoolPref("zia.toolbar.site-color", true);
+
   function applyColor(rgb) {
+    if (!siteColorOn()) {
+      rgb = null;
+    }
     const key = rgb ? rgb.join(",") : "fallback";
     if (key === appliedColorKey) {
       return;
@@ -225,6 +231,10 @@
 
   async function updateColor(fromScroll = false, duringLoad = false) {
     const browser = gBrowser.selectedBrowser;
+    if (!siteColorOn()) {
+      applyColor(null);
+      return;
+    }
 
     if (isErrorPage(browser)) {
       showErrorColor();
@@ -963,6 +973,12 @@
       label.setAttribute("zia-has-icon", "true");
       return;
     }
+    // Only the browser's and mods' own icon files: never a web address or a
+    // file elsewhere on the computer.
+    if (!isOwnIconUrl(icon)) {
+      mark?.remove();
+      return;
+    }
     label.setAttribute("zia-has-svg", "true");
     let svgSlot = mark;
     if (!svgSlot) {
@@ -995,9 +1011,38 @@
         if (!node || node.localName !== "svg") {
           return;
         }
+        cleanSvg(node);
         svgSlot.replaceChildren(document.importNode(node, true));
       })
       .catch(() => {});
+  }
+
+  const OWN_ICON_SCHEMES = ["chrome:", "resource:"];
+
+  function isOwnIconUrl(icon) {
+    try {
+      return OWN_ICON_SCHEMES.includes(new URL(icon, "chrome://browser/content/browser.xhtml").protocol);
+    } catch (err) {
+      return false;
+    }
+  }
+
+  // An icon is only shapes: drop anything that could run or load something
+  // before it goes into the browser's own window.
+  function cleanSvg(svg) {
+    for (const node of svg.querySelectorAll("script, foreignObject, iframe, embed, object, audio, video")) {
+      node.remove();
+    }
+    for (const node of [svg, ...svg.querySelectorAll("*")]) {
+      for (const attr of [...node.attributes]) {
+        const name = attr.name.toLowerCase();
+        const value = attr.value.trim().toLowerCase();
+        const isLink = name === "href" || name.endsWith(":href") || name === "src";
+        if (name.startsWith("on") || (isLink && !value.startsWith("#")) || value.startsWith("javascript:")) {
+          node.removeAttributeNode(attr);
+        }
+      }
+    }
   }
 
   function removeSpaceLabel(indicator) {
@@ -2659,6 +2704,9 @@
       "dragover",
       (event) => {
         const open = splitDrop.overlay?.hasAttribute("open");
+        if (!open && !Services.prefs.getBoolPref("zia.split.drop-cards", true)) {
+          return;
+        }
         const overPage = isOverPage(event);
         if (open) {
           if (overPage) {
@@ -3269,19 +3317,60 @@
   }
 
   const UNDO_WINDOW_MS = 10000;
-  const undoState = { count: 0, closedAt: 0 };
+  const undoState = { closedAt: 0, actions: 0, sameMoment: false, closed: [] };
 
-  function reopenOneTab() {
+  // The page a tab shows, read from its saved state so it works for tabs that
+  // haven't loaded yet.
+  function savedUrlOf(tab) {
     try {
-      if (window.SessionStore?.undoCloseTab) {
-        window.SessionStore.undoCloseTab(window, 0);
+      const state = JSON.parse(window.SessionStore.getTabState(tab));
+      const entry = state.entries?.[(state.index || state.entries.length) - 1];
+      if (entry?.url) {
+        return entry.url;
+      }
+    } catch (err) {
+    }
+    return tab.linkedBrowser?.currentURI?.spec || "";
+  }
+
+  // Where a closing tab lived, so undo can put it back in its folder or split.
+  function closedTabRecord(tab) {
+    const record = { url: savedUrlOf(tab), folder: null, split: null };
+    const group = tab.group;
+    if (group?.hasAttribute("split-view-group")) {
+      const data = window.gZenViewSplitter?._data?.find((entry) => entry.tabs?.includes(tab));
+      record.split = { key: group.id || "split", gridType: data?.gridType };
+      const folder = group.group;
+      if (folder?.isZenFolder) {
+        record.folder = folderRecord(folder);
+      }
+    } else if (group?.isZenFolder) {
+      record.folder = folderRecord(group);
+    }
+    return record;
+  }
+
+  function folderRecord(folder) {
+    return {
+      id: folder.id,
+      label: folder.label,
+      workspaceId: folder.getAttribute("zen-workspace-id") || undefined,
+    };
+  }
+
+  // Firefox's own "reopen closed tab" brings back everything one close action
+  // took away (a whole folder, a split, several tabs at once), not just one tab.
+  function reopenLastClose() {
+    try {
+      if (typeof window.undoCloseTab === "function") {
+        window.undoCloseTab();
         return true;
       }
     } catch (err) {
     }
     try {
-      if (typeof window.undoCloseTab === "function") {
-        window.undoCloseTab();
+      if (window.SessionStore?.undoCloseTab) {
+        window.SessionStore.undoCloseTab(window, 0);
         return true;
       }
     } catch (err) {
@@ -3297,16 +3386,89 @@
     return false;
   }
 
-  function undoClosedTabs() {
-    const count = Math.max(1, undoState.count);
-    undoState.count = 0;
-    undoState.closedAt = 0;
-    for (let i = 0; i < count; i++) {
-      if (!reopenOneTab()) {
-        console.warn("[Zia] Undo close: this build didn't reopen the tab.");
-        break;
+  // Tabs that came back loose from a split or a deleted folder go back into one.
+  function regroupReopened(opened, closed) {
+    const pending = [...closed];
+    const matched = [];
+    for (const tab of opened) {
+      if (!tab.isConnected || tab.hasAttribute("zen-empty-tab")) {
+        continue;
+      }
+      const url = savedUrlOf(tab);
+      const index = pending.findIndex((record) => record.url === url);
+      if (index >= 0) {
+        matched.push({ tab, record: pending.splice(index, 1)[0] });
       }
     }
+
+    const splits = new Map();
+    for (const { tab, record } of matched) {
+      if (record.split && !tab.group?.hasAttribute("split-view-group")) {
+        const entry = splits.get(record.split.key) || { tabs: [], gridType: record.split.gridType };
+        entry.tabs.push(tab);
+        splits.set(record.split.key, entry);
+      }
+    }
+    for (const { tabs, gridType } of splits.values()) {
+      if (tabs.length >= 2) {
+        try {
+          window.gZenViewSplitter?.splitTabs(tabs, gridType, 0);
+        } catch (err) {
+          console.warn("[Zia] Undo close: couldn't put the split back together.", err);
+        }
+      }
+    }
+
+    const folders = new Map();
+    for (const { tab, record } of matched) {
+      const inFolder = tab.group?.isZenFolder || tab.group?.group?.isZenFolder;
+      if (record.folder && !inFolder) {
+        const entry = folders.get(record.folder.id) || { tabs: [], seen: new Set(), folder: record.folder };
+        // A split goes into the folder as one item, so add just one of its tabs.
+        const key = tab.group?.hasAttribute("split-view-group") ? tab.group : tab;
+        if (!entry.seen.has(key)) {
+          entry.seen.add(key);
+          entry.tabs.push(tab);
+        }
+        folders.set(record.folder.id, entry);
+      }
+    }
+    for (const { tabs, folder } of folders.values()) {
+      try {
+        const existing = document.getElementById(folder.id);
+        if (existing?.isZenFolder) {
+          existing.addTabs(tabs);
+        } else {
+          window.gZenFolders?.createFolder(tabs, { label: folder.label, workspaceId: folder.workspaceId });
+        }
+      } catch (err) {
+        console.warn("[Zia] Undo close: couldn't put the folder back.", err);
+      }
+    }
+  }
+
+  function undoClosedTabs() {
+    const actions = Math.max(1, undoState.actions);
+    const closed = undoState.closed;
+    undoState.actions = 0;
+    undoState.closed = [];
+    undoState.closedAt = 0;
+
+    const opened = [];
+    const onOpen = (event) => opened.push(event.target);
+    gBrowser.tabContainer.addEventListener("TabOpen", onOpen);
+    try {
+      for (let i = 0; i < actions; i++) {
+        if (!reopenLastClose()) {
+          console.warn("[Zia] Undo close: this build didn't reopen the tab.");
+          break;
+        }
+      }
+    } finally {
+      gBrowser.tabContainer.removeEventListener("TabOpen", onOpen);
+    }
+    // Give Zen a moment to finish restoring before regrouping.
+    setTimeout(() => safely("regroupReopened", () => regroupReopened(opened, closed)), 250);
   }
 
   function watchUndoClose() {
@@ -3316,9 +3478,23 @@
       if (tab.hasAttribute("zen-empty-tab") || url === "about:blank" || url === "about:newtab") {
         return;
       }
-      const recent = Date.now() - undoState.closedAt < 1000;
-      undoState.count = recent ? undoState.count + 1 : 1;
-      undoState.closedAt = Date.now();
+      const now = Date.now();
+      if (now - undoState.closedAt > 1000) {
+        undoState.actions = 0;
+        undoState.closed = [];
+      }
+      undoState.closedAt = now;
+      // Tabs closed in the same moment are one action, which Firefox reopens
+      // together.
+      if (!undoState.sameMoment) {
+        undoState.sameMoment = true;
+        undoState.actions++;
+        setTimeout(() => (undoState.sameMoment = false), 0);
+      }
+      try {
+        undoState.closed.push(closedTabRecord(tab));
+      } catch (err) {
+      }
     });
 
     window.addEventListener(
@@ -3574,7 +3750,7 @@
     };
     set("zen.widget.mac.mono-window-controls", false);
     set("zen.urlbar.replace-newtab", !Services.prefs.getBoolPref("zia.newtab.real-tab", true));
-    set("zen.splitView.enable-tab-drop", false);
+    set("zen.splitView.enable-tab-drop", !Services.prefs.getBoolPref("zia.split.drop-cards", true));
     set("browser.urlbar.trimHttps", true);
     set("browser.urlbar.untrimOnUserInteraction.featureGate", false);
     try {
@@ -3592,30 +3768,45 @@
       set(name, true);
     }
     set("zia.tabs.favicon-glow", false);
+    set("zia.essentials.fill-row", false);
   }
 
   // Options in Sine's settings. All on, except the favicon glow.
-  const ZIA_OPTIONS = ["zia.urlbar.dia-style", "zia.newtab.real-tab", "zia.tabs.sound-bars"];
+  const ZIA_OPTIONS = [
+    "zia.urlbar.dia-style",
+    "zia.newtab.real-tab",
+    "zia.tabs.sound-bars",
+    "zia.toolbar.site-color",
+    "zia.split.drop-cards",
+    "zia.page.rounding",
+  ];
+  const WATCHED_OPTIONS = ["zia.urlbar.dia-style", "zia.newtab.real-tab", "zia.toolbar.site-color", "zia.split.drop-cards"];
 
   function watchOptions() {
     const urlbar = gURLBar?.textbox || document.getElementById("urlbar");
     const apply = () => {
       urlbar?.toggleAttribute("zia-classic", !Services.prefs.getBoolPref("zia.urlbar.dia-style", true));
-      // Off gives Cmd/Ctrl+T back to Zen's floating address bar.
+      // Off gives Cmd/Ctrl+T back to Zen's floating address bar, and tab
+      // drops on the page back to Zen's own split.
       try {
-        Services.prefs
-          .getDefaultBranch("")
-          .setBoolPref("zen.urlbar.replace-newtab", !Services.prefs.getBoolPref("zia.newtab.real-tab", true));
+        const defaults = Services.prefs.getDefaultBranch("");
+        defaults.setBoolPref("zen.urlbar.replace-newtab", !Services.prefs.getBoolPref("zia.newtab.real-tab", true));
+        defaults.setBoolPref("zen.splitView.enable-tab-drop", !Services.prefs.getBoolPref("zia.split.drop-cards", true));
       } catch (err) {
       }
     };
+    const onChange = () => {
+      apply();
+      appliedColorKey = null;
+      updateColor();
+    };
     apply();
-    for (const name of ["zia.urlbar.dia-style", "zia.newtab.real-tab"]) {
-      Services.prefs.addObserver(name, apply);
+    for (const name of WATCHED_OPTIONS) {
+      Services.prefs.addObserver(name, onChange);
     }
     window.addEventListener("unload", () => {
-      for (const name of ["zia.urlbar.dia-style", "zia.newtab.real-tab"]) {
-        Services.prefs.removeObserver(name, apply);
+      for (const name of WATCHED_OPTIONS) {
+        Services.prefs.removeObserver(name, onChange);
       }
     });
   }
@@ -4836,6 +5027,68 @@
     });
 
     header.appendChild(button);
+  }
+
+  // Optional: the last essential stretches across whatever's left of its row.
+  // The grid can't span "to the end of the row" by itself, so Zia counts the
+  // columns and sets the span.
+  const FILL_ROW_PREF = "zia.essentials.fill-row";
+
+  function fillEssentialRows() {
+    const on = Services.prefs.getBoolPref(FILL_ROW_PREF, false) && root.getAttribute("zen-sidebar-expanded") === "true";
+    const wanted = new Map();
+    if (on) {
+      for (const grid of document.querySelectorAll(".zen-essentials-container")) {
+        const tabs = [...grid.children].filter((tab) =>
+          tab.matches?.(".tabbrowser-tab[zen-essential]:not([hidden], [zia-essential-proxy])")
+        );
+        const columns = getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length;
+        const empty = columns - (tabs.length % columns || columns);
+        if (tabs.length && columns > 1 && empty > 0) {
+          wanted.set(tabs[tabs.length - 1], empty + 1);
+        }
+      }
+    }
+    for (const tab of document.querySelectorAll(".tabbrowser-tab[zia-fill-row]")) {
+      if (!wanted.has(tab)) {
+        tab.removeAttribute("zia-fill-row");
+        tab.style.removeProperty("grid-column");
+      }
+    }
+    for (const [tab, span] of wanted) {
+      if (tab.style.getPropertyValue("grid-column") !== `span ${span}`) {
+        tab.style.setProperty("grid-column", `span ${span}`);
+      }
+      tab.setAttribute("zia-fill-row", "true");
+    }
+  }
+
+  function watchEssentialRows() {
+    const essentials = document.getElementById("zen-essentials");
+    if (!essentials) {
+      return;
+    }
+    let frame = 0;
+    const schedule = () => {
+      if (!frame) {
+        frame = requestAnimationFrame(() => {
+          frame = 0;
+          fillEssentialRows();
+        });
+      }
+    };
+    new MutationObserver(schedule).observe(essentials, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["hidden", "zen-essential"],
+    });
+    new ResizeObserver(schedule).observe(essentials);
+    new MutationObserver(schedule).observe(root, { attributes: true, attributeFilter: ["zen-sidebar-expanded"] });
+    window.addEventListener("ZenWorkspacesUIUpdate", schedule);
+    Services.prefs.addObserver(FILL_ROW_PREF, schedule);
+    window.addEventListener("unload", () => Services.prefs.removeObserver(FILL_ROW_PREF, schedule));
+    schedule();
   }
 
   function watchFolderCloseButtons() {
@@ -7757,6 +8010,7 @@
     safely("watchFolderColors", watchFolderColors);
     safely("addFolderColorPicker", addFolderColorPicker);
     safely("watchFolderCloseButtons", watchFolderCloseButtons);
+    safely("watchEssentialRows", watchEssentialRows);
     safely("watchSidebarPaint", watchSidebarPaint);
     safely("watchWindowButtonsSide", watchWindowButtonsSide);
     safely("addTabHoverCards", addTabHoverCards);
