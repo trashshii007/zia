@@ -3565,6 +3565,51 @@
     return null;
   }
 
+  // The page whose saved icon stands for a typed or listed address. The icon
+  // is often saved under the www. form (or the bare form) only, and not for
+  // every path, so try those too. Found ones are remembered, since typing asks
+  // repeatedly.
+  const iconPageCache = new Map();
+
+  async function iconPageFor(spec) {
+    if (iconPageCache.has(spec)) {
+      return iconPageCache.get(spec);
+    }
+    let url;
+    try {
+      url = new URL(spec);
+    } catch (err) {
+      return null;
+    }
+    const bare = url.host.replace(/^www\./i, "");
+    const hosts = [url.host, url.host === bare ? `www.${bare}` : bare];
+    const candidates = [spec];
+    for (const h of hosts) {
+      candidates.push(`${url.protocol}//${h}${url.pathname}${url.search}`, `${url.protocol}//${h}/`);
+    }
+    const found = await knownIconPage([...new Set(candidates)]);
+    // Only found ones are kept: a site visited later gets its icon.
+    if (found) {
+      iconPageCache.set(spec, found);
+    }
+    return found;
+  }
+
+  function showTypedIcon(urlbar, spec) {
+    const value = spec ? `url("page-icon:${spec}")` : "";
+    if (urlbar.style.getPropertyValue("--zia-typed-icon") === value) {
+      return;
+    }
+    if (value) {
+      urlbar.style.setProperty("--zia-typed-icon", value);
+    } else {
+      urlbar.style.removeProperty("--zia-typed-icon");
+    }
+  }
+
+  // The site's icon in the address bar while typing its address, or the
+  // magnifying glass. It only changes once the icon is known, so typing
+  // doesn't flash between the two.
   function updateTypedIcon() {
     const urlbar = gURLBar.textbox || document.getElementById("urlbar");
     const value = (gURLBar.value || "").trim();
@@ -3572,22 +3617,51 @@
     const host = match?.[1];
     const ask = ++typedIconAsk;
     if (!host) {
-      urlbar.style.removeProperty("--zia-typed-icon");
+      showTypedIcon(urlbar, null);
       return;
     }
-    urlbar.style.setProperty("--zia-typed-icon", `url("page-icon:https://${host}/")`);
-    const path = match[2] || "/";
-    const bare = host.replace(/^www\./i, "");
-    const hosts = [host, host === bare ? `www.${bare}` : bare];
-    const candidates = [];
-    for (const h of hosts) {
-      candidates.push(`https://${h}${path}`, `https://${h}/`);
+    const spec = `https://${host}${match[2] || "/"}`;
+    if (iconPageCache.has(spec)) {
+      showTypedIcon(urlbar, iconPageCache.get(spec));
+      return;
     }
-    knownIconPage([...new Set(candidates)]).then((spec) => {
-      if (spec && ask === typedIconAsk) {
-        urlbar.style.setProperty("--zia-typed-icon", `url("page-icon:${spec}")`);
+    iconPageFor(spec).then((found) => {
+      if (ask === typedIconAsk) {
+        showTypedIcon(urlbar, found);
       }
     });
+  }
+
+  // Result rows get the default globe when the icon is saved under the other
+  // form of the address (youtube.com vs www.youtube.com); point them at it.
+  function fillRowIcons(results) {
+    for (const img of results.querySelectorAll(".urlbarView-row .urlbarView-favicon")) {
+      const src = img.getAttribute("src") || "";
+      let spec = null;
+      if (src.startsWith("page-icon:")) {
+        spec = src.slice("page-icon:".length);
+      } else if (!src || src.includes("defaultFavicon")) {
+        const row = img.closest(".urlbarView-row");
+        const type = row?.getAttribute("type");
+        if (/^(search|tip|dynamic|tabtosearch)/.test(type || "")) {
+          continue;
+        }
+        const text = (row?.querySelector(".urlbarView-url")?.textContent || "").trim();
+        if (!/^(?:https?:\/\/)?[\w-]+(?:\.[\w-]+)+/i.test(text)) {
+          continue;
+        }
+        spec = /^https?:/i.test(text) ? text : `https://${text}`;
+      }
+      if (!spec) {
+        continue;
+      }
+      iconPageFor(spec).then((found) => {
+        const icon = found && `page-icon:${found}`;
+        if (icon && icon !== src && img.getAttribute("src") === src) {
+          img.setAttribute("src", icon);
+        }
+      });
+    }
   }
 
   function shortenEngineActions(results) {
@@ -3740,6 +3814,7 @@
           return;
         }
         shortenEngineActions(results);
+        fillRowIcons(results);
         alignTypedTextWithRows(results);
         fitPopoverBottom();
 

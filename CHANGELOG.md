@@ -23,6 +23,14 @@ Every release of Zia, newest first. The format follows
   it. Zen only showed it when a page had exactly one video, so never on
   YouTube.
 
+### Fixed
+
+- Typing an address no longer flashes between the site's icon and the
+  magnifying glass; the icon changes once, when it's found.
+- Results in the address pop-up show the site's icon when it's saved under
+  the other form of the address (youtube.com vs www.youtube.com), instead of
+  a blank globe.
+
 ## [2.33.4] — 2026-09-24
 
 ### Fixed
