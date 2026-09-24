@@ -92,7 +92,7 @@ The first video opens the Multiview tab and up to three more join it; after that
 
 ![Multiview with sport, scenery and two live streams](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/multiview-wall.webp>)
 
-Hover a tile to drag it to a new spot, give it the sound (one tile plays at a time, marked with a white ring), open it on its site or remove it. Videos pick up from where you were, and live streams join live.
+Hover a tile to drag it to a new spot, make it the big one with the others in a row beneath, give it the sound (one tile plays at a time, marked with a white ring), open it on its site or remove it. With two videos, one button puts them side by side or stacked. Videos pick up from where you were, and live streams join live.
 
 ![A Multiview tile on hover](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/multiview-tile.webp>)
 
