@@ -13,10 +13,12 @@ Every release of Zia, newest first. The format follows
   site's name in the middle, big 15-second back / play-pause / 15-second
   forward buttons in the centre, and a thin progress line along the bottom.
   Turn it off in the settings to get Firefox's own controls back.
-- **Tuck picture-in-picture away.** Drag the window against the left or right
-  edge of the screen and it slides off, leaving a thin tab with sound bars.
-  Hover the tab to slide the video back out; it tucks away again when you
-  move off it. Drag it away from the edge to leave it out.
+- **Tuck picture-in-picture away.** Press the new tuck button beside Close,
+  or drag the window against the left or right side of the screen (a blue
+  edge says "Let go to tuck away"), and it slides off, leaving a thin strip
+  with sound bars and an arrow. Point at the strip to peek the video back
+  out; it tucks away again when you move off it. Press **Keep it out** (the
+  same button) or drag it away from the edge to leave it out.
 - The music player always shows its picture-in-picture button when you hover
   it (Zen only showed it for some videos).
 
