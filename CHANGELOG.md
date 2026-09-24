@@ -22,6 +22,8 @@ Every release of Zia, newest first. The format follows
 
 - A coloured folder keeps its colour while a tab is dragged into it, instead
   of turning to the plain hover colour.
+- A folder's colour fades to its hover colour and back instead of snapping,
+  so dropping a tab in or dragging one out no longer flashes.
 - The gap below an open folder is the same as the gap between two tabs; it
   was thinner.
 

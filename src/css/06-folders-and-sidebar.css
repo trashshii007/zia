@@ -52,6 +52,9 @@
     corner-shape: round;
     pointer-events: none;
     background-color: transparent;
+    /* eases between the folder's colour and its hover colour, which would
+     * otherwise snap as a dragged tab lands in it or leaves it */
+    transition: background-color 180ms ease;
   }
 
   &::after {
