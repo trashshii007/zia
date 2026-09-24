@@ -7937,6 +7937,11 @@
       if (tile) {
         lastTileUnder = tile;
         lastTapPoint ||= { x: point.x, y: point.y };
+      } else if (skip && inBox(skip, point)) {
+        // Over the dragged essential's own (hidden) tile, which Zen moves
+        // along as the drag goes. Remember that, so moving back onto the tile
+        // it just swapped with taps again.
+        lastTileUnder = skip;
       }
     };
 

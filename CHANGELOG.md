@@ -18,7 +18,8 @@ Every release of Zia, newest first. The format follows
   them back on once, the first time it runs. Turning them off again
   afterwards is respected.
 - Dragging an essential one place along now taps as it passes the
-  neighbouring tile. It only tapped from the second tile on.
+  neighbouring tile, and taps again if you change your mind and move it
+  back. It only tapped from the second tile on, and not at all going back.
 
 ## [2.40.0] — 2026-09-24
 
