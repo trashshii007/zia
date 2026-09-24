@@ -8,12 +8,15 @@ Every release of Zia, newest first. The format follows
 
 ### Changed
 
-- **Folders open and close with a spring.** The folder slides open or shut
-  with a slight overshoot and settles into place, instead of Zen's even
-  slide followed by a separate 1px nudge of the folder's box. The setting
-  is now called **Folders open and close with a gentle spring**.
-- The music player opens on hover with the same spring, and its buttons and
-  progress bar spring in with it.
+- **Folders open and close with a spring.** The folder slides open or shut,
+  runs a few pixels past and settles back, instead of Zen's even slide
+  followed by a separate 1px nudge of the folder's box. Closing, whatever is
+  below the folder bounces up a little. The bounce is the same size whatever
+  the folder's size. The setting is now called **Folders open and close with
+  a gentle spring**.
+- The music player opens on hover with the same spring, bouncing by the same
+  amount, and its buttons and progress bar spring in with it.
+- The sidebar no longer shows a scrollbar anywhere. It still scrolls.
 
 ## [2.42.0] — 2026-09-24
 

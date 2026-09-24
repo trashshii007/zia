@@ -1279,38 +1279,55 @@
     }).observe(essentials, { childList: true, subtree: true });
   }
 
-  // Zen slides a folder open and shut in 0.18s at an even pace. Zia gives
-  // that slide a spring with a slight overshoot instead, the same one the
-  // music player uses (--zia-spring), so the folder settles into place. Zen
-  // moves the element that starts a folder's contents by its top margin;
-  // Zia only changes the timing of that one animation.
-  const FOLDER_SPRING = { duration: 420, easing: "cubic-bezier(0.32, 1.25, 0.5, 1)" };
-
+  // Zen slides a folder open and shut in 0.18s at an even pace. Zia turns
+  // that slide into a spring: it eases in quickly, runs a few pixels past
+  // where it's going, and settles back. Opening, the folder's box stretches a
+  // little further than it needs to; closing, whatever is below the folder
+  // bounces up a little. The overshoot is the same few pixels whatever the
+  // folder's size, like the music player's, rather than growing with it.
+  // Zen moves the element that starts a folder's contents by its top margin;
+  // Zia only changes that one animation.
+  const FOLDER_SPRING_MS = 420;
+  const FOLDER_OVERSHOOT_PX = 3;
   const FOLDER_SELECTOR = "zen-folder, tab-group:not([split-view-group])";
 
   const isFolder = (el) =>
     el?.localName === "zen-folder" || (el?.localName === "tab-group" && !el.hasAttribute("split-view-group"));
 
-  const movesTopMargin = (keyframes) =>
-    Array.isArray(keyframes) ? keyframes.some((frame) => frame && "marginTop" in frame) : !!keyframes && "marginTop" in keyframes;
-
   function springFolderAnimation(element, keyframes, options) {
     if (
       !element.classList?.contains("zen-tab-group-start") ||
       !isFolder(element.parentElement?.parentElement) ||
-      !movesTopMargin(keyframes) ||
+      !Array.isArray(keyframes) ||
+      keyframes.length !== 2 ||
       !(typeof options === "object" && options?.duration > 0)
     ) {
-      return options;
+      return null;
+    }
+    const from = parseFloat(keyframes[0]?.marginTop);
+    const to = parseFloat(keyframes[1]?.marginTop);
+    if (!Number.isFinite(from) || !Number.isFinite(to) || from === to) {
+      return null;
     }
     try {
       if (!Services.prefs.getBoolPref("zia.folders.bounce", true)) {
-        return options;
+        return null;
       }
     } catch (err) {
-      return options;
+      return null;
     }
-    return { ...options, ...FOLDER_SPRING };
+    // Opening, the margin rises to 0 and goes a little past; closing, it
+    // falls and goes a little further, so the rows below rise past their
+    // place and drop back.
+    const past = to + Math.sign(to - from) * Math.min(FOLDER_OVERSHOOT_PX, Math.abs(to - from) / 4);
+    return {
+      keyframes: [
+        { marginTop: `${from}px`, offset: 0, easing: "cubic-bezier(0.25, 1, 0.5, 1)" },
+        { marginTop: `${past}px`, offset: 0.62, easing: "ease-in-out" },
+        { marginTop: `${to}px`, offset: 1 },
+      ],
+      options: { ...options, duration: FOLDER_SPRING_MS, easing: "linear" },
+    };
   }
 
   function allowEmojiFolderIcons() {
@@ -1335,7 +1352,8 @@
       return;
     }
     const patched = function (keyframes, options) {
-      return animate.call(this, keyframes, springFolderAnimation(this, keyframes, options));
+      const spring = springFolderAnimation(this, keyframes, options);
+      return spring ? animate.call(this, spring.keyframes, spring.options) : animate.call(this, keyframes, options);
     };
     patched.__zia = true;
     Element.prototype.animate = patched;
