@@ -4,6 +4,22 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.45.0] — 2026-09-24
+
+### Changed
+
+- **Throw picture-in-picture at the side to tuck it.** The blue "Let go to
+  tuck away" edge is gone. Let go of the window with about a third of it
+  past the left or right side of the screen, or flick it quickly at a side,
+  and it springs the rest of the way into its tucked strip.
+
+### Fixed
+
+- Live streams in picture-in-picture no longer show a progress line or time.
+  Firefox only hid them for video with no length at all, and most live
+  streams report one that keeps growing. Zia now counts a stream as live
+  the same way Zen's own music player does.
+
 ## [2.44.0] — 2026-09-24
 
 ### Changed

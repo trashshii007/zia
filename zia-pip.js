@@ -49,10 +49,11 @@
   const back = make("button", "zia-pip-pill zia-pip-back control-item", topBar);
   back.textContent = "Back to Tab";
   const host = make("div", "zia-pip-host control-item", topBar);
+  let sourceBrowser = null;
   try {
     const { PictureInPicture } = ChromeUtils.importESModule("resource://gre/modules/PictureInPicture.sys.mjs");
-    const browser = PictureInPicture.weakWinToBrowser?.get(window);
-    host.textContent = browser?.currentURI?.host || "";
+    sourceBrowser = PictureInPicture.weakWinToBrowser?.get(window) || null;
+    host.textContent = sourceBrowser?.currentURI?.host || "";
   } catch (err) {
     console.debug("[Zia] picture-in-picture: site name", err);
   }
@@ -68,8 +69,6 @@
   back.addEventListener("click", press("unpip"));
   closeButton.addEventListener("click", press("close"));
 
-  const dropHint = make("div", "zia-pip-drop-hint", document.body);
-  dropHint.textContent = "Let go to tuck away";
   const sliver = make("div", "zia-pip-sliver", document.body);
 
   const applyPrefs = () => {
@@ -79,6 +78,28 @@
   applyPrefs();
   Services.prefs.addObserver("zia.pip.", applyPrefs);
   window.addEventListener("unload", () => Services.prefs.removeObserver("zia.pip.", applyPrefs));
+
+  // Live streams get no progress line or time. Firefox hides them only for a
+  // video with no length at all, but most live streams report one that keeps
+  // growing. Zen's own player counts 900,000 seconds or more as live; Zia
+  // asks the tab's media controller and does the same.
+  const LIVE_SECONDS = 900000;
+  try {
+    const controller = sourceBrowser?.browsingContext?.mediaController;
+    if (controller) {
+      const showLive = (duration) => root.toggleAttribute("zia-live", Number.isFinite(duration) ? duration >= LIVE_SECONDS : duration === Infinity);
+      try {
+        showLive(controller.getPositionState()?.duration);
+      } catch (err) {
+        // No position yet; the event below brings it
+      }
+      const onPosition = (event) => showLive(event.duration);
+      controller.addEventListener("positionstatechange", onPosition);
+      window.addEventListener("unload", () => controller.removeEventListener("positionstatechange", onPosition));
+    }
+  } catch (err) {
+    console.debug("[Zia] picture-in-picture: live check", err);
+  }
 
   // Firefox skips 5 seconds; Dia's buttons skip 15, so each press skips three times.
   let repeating = false;
@@ -98,16 +119,19 @@
     });
   }
 
-  // Tucking. Two ways in: the tuck button, or drag the window against the
-  // left or right side of the screen (a blue edge says "Let go to tuck
-  // away"). Tucked, only a strip with an arrow shows. Pointing at it only
+  // Tucking. Two ways in: the tuck button, or throw the window at the left
+  // or right side of the screen. Let go with a good part of it off the side,
+  // or flick it quickly at a side, and it springs the rest of the way in.
+  // Tucked, only a strip with an arrow shows. Pointing at it only
   // nudges the video out a little, so passing over it does nothing. Two
   // ways out, and either way it stays out until you tuck it again: click
   // the strip and the video slides back onto the screen, or hold the strip
   // and drag it out sideways.
   const SLIVER = 24;
   const NUDGE = 12;
-  const ZONE = 24;
+  const TUCK_OFF = 0.3; // this much of the window past a side tucks it
+  const FLING_SPEED = 1.2; // px per ms toward a side as it's let go
+  const FLING_REACH = 160; // and within this many px of that side
   const MARGIN = 16;
   let state = "free"; // "free" or "tucked"
   let side = null;
@@ -115,6 +139,7 @@
   let lastX = window.screenX;
   let lastY = window.screenY;
   let movedAt = 0;
+  let trail = []; // [time, x] while the window is being dragged
   let glideId = 0;
 
   const screenBox = () => {
@@ -126,12 +151,26 @@
     const middle = window.screenX + window.outerWidth / 2;
     return middle > (box.left + box.right) / 2 ? "right" : "left";
   };
-  const edgeUnderWindow = () => {
+  // Where the window was let go: far enough past a side, or flicked at one
+  const tuckEdge = () => {
     const box = screenBox();
-    if (window.screenX + window.outerWidth >= box.right - ZONE) {
+    const width = window.outerWidth;
+    if ((window.screenX + width - box.right) / width >= TUCK_OFF) {
       return "right";
     }
-    if (window.screenX <= box.left + ZONE) {
+    if ((box.left - window.screenX) / width >= TUCK_OFF) {
+      return "left";
+    }
+    const last = trail.at(-1);
+    const first = last && trail.find(([time]) => last[0] - time <= 150);
+    if (!first || first === last) {
+      return null;
+    }
+    const speed = (last[1] - first[1]) / (last[0] - first[0] || 1);
+    if (speed > FLING_SPEED && box.right - (window.screenX + width) < FLING_REACH) {
+      return "right";
+    }
+    if (speed < -FLING_SPEED && window.screenX - box.left < FLING_REACH) {
       return "left";
     }
     return null;
@@ -141,7 +180,8 @@
     tuckButton.setAttribute("tooltip", "Tuck into the side");
   };
   // A newer glide takes over from one still running.
-  const glide = (x, duration = 280, done = null) => {
+  // `spring` runs a little past the end and settles back
+  const glide = (x, duration = 280, done = null, spring = false) => {
     animating = true;
     const id = ++glideId;
     const from = window.screenX;
@@ -152,7 +192,7 @@
         return;
       }
       const t = Math.min(1, (now - start) / duration);
-      const eased = 1 - Math.pow(1 - t, 3);
+      const eased = spring ? 1 + 2.2 * Math.pow(t - 1, 3) + 1.2 * Math.pow(t - 1, 2) : 1 - Math.pow(1 - t, 3);
       window.moveTo(Math.round(from + (x - from) * eased), y);
       if (t < 1) {
         requestAnimationFrame(step);
@@ -168,12 +208,11 @@
   const tuck = (edge) => {
     side = edge;
     state = "tucked";
-    root.removeAttribute("zia-drop-hint");
     root.setAttribute("zia-tucked", edge);
     root.removeAttribute("zia-nudged");
     root.removeAttribute("zia-emerging");
     updateButton();
-    glide(tuckedX(0));
+    glide(tuckedX(0), 360, null, true);
   };
   // Where the tucked window sits, with `extra` more of it showing.
   const tuckedX = (extra) => {
@@ -305,7 +344,6 @@
       if (state !== "free") {
         release();
       }
-      root.removeAttribute("zia-drop-hint");
       return;
     }
     if (animating) {
@@ -322,33 +360,32 @@
       return;
     }
     if (x !== lastX || y !== lastY) {
-      // Being dragged: a tucked or peeking window that's moved is free again.
+      // Being dragged: a tucked window that's moved is free again.
+      if (now - movedAt > 300) {
+        trail = [];
+      }
       lastX = x;
       lastY = y;
       movedAt = now;
+      trail.push([now, x]);
+      if (trail.length > 20) {
+        trail.shift();
+      }
       if (state !== "free") {
         release();
-      }
-      const edge = edgeUnderWindow();
-      if (edge) {
-        root.setAttribute("zia-drop-hint", edge);
-      } else {
-        root.removeAttribute("zia-drop-hint");
       }
       updateButton();
       return;
     }
-    // Only when the user has just dragged it there and let go, never where
-    // Firefox first puts it.
+    // Just let go after a drag (never where Firefox first puts it): tuck if
+    // it was thrown at a side.
     const sinceMove = now - movedAt;
-    if (state === "free" && sinceMove > 350 && sinceMove < 1500) {
-      const edge = edgeUnderWindow();
+    if (state === "free" && trail.length && sinceMove > 200) {
+      const edge = tuckEdge();
+      trail = [];
       if (edge) {
         tuck(edge);
       }
     }
-    if (sinceMove > 1500) {
-      root.removeAttribute("zia-drop-hint");
-    }
-  }, 100);
+  }, 40);
 })();
