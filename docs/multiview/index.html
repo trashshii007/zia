@@ -27,23 +27,31 @@
   #wall {
     position: absolute;
     inset: var(--gap);
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--gap);
-    place-content: center;
   }
 
+  /* Placed by layout(); moving between layouts glides rather than jumps. */
   .tile {
-    position: relative;
-    flex: none;
-    width: var(--tile-w, 100%);
-    height: var(--tile-h, 100%);
+    position: absolute;
     overflow: hidden;
     border-radius: var(--radius);
     background: #000;
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
     transition: box-shadow 160ms ease, opacity 160ms ease;
     animation: tile-in 260ms var(--ease);
+  }
+
+  #wall.gliding .tile {
+    transition: box-shadow 160ms ease, opacity 160ms ease, left 300ms var(--ease), top 300ms var(--ease),
+      width 300ms var(--ease), height 300ms var(--ease);
+  }
+
+  .pill[hidden] {
+    display: none;
+  }
+
+  .pill.active {
+    background: #fff;
+    color: #000;
   }
 
   @keyframes tile-in {
@@ -228,6 +236,10 @@
     handle: icon('<circle cx="6" cy="4" r=".6"/><circle cx="10" cy="4" r=".6"/><circle cx="6" cy="8" r=".6"/><circle cx="10" cy="8" r=".6"/><circle cx="6" cy="12" r=".6"/><circle cx="10" cy="12" r=".6"/>'),
     muted: icon('<path d="M2.5 6h2.2L8 3.2v9.6L4.7 10H2.5z" fill="currentColor"/><path d="M11 6.2l3.4 3.6M14.4 6.2L11 9.8"/>'),
     sound: icon('<path d="M2.5 6h2.2L8 3.2v9.6L4.7 10H2.5z" fill="currentColor"/><path d="M10.6 5.6a3.4 3.4 0 0 1 0 4.8M12.6 3.8a6 6 0 0 1 0 8.4"/>'),
+    bigger: icon('<path d="M9.5 2.5h4v4M13.5 2.5L9 7M6.5 13.5h-4v-4M2.5 13.5L7 9"/>'),
+    smaller: icon('<path d="M13.5 6.5h-4v-4M9.5 6.5l4-4M2.5 9.5h4v4M6.5 9.5l-4 4"/>'),
+    side: icon('<rect x="1.5" y="4" width="5.5" height="8" rx="1.2"/><rect x="9" y="4" width="5.5" height="8" rx="1.2"/>'),
+    stacked: icon('<rect x="3" y="1.5" width="10" height="5.5" rx="1.2"/><rect x="3" y="9" width="10" height="5.5" rx="1.2"/>'),
     open: icon('<path d="M9.5 2.5h4v4M13.5 2.5L7.5 8.5M12 9.5v3a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3"/>'),
     close: icon('<path d="M4 4l8 8M12 4l-8 8"/>'),
   };
@@ -466,6 +478,8 @@
       <div class="bar">
         <button class="pill handle" draggable="true" title="Drag to move">${ICONS.handle}</button>
         <span class="label"></span>
+        <button class="pill pair" title="Side by side">${ICONS.side}</button>
+        <button class="pill focus" title="Make this one bigger">${ICONS.bigger}</button>
         <button class="pill sound" title="Play this one's sound">${ICONS.muted}</button>
         <a class="pill open" target="_blank" rel="noopener" title="Open on the site">${ICONS.open}</a>
         <button class="pill remove" title="Remove">${ICONS.close}</button>
@@ -491,6 +505,16 @@
     el.querySelector(".open").href = kind.source(entry);
     el.querySelector(".sound").addEventListener("click", () => setSound(soundKey === key ? null : key));
     el.querySelector(".remove").addEventListener("click", () => removeTile(key));
+    el.querySelector(".focus").addEventListener("click", () => {
+      prefs.focus = prefs.focus === key ? null : key;
+      savePrefs();
+      glide();
+    });
+    el.querySelector(".pair").addEventListener("click", () => {
+      prefs.pair = currentPair === "side" ? "stacked" : "side";
+      savePrefs();
+      glide();
+    });
 
     const handle = el.querySelector(".handle");
     handle.addEventListener("dragstart", (event) => {
@@ -564,9 +588,7 @@
   }
 
   function applyOrder() {
-    order.forEach((key, index) => {
-      tiles.get(key).el.style.order = index;
-    });
+    glide();
   }
 
   // Moving an iframe in the page reloads it, so tiles are only ever added or
@@ -596,29 +618,135 @@
     refresh();
   }
 
-  // ---------- The grid: as many columns as make the tiles biggest, 16:9,
-  // with a part-filled last row centred
+  // ---------- Layouts. Remembered in this browser (not in the address):
+  //  - grid: as many columns as make the tiles biggest, 16:9, with a
+  //    part-filled last row centred
+  //  - two videos: side by side or stacked, as picked on a tile (until then,
+  //    whichever makes them bigger)
+  //  - one tile bigger: the rest in a row below it, or in a column beside it
+  //    when that leaves the big one bigger
+  const PREFS_KEY = "zia-multiview-layout";
+  let prefs = { pair: "auto", focus: null };
+  try {
+    prefs = { ...prefs, ...JSON.parse(localStorage.getItem(PREFS_KEY) || "{}") };
+  } catch (err) {}
+  function savePrefs() {
+    try {
+      localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+    } catch (err) {}
+  }
+  let currentPair = null;
+
+  const GAP = 8;
+  const fit = (w, h) => (w / h > 16 / 9 ? [(h * 16) / 9, h] : [w, (w * 9) / 16]);
+
+  function gridSize(n, cols, width, height) {
+    const rows = Math.ceil(n / cols);
+    return fit((width - GAP * (cols - 1)) / cols, (height - GAP * (rows - 1)) / rows);
+  }
+
+  // Rows of equal tiles, each row centred, the block centred.
+  function placeGrid(keys, cols, w, h, width, height) {
+    const rows = Math.ceil(keys.length / cols);
+    const top = (height - (rows * h + GAP * (rows - 1))) / 2;
+    const spots = [];
+    keys.forEach((key, i) => {
+      const row = Math.floor(i / cols);
+      const inRow = Math.min(cols, keys.length - row * cols);
+      const left = (width - (inRow * w + GAP * (inRow - 1))) / 2;
+      spots.push([key, left + (i % cols) * (w + GAP), top + row * (h + GAP), w, h]);
+    });
+    return spots;
+  }
+
+  function placeFocus(big, rest, width, height) {
+    const m = rest.length;
+    // Below: a row of small tiles about a quarter of the height
+    let sh = Math.min(Math.max(height * 0.24, 70), 260);
+    let sw = (sh * 16) / 9;
+    if (m * sw + GAP * (m - 1) > width) {
+      sw = (width - GAP * (m - 1)) / m;
+      sh = (sw * 9) / 16;
+    }
+    const [bw1, bh1] = fit(width, height - GAP - sh);
+    // Beside: a column of small tiles about a quarter of the width
+    let cw = Math.min(Math.max(width * 0.24, 120), 460);
+    let ch = (cw * 9) / 16;
+    if (m * ch + GAP * (m - 1) > height) {
+      ch = (height - GAP * (m - 1)) / m;
+      cw = (ch * 16) / 9;
+    }
+    const [bw2, bh2] = fit(width - GAP - cw, height);
+
+    const spots = [];
+    if (bw1 >= bw2) {
+      const top = (height - (bh1 + GAP + sh)) / 2;
+      spots.push([big, (width - bw1) / 2, top, bw1, bh1]);
+      const left = (width - (m * sw + GAP * (m - 1))) / 2;
+      rest.forEach((key, i) => spots.push([key, left + i * (sw + GAP), top + bh1 + GAP, sw, sh]));
+    } else {
+      const left = (width - (bw2 + GAP + cw)) / 2;
+      spots.push([big, left, (height - bh2) / 2, bw2, bh2]);
+      const top = (height - (m * ch + GAP * (m - 1))) / 2;
+      rest.forEach((key, i) => spots.push([key, left + bw2 + GAP, top + i * (ch + GAP), cw, ch]));
+    }
+    return spots;
+  }
+
   function layout() {
     const n = order.length;
-    const gap = 8;
     const width = wall.clientWidth;
     const height = wall.clientHeight;
-    let best = { cols: 1, w: 0, h: 0 };
-    for (let cols = 1; cols <= Math.max(1, n); cols++) {
-      const rows = Math.ceil(n / cols);
-      let w = (width - gap * (cols - 1)) / cols;
-      let h = (height - gap * (rows - 1)) / rows;
-      if (w / h > 16 / 9) {
-        w = (h * 16) / 9;
-      } else {
-        h = (w * 9) / 16;
-      }
-      if (w > best.w) {
-        best = { cols, w, h };
-      }
+    if (!n || !width || !height) {
+      return;
     }
-    wall.style.setProperty("--tile-w", `${Math.floor(best.w)}px`);
-    wall.style.setProperty("--tile-h", `${Math.floor(best.h)}px`);
+    const focus = n > 1 && order.includes(prefs.focus) ? prefs.focus : null;
+    let spots;
+    currentPair = null;
+    if (focus) {
+      spots = placeFocus(focus, order.filter((key) => key !== focus), width, height);
+    } else if (n === 2) {
+      const [sw, sh] = gridSize(2, 2, width, height);
+      const [tw, th] = gridSize(2, 1, width, height);
+      currentPair = prefs.pair === "side" || prefs.pair === "stacked" ? prefs.pair : sw >= tw ? "side" : "stacked";
+      spots = currentPair === "side" ? placeGrid(order, 2, sw, sh, width, height) : placeGrid(order, 1, tw, th, width, height);
+    } else {
+      let best = { cols: 1, w: 0, h: 0 };
+      for (let cols = 1; cols <= n; cols++) {
+        const [w, h] = gridSize(n, cols, width, height);
+        if (w > best.w) {
+          best = { cols, w, h };
+        }
+      }
+      spots = placeGrid(order, best.cols, best.w, best.h, width, height);
+    }
+    for (const [key, left, top, w, h] of spots) {
+      const tile = tiles.get(key);
+      Object.assign(tile.el.style, {
+        left: `${Math.round(left)}px`,
+        top: `${Math.round(top)}px`,
+        width: `${Math.floor(w)}px`,
+        height: `${Math.floor(h)}px`,
+      });
+      const isFocus = key === focus;
+      const focusButton = tile.el.querySelector(".focus");
+      focusButton.innerHTML = isFocus ? ICONS.smaller : ICONS.bigger;
+      focusButton.title = isFocus ? "Back to the grid" : "Make this one bigger";
+      focusButton.hidden = n < 2;
+      const pairButton = tile.el.querySelector(".pair");
+      pairButton.hidden = !currentPair;
+      pairButton.innerHTML = currentPair === "side" ? ICONS.stacked : ICONS.side;
+      pairButton.title = currentPair === "side" ? "Stack them" : "Side by side";
+    }
+  }
+
+  // Layout changes the user asks for glide; resizing the window doesn't.
+  let glideTimer = 0;
+  function glide() {
+    wall.classList.add("gliding");
+    layout();
+    clearTimeout(glideTimer);
+    glideTimer = setTimeout(() => wall.classList.remove("gliding"), 350);
   }
 
   // The tab's icon: a 2×2 grid of faint white squares, one coloured in per video.

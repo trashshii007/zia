@@ -4,6 +4,18 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.36.1] — 2026-09-24
+
+### Added
+
+- Multiview layouts, from each tile's hover bar:
+  - With two videos, a button puts them **side by side** or **stacked**.
+  - **Make this one bigger** turns a tile into the main one, with the
+    others in a row below it, or in a column beside it on a wide window.
+    Press it again to go back to the grid.
+  Tiles glide into their new places without the videos reloading, and the
+  layout you pick is remembered.
+
 ## [2.36.0] — 2026-09-24
 
 ### Added
