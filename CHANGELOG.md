@@ -15,7 +15,10 @@ Every release of Zia, newest first. The format follows
 ### Changed
 
 - Multiview holds up to four videos. With four in it, the right-click item
-  reads **Multiview is full (4 videos)**.
+  becomes **Replace in Multiview**, listing the four; pick one and the new
+  video takes its place while the others keep playing.
+- Multiview tiles show the video's title (or the stream's) instead of only
+  the site's name.
 
 ## [2.35.0] — 2026-09-24
 

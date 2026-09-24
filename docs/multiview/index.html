@@ -232,7 +232,7 @@
     close: icon('<path d="M4 4l8 8M12 4l-8 8"/>'),
   };
 
-  // ---------- The address holds the videos: #~colour,kind:id@seconds,kind:id,...
+  // ---------- The address holds the videos: #~colour,kind:id@seconds;title,...
   // (the colour, from Zia, fills the tab's grid icon). Four at most.
   const MAX = 4;
   const ZIA_BLUE = "5ab9f5";
@@ -245,9 +245,12 @@
     return items
       .filter((item) => !item.startsWith("~"))
       .map((item) => {
-        const [head, at] = item.split("@");
+        const [body, title] = item.split(";");
+        const [head, at] = body.split("@");
         const [kind, id] = head.split(":");
-        return kind && id ? { kind, id: decodeURIComponent(id), at: Number(at) || 0 } : null;
+        return kind && id
+          ? { kind, id: decodeURIComponent(id), at: Number(at) || 0, title: title ? decodeURIComponent(title) : "" }
+          : null;
       })
       .filter((entry) => entry && KINDS[entry.kind])
       .slice(0, MAX);
@@ -255,8 +258,8 @@
 
   function writeEntries() {
     const items = order.map((key) => {
-      const { kind, id, at } = tiles.get(key).entry;
-      return `${kind}:${encodeURIComponent(id)}${at ? `@${Math.floor(at)}` : ""}`;
+      const { kind, id, at, title } = tiles.get(key).entry;
+      return `${kind}:${encodeURIComponent(id)}${at ? `@${Math.floor(at)}` : ""}${title ? `;${encodeURIComponent(title)}` : ""}`;
     });
     history.replaceState(null, "", `#${[`~${color}`, ...items].join(",")}`);
   }
@@ -481,7 +484,10 @@
         label.textContent = text || "";
       },
     };
-    el.querySelector(".label").textContent = kind.label(entry);
+    // The video's title where Zia passed one, else the site
+    const label = el.querySelector(".label");
+    label.textContent = entry.title || kind.label(entry);
+    label.title = entry.title ? `${entry.title} — ${kind.label(entry)}` : kind.label(entry);
     el.querySelector(".open").href = kind.source(entry);
     el.querySelector(".sound").addEventListener("click", () => setSound(soundKey === key ? null : key));
     el.querySelector(".remove").addEventListener("click", () => removeTile(key));
