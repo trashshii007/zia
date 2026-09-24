@@ -14,6 +14,9 @@ Every release of Zia, newest first. The format follows
   puts it back shortly after the pointer is released, or on the next launch
   at the latest, and undoes its own change instead of saving a new value.
 - Zia's drag taps no longer switch Zen's haptics on if you'd turned them off.
+- If haptics were left switched off by the old version, this version switches
+  them back on once, the first time it runs. Turning them off again
+  afterwards is respected.
 
 ## [2.40.0] — 2026-09-24
 

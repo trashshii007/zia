@@ -27,6 +27,7 @@
   // released, or on the next launch at the latest.
   const HAPTIC_PREF = "zen.haptic-feedback.enabled";
   const MUTE_MARK = "zia.haptics.muted";
+  const REPAIRED_MARK = "zia.haptics.repaired";
   let hapticsWereOn = null;
   let hapticsHadUserValue = false;
   function restoreHaptics(hadUserValue) {
@@ -66,6 +67,15 @@
     try {
       if (Services.prefs.getBoolPref(MUTE_MARK, false) && hapticsWereOn === null) {
         restoreHaptics(false);
+      }
+      // Before 2.40.1 the mute wasn't marked, so a drag that didn't finish left
+      // haptics off with no trace. Put them back once. Anyone who turns them
+      // off again afterwards is left alone.
+      if (!Services.prefs.getBoolPref(REPAIRED_MARK, false)) {
+        Services.prefs.setBoolPref(REPAIRED_MARK, true);
+        if (hapticsWereOn === null && !Services.prefs.getBoolPref(HAPTIC_PREF, true)) {
+          restoreHaptics(false);
+        }
       }
     } catch (err) {
       noteError("start: watchHapticsMute", err);
