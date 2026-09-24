@@ -4,6 +4,16 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.38.1] — 2026-09-24
+
+### Fixed
+
+- Hovering a tucked picture-in-picture no longer shows a slice of video
+  beside the strip while it nudges out. The strip is now always wide enough
+  to cover the nudge.
+- The strip's arrow stays by its inner edge and moves out with the video
+  when you hover, instead of drifting right, and no longer brightens.
+
 ## [2.38.0] — 2026-09-24
 
 ### Added
