@@ -380,7 +380,7 @@
 }
 
 /* Tucked: only a strip of the window shows, with an arrow pointing back
- * out. Hovering it brings the video back. */
+ * out. Hovering it nudges the video out a little; clicking brings it back. */
 .zia-pip-sliver {
   display: none;
 }
@@ -391,6 +391,7 @@
   bottom: 0;
   z-index: 30;
   width: 24px;
+  transition: width 160ms ease;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -423,12 +424,24 @@
   scale: -1 1;
 }
 
+/* Nudged out on hover: the strip widens with the window so the pointer
+ * stays on it. */
+:root[zia-tucked][zia-nudged] .zia-pip-sliver {
+  width: 36px;
+}
+
 .zia-pip-sliver:hover::after {
   opacity: 1;
   translate: -2px 0;
 }
 
-:root[zia-tucked="left"] .zia-pip-sliver:hover::after {
+:root[zia-tucked="left"] /* Nudged out on hover: the strip widens with the window so the pointer
+ * stays on it. */
+:root[zia-tucked][zia-nudged] .zia-pip-sliver {
+  width: 36px;
+}
+
+.zia-pip-sliver:hover::after {
   translate: 2px 0;
 }
 
