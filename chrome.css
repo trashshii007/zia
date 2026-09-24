@@ -3104,6 +3104,61 @@ findbar {
   translate: none !important;
 }
 
+/* Address bar position: bottom (an option). The toolbar sits under the page,
+   the corners and separator swap sides, and the address pop-up grows upwards.
+   Compact mode and Zen's single toolbar keep their own layout. */
+:root[zia-urlbar-position="bottom"]:not([inDOMFullscreen="true"], [popup-window], [zen-compact-mode="true"], [zen-single-toolbar="true"]) {
+  & #zen-appcontent-navbar-wrapper {
+    order: 9;
+    border-radius: 0 0 var(--zia-card-radius) var(--zia-card-radius) !important;
+    border-bottom: none !important;
+    border-top: 1px solid var(--zia-separator) !important;
+  }
+
+  & #tabbrowser-tabbox #tabbrowser-tabpanels .browserSidebarContainer {
+    border-radius: var(--zia-card-radius) var(--zia-card-radius) 0 0 !important;
+  }
+
+  & #tabbrowser-tabpanels :is(.browserSidebarContainer, .browserStack, browser) {
+    clip-path: inset(0 round var(--zia-card-radius) var(--zia-card-radius) 0 0);
+  }
+
+  & #urlbar[breakout-extend]:not([zen-floating-urlbar="true"]) {
+    flex-direction: column-reverse !important;
+
+    & > .urlbar-background {
+      transform-origin: 50% 100% !important;
+    }
+
+    & .urlbarView {
+      margin-block: 0 !important;
+      clip-path: none !important;
+    }
+  }
+
+  /* split view: each pane's toolbar sits at the bottom of its pane */
+  & .browserContainer:has(> .zia-pane-bar) > .browserStack {
+    margin-top: 0 !important;
+    margin-bottom: var(--zia-toolbar-height) !important;
+  }
+
+  & .zia-pane-bar {
+    grid-area: browserstack !important;
+    align-self: end;
+    border-bottom: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+    &[light] {
+      border-top-color: rgba(0, 0, 0, 0.12);
+    }
+  }
+
+  &[zia-split="true"] #urlbar[breakout-extend]:not([zia-classic]) {
+    top: auto !important;
+    bottom: var(--zia-pane-url-bottom, 8px) !important;
+  }
+}
+
 :root[inDOMFullscreen="true"] .zia-pane-bar {
   display: none !important;
 }

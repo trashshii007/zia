@@ -4,6 +4,17 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.33.0] — 2026-09-24
+
+### Added
+
+- **Address bar position** in the settings: Top (the default) or Bottom. At
+  the bottom, the toolbar sits under the page, the page's rounded corners
+  move to the top, and the address pop-up opens upwards from the bar. In
+  split view each pane's toolbar moves to the bottom of its pane. Compact
+  mode and Zen's single-toolbar layout keep the address bar where they put
+  it.
+
 ## [2.32.0] — 2026-09-24
 
 ### Added

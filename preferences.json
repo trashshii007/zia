@@ -94,6 +94,22 @@
     "defaultValue": true
   },
   {
+    "type": "dropdown",
+    "label": "Address bar position",
+    "property": "zia.urlbar.position",
+    "defaultValue": "top",
+    "options": [
+      {
+        "label": "Top",
+        "value": "top"
+      },
+      {
+        "label": "Bottom",
+        "value": "bottom"
+      }
+    ]
+  },
+  {
     "type": "separator",
     "label": "New tabs"
   },
