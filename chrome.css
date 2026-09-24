@@ -338,10 +338,18 @@
     margin-block-end: calc(-1 * var(--zia-pop-bottom-trim)) !important;
   }
 
+  /* When the list scrolls it hangs past the pop-up by the trim. Cut it off
+     exactly at the pop-up's edge, so rows run right up to it mid-scroll, and
+     add the hidden amount back as space at the end, so the last row scrolls
+     clear with the same gap below it as at the sides. */
   :root[zia-pop-scrolls="true"] & .urlbarView {
-    /* the list hangs past the pop-up by the trim; cut it off just inside the
-       pop-up's edge so scrolled rows never show below it */
-    clip-path: inset(0 0 calc(var(--zia-pop-bottom-trim) + var(--zia-pop-row-inset) / 2) 0);
+    clip-path: inset(0 0 var(--zia-pop-bottom-trim) 0);
+  }
+
+  :root[zia-pop-scrolls="true"] & #urlbar-results::after {
+    content: "";
+    display: block;
+    height: var(--zia-pop-bottom-trim);
   }
 
   --urlbarView-item-inline-padding: 8px !important;

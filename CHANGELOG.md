@@ -4,6 +4,14 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.33.4] — 2026-09-24
+
+### Fixed
+
+- Scrolled results in the address pop-up are cut off exactly at its bottom
+  edge, and scrolled to the end, the last result has the same gap below it
+  as at the sides. (2.33.2 and 2.33.3 cut them off a few pixels short.)
+
 ## [2.33.2] — 2026-09-24
 
 ### Fixed
