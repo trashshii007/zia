@@ -99,10 +99,13 @@
 
   // Tucking. Two ways in: the tuck button, or drag the window against the
   // left or right side of the screen (a blue edge says "Let go to tuck
-  // away"). Tucked, only a strip with an arrow shows; point at it and the
-  // video slides back out, then tucks again when the pointer leaves. Press
-  // the button again ("Keep it out") or drag it away to leave it out.
+  // away"). Tucked, only a strip with an arrow shows. Pointing at it only
+  // nudges the video out a little, so passing over it does nothing; click
+  // it and the video slides back out, then tucks again when the pointer
+  // leaves. Press the button again ("Keep it out") or drag it away to leave
+  // it out.
   const SLIVER = 24;
+  const NUDGE = 12;
   const ZONE = 24;
   const MARGIN = 16;
   let state = "free"; // "free", "tucked" or "out" (peeking from a tuck)
@@ -112,7 +115,7 @@
   let lastY = window.screenY;
   let movedAt = 0;
   let leaveTimer = 0;
-  let hoverTimer = 0;
+  let glideId = 0;
 
   const screenBox = () => {
     const s = window.screen;
@@ -138,13 +141,17 @@
     tuckButton.setAttribute("tooltip", state === "out" ? "Keep it out" : "Tuck into the side");
     tuckButton.toggleAttribute("zia-keep", state === "out");
   };
-  const glide = (x) => {
+  // A newer glide takes over from one still running.
+  const glide = (x, duration = 280) => {
     animating = true;
+    const id = ++glideId;
     const from = window.screenX;
     const y = window.screenY;
     const start = performance.now();
-    const duration = 280;
     const step = (now) => {
+      if (id !== glideId) {
+        return;
+      }
       const t = Math.min(1, (now - start) / duration);
       const eased = 1 - Math.pow(1 - t, 3);
       window.moveTo(Math.round(from + (x - from) * eased), y);
@@ -164,13 +171,26 @@
     state = "tucked";
     root.removeAttribute("zia-drop-hint");
     root.setAttribute("zia-tucked", edge);
+    root.removeAttribute("zia-nudged");
     updateButton();
+    glide(tuckedX(0));
+  };
+  // Where the tucked window sits, with `extra` more of it showing.
+  const tuckedX = (extra) => {
     const box = screenBox();
-    glide(edge === "right" ? box.right - SLIVER : box.left - window.outerWidth + SLIVER);
+    return side === "right" ? box.right - SLIVER - extra : box.left - window.outerWidth + SLIVER + extra;
+  };
+  const nudge = (out) => {
+    if (state !== "tucked" || root.hasAttribute("zia-nudged") === out) {
+      return;
+    }
+    root.toggleAttribute("zia-nudged", out);
+    glide(tuckedX(out ? NUDGE : 0), 160);
   };
   const slideOut = () => {
     state = "out";
     root.removeAttribute("zia-tucked");
+    root.removeAttribute("zia-nudged");
     updateButton();
     const box = screenBox();
     glide(side === "right" ? box.right - window.outerWidth - MARGIN : box.left + MARGIN);
@@ -180,6 +200,7 @@
     state = "free";
     side = null;
     root.removeAttribute("zia-tucked");
+    root.removeAttribute("zia-nudged");
     updateButton();
   };
   updateButton();
@@ -193,20 +214,12 @@
     }
   });
 
-  // Point at the strip (briefly, so passing over it doesn't count) and the
-  // video slides back out.
-  sliver.addEventListener("mouseenter", () => {
-    clearTimeout(hoverTimer);
-    hoverTimer = setTimeout(() => {
-      if (state === "tucked" && !animating) {
-        slideOut();
-      }
-    }, 120);
-  });
-  sliver.addEventListener("mouseleave", () => clearTimeout(hoverTimer));
+  // Pointing at the strip nudges the video out a little; clicking brings it
+  // all the way back.
+  sliver.addEventListener("mouseenter", () => nudge(true));
+  sliver.addEventListener("mouseleave", () => nudge(false));
   sliver.addEventListener("click", () => {
-    if (state === "tucked" && !animating) {
-      clearTimeout(hoverTimer);
+    if (state === "tucked") {
       slideOut();
     }
   });

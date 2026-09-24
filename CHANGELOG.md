@@ -4,6 +4,14 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.37.0] — 2026-09-24
+
+### Changed
+
+- Tucked picture-in-picture no longer springs out when the pointer passes
+  over its strip. Hovering nudges it out a little to show it's there;
+  click the strip to bring the video all the way back.
+
 ## [2.36.1] — 2026-09-24
 
 ### Added
