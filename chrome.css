@@ -981,8 +981,8 @@ zen-essentials-promo {
   pointer-events: none !important;
 }
 
-[zia-drop-lock],
-#tabbrowser-tabs[zia-settling] :is(.tabbrowser-tab, .tab-group-label-container, tab-group, zen-folder) {
+[zia-drop-lock]:not([zia-landing]),
+#tabbrowser-tabs[zia-settling] :is(.tabbrowser-tab, .tab-group-label-container, tab-group, zen-folder):not([zia-landing]) {
   transition: none !important;
   transform: none !important;
   translate: none !important;
@@ -992,6 +992,16 @@ zen-essentials-promo {
 [zia-drop-lock] {
   visibility: visible !important;
   opacity: 1 !important;
+}
+
+:root[zia-dragging-tab] .tabbrowser-tab :is(.tab-close-button, .tab-reset-button),
+#tabbrowser-tabs[zia-settling] .tabbrowser-tab :is(.tab-close-button, .tab-reset-button) {
+  opacity: 0 !important;
+  transition: none !important;
+}
+
+#tabbrowser-tabs[zia-settling] .tabbrowser-tab {
+  animation: none !important;
 }
 
 #zia-tab-card[zia-anchor="essential"]::before {
@@ -1217,6 +1227,52 @@ zen-essentials-promo {
 
 :root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group]))[zia-drop-slot]::after {
   opacity: 1 !important;
+}
+
+:root #tabbrowser-tabs:is([zia-settling], [movingtab]) .tabbrowser-tab[zia-drag-away],
+:root #tabbrowser-tabs .tabbrowser-tab[zia-drag-away][zia-dragging],
+.tabbrowser-tab[zia-drag-away] {
+  opacity: 0 !important;
+}
+
+#zia-drag-thumb {
+  position: fixed;
+  z-index: 2147483647;
+  translate: -50% -50%;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+
+  border-radius: 7px;
+  background-color: #1f1f1f;
+  overflow: hidden;
+
+  transition: width 150ms ease-out, height 150ms ease-out;
+
+  &[zia-leaving] {
+    transition: width 150ms ease-out, height 150ms ease-out, left 150ms ease-out, top 150ms ease-out;
+  }
+
+  &[zia-card] {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  }
+
+  & > canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  & > img {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+#zia-split-drag-picture {
+  visibility: hidden !important;
 }
 
 :root #tabbrowser-tabs:is([zia-settling], [movingtab]) .tabbrowser-tab[zia-to-essential],
@@ -3392,4 +3448,20 @@ zen-folder .tab-reset-button {
   border-radius: 16.5px !important;
   --urlbarview-separator-color: transparent !important;
   --urlbarView-separator-color: transparent !important;
+}
+
+:root:not(#zia-none) .tabbrowser-tab[zia-morph] > .tab-stack > .tab-background {
+  margin-inline-start: var(--zia-morph-bg-start) !important;
+  margin-inline-end: var(--zia-morph-bg-end) !important;
+  transition: margin-inline-start 120ms ease-out, margin-inline-end 120ms ease-out !important;
+}
+
+:root:not(#zia-none) .tabbrowser-tab[zia-morph] > .tab-stack > .tab-content {
+  margin-inline-start: var(--zia-morph-content-start) !important;
+  margin-inline-end: var(--zia-morph-content-end) !important;
+  transition: margin-inline-start 120ms ease-out, margin-inline-end 120ms ease-out !important;
+}
+
+:root:not(#zia-none) .tabbrowser-tab[zia-morph-done] > .tab-stack > :is(.tab-background, .tab-content) {
+  transition: none !important;
 }

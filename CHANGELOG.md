@@ -4,6 +4,37 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.30.2] — 2026-09-24
+
+### Added
+
+- A tab dragged out over the page, to make a split, turns into a thumbnail
+  of its page, and back into the tab when it returns to the sidebar.
+
+### Changed
+
+- A dropped tab or folder glides from where it was let go into its place,
+  as in Dia, instead of snapping.
+
+### Fixed
+
+- A tab or folder dragged past the bottom of the list no longer vanishes
+  just under the last tab, or under the essentials' background.
+- A tab dragged into a folder narrows to exactly a folder tab's width; it
+  only narrowed on the left.
+- + New Tab moves down to make room when an essential is dragged into the
+  list above it.
+- An essential dragged off as a tab has a tab's usual gap between its icon
+  and name.
+- No flash after dropping a tab or an essential. Zen hid whatever was
+  dropped until the (invisible) drag picture had slid into place; it now
+  stays in view, a tab's ✕ or "−" no longer blinks under the pointer, and an
+  essential dragged back into the list no longer fades in from nothing.
+- Quick drags onto and off the essentials no longer leave a copy of the tab
+  stuck over the essentials, or the new essential missing for a while.
+- The bottom tab has its glow again (only the top row goes without, next to
+  the essentials).
+
 ## [2.30.1] — 2026-09-24
 
 ### Added

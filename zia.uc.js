@@ -5506,27 +5506,6 @@
       return { top: box.top - applied, height: box.height };
     };
 
-    const slotSize = (tab) => {
-      const rect = layoutBox(tab);
-      for (const item of gBrowser.tabContainer.ariaFocusableItems) {
-        if (item === tab || item.elementIndex == null) {
-          continue;
-        }
-        if (Math.abs(item.elementIndex - tab.elementIndex) !== 1) {
-          continue;
-        }
-        const other = nodeToMove(item);
-        if (!other) {
-          continue;
-        }
-        const pitch = Math.abs(layoutBox(other).top - rect.top);
-        if (pitch > 8) {
-          return pitch;
-        }
-      }
-      return rect.height;
-    };
-
     const place = (node, y, above) => {
       if (!node) {
         return;
@@ -5771,29 +5750,26 @@
         start = 0;
         end = 0;
       }
-      const set = (node, base, dStart, dEnd) => {
-        if (!node) {
-          return;
-        }
-        node.style.setProperty("transition", "margin-inline-start 120ms ease-out, margin-inline-end 120ms ease-out", "important");
-        node.style.setProperty("margin-inline-start", `${base.start + dStart}px`, "important");
-        node.style.setProperty("margin-inline-end", `${base.end + dEnd}px`, "important");
-      };
-      set(drag.bg, drag.bgBase, start, end);
-      set(drag.content, drag.contentBase, start, end);
+
+      const tab = drag.tab;
+      tab.style.setProperty("--zia-morph-bg-start", `${drag.bgBase.start + start}px`);
+      tab.style.setProperty("--zia-morph-bg-end", `${drag.bgBase.end + end}px`);
+      tab.style.setProperty("--zia-morph-content-start", `${drag.contentBase.start + start}px`);
+      tab.style.setProperty("--zia-morph-content-end", `${drag.contentBase.end + end}px`);
+      tab.setAttribute("zia-morph", "true");
     };
 
-    const unmorphWidth = (tab, bg, content) => {
-      for (const node of [bg, content]) {
-        if (!node) {
-          continue;
-        }
-        node.style.setProperty("transition", "none", "important");
-        node.style.removeProperty("margin-inline-start");
-        node.style.removeProperty("margin-inline-end");
-        node.getBoundingClientRect();
-        node.style.removeProperty("transition");
+    const unmorphWidth = (tab) => {
+      if (!tab) {
+        return;
       }
+      tab.setAttribute("zia-morph-done", "true");
+      tab.removeAttribute("zia-morph");
+      for (const name of ["--zia-morph-bg-start", "--zia-morph-bg-end", "--zia-morph-content-start", "--zia-morph-content-end"]) {
+        tab.style.removeProperty(name);
+      }
+      tab.getBoundingClientRect();
+      tab.removeAttribute("zia-morph-done");
     };
 
     const newTabButton = () =>
@@ -5911,38 +5887,6 @@
       updateTarget(visualMid);
       paintFolders();
       morphWidth(drag.target?.folder || null);
-    };
-
-    let hoverTimer = 0;
-    let lastClientY = 0;
-
-    const retarget = () => {
-      if (!drag?.moving?.isConnected) {
-        return;
-      }
-      const prev = new Map(drag.rows.map((row) => [row.node, row.delta]));
-      drag.rows = measureRows(drag.folder ? null : drag.tab);
-      for (const row of drag.rows) {
-        if (row.node === drag.moving || (drag.folder && drag.folder.contains(row.node))) {
-          continue;
-        }
-        if (prev.has(row.node)) {
-          row.delta = prev.get(row.node);
-        } else {
-          place(row.node, 0, false);
-          row.delta = 0;
-        }
-      }
-      const box = layoutTop(drag.moving);
-      drag.origin = box.top;
-      drag.height = box.height;
-      if (drag.folder) {
-        drag.pitch = box.height;
-      }
-      const sep = currentSeparator();
-      if (sep) {
-        drag.sepTop = sep.getBoundingClientRect().top - (drag.sepDelta || 0);
-      }
     };
 
     const pinFor = (tab, pinned) => {
@@ -6110,14 +6054,7 @@
       return { width, height: Math.round(width * 0.75) };
     };
 
-    const mirrorOf = (node) => node?.ziaView || null;
-
     const sizeProxy = (node, width, height) => {
-      const view = mirrorOf(node);
-      if (view) {
-        view.style.width = `${Math.round(width)}px`;
-        view.style.height = `${Math.round(height)}px`;
-      }
       for (const [name, value] of [
         ["width", width],
         ["height", height],
@@ -6131,15 +6068,6 @@
     };
 
     const moveProxy = (x, y) => {
-      const view = mirrorOf(proxy);
-      if (view) {
-        view.style.left = `${Math.round(x)}px`;
-        view.style.top = `${Math.round(y)}px`;
-
-        proxy.style.setProperty("left", "-10000px", "important");
-        proxy.style.setProperty("top", "-10000px", "important");
-        return;
-      }
       const off = proxy.ziaOffset || { x: 0, y: 0 };
       proxy.style.setProperty("left", `${Math.round(x - off.x)}px`, "important");
       proxy.style.setProperty("top", `${Math.round(y - off.y)}px`, "important");
@@ -6190,9 +6118,6 @@
       proxy.ziaLeaving = false;
       const props = ["width", "height", "min-width", "max-width", "min-height", "max-height"];
       proxy.style.setProperty("transition", props.map((name) => `${name} ${PROXY_MS}ms ease-out`).join(", "), "important");
-      if (proxy.ziaView) {
-        proxy.ziaView.style.transition = `width ${PROXY_MS}ms ease-out, height ${PROXY_MS}ms ease-out`;
-      }
       if (!drag.moving.hasAttribute("zia-to-essential")) {
         tap();
       }
@@ -6210,16 +6135,12 @@
       proxy.ziaLeaving = true;
       const row = drag.moving.getBoundingClientRect();
       proxy.style.setProperty("transition", `all ${PROXY_MS}ms ease-out`, "important");
-      if (proxy.ziaView) {
-        proxy.ziaView.style.transition = `all ${PROXY_MS}ms ease-out`;
-      }
       sizeProxy(proxy, row.width, row.height);
       moveProxy(row.left + row.width / 2, row.top + row.height / 2);
       const leaving = proxy;
       const moving = drag.moving;
       proxyLeaveTimer = setTimeout(() => {
         if (proxy === leaving && leaving.ziaLeaving) {
-          leaving.ziaView?.remove();
           leaving.remove();
           proxy = null;
           moving.removeAttribute("zia-to-essential");
@@ -6236,20 +6157,25 @@
       }
       landingTab = tab;
       const done = () => {
-        tile.ziaView?.remove();
         tile.remove();
         tab.removeAttribute("zia-to-essential");
         if (landingTab === tab) {
           landingTab = null;
         }
       };
+
+      const whenEssential = (then, tries = 0) => {
+        if (tab.isConnected && tab.hasAttribute("zen-essential")) {
+          then();
+        } else if (tries < 30) {
+          requestAnimationFrame(() => whenEssential(then, tries + 1));
+        } else {
+          done();
+        }
+      };
       setTimeout(
         () =>
-          requestAnimationFrame(() => {
-            if (!tab.isConnected || !tab.hasAttribute("zen-essential")) {
-              done();
-              return;
-            }
+          whenEssential(() => {
             const own = tab.getBoundingClientRect();
             const drawn = tab.querySelector(".tab-background")?.getBoundingClientRect() || own;
             const box = { left: own.left, width: own.width, top: drawn.top, height: drawn.height };
@@ -6257,12 +6183,6 @@
             tile.style.setProperty("transition", `all ${PROXY_MS}ms ease-out`, "important");
             tile.style.setProperty("left", `${Math.round(box.left + box.width / 2 - off.x)}px`, "important");
             tile.style.setProperty("top", `${Math.round(box.top + box.height / 2 - off.y)}px`, "important");
-            if (tile.ziaView) {
-              tile.ziaView.style.transition = `all ${PROXY_MS}ms ease-out`;
-              sizeProxy(tile, box.width, box.height);
-              tile.ziaView.style.left = `${Math.round(box.left + box.width / 2)}px`;
-              tile.ziaView.style.top = `${Math.round(box.top + box.height / 2)}px`;
-            }
             sizeProxy(tile, box.width, box.height);
             setTimeout(done, PROXY_MS + 20);
           }),
@@ -6302,7 +6222,6 @@
 
     const dropProxy = () => {
       clearTimeout(proxyLeaveTimer);
-      proxy?.ziaView?.remove();
       proxy?.remove();
       proxy = null;
       document.querySelectorAll("[zia-to-essential]").forEach((node) => {
@@ -6310,6 +6229,129 @@
           node.removeAttribute("zia-to-essential");
         }
       });
+    };
+
+    const THUMB_MS = 150;
+    let thumb = null;
+    let thumbTimer = 0;
+
+    const pictureSource = () => {
+      const source = document.getElementById("zia-split-drag-picture");
+      return source?.width ? source : null;
+    };
+    const pictureSize = () => {
+      const source = pictureSource();
+      const width = parseFloat(source?.style.width) || DRAG_PICTURE_W;
+      const height = parseFloat(source?.style.height) || DRAG_PICTURE_H;
+      return { width, height };
+    };
+
+    const fillThumb = () => {
+      if (!thumb) {
+        return;
+      }
+      const source = pictureSource();
+      if (source) {
+        let canvas = thumb.querySelector("canvas");
+        if (!canvas) {
+          canvas = document.createElementNS(XHTML_NS, "canvas");
+          thumb.replaceChildren(canvas);
+        }
+        if (canvas.width !== source.width || canvas.height !== source.height) {
+          canvas.width = source.width;
+          canvas.height = source.height;
+        }
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(source, 0, 0);
+        thumb.removeAttribute("zia-card");
+      } else if (!thumb.firstChild && drag?.tab) {
+        const icon = document.createElementNS(XHTML_NS, "img");
+        icon.setAttribute("src", gBrowser.getIcon(drag.tab) || DEFAULT_TAB_ICON);
+        thumb.replaceChildren(icon);
+        thumb.setAttribute("zia-card", "true");
+      }
+    };
+
+    const sizeThumb = (node, width, height) => {
+      node.style.width = `${Math.round(width)}px`;
+      node.style.height = `${Math.round(height)}px`;
+    };
+
+    const showThumb = (x, y) => {
+      clearTimeout(thumbTimer);
+      if (!thumb) {
+        thumb = document.createElementNS(XHTML_NS, "div");
+        thumb.id = "zia-drag-thumb";
+        const row = (bgOf(drag.tab) || drag.moving).getBoundingClientRect();
+        sizeThumb(thumb, row.width, row.height);
+        thumb.style.left = `${Math.round(row.left + row.width / 2)}px`;
+        thumb.style.top = `${Math.round(row.top + row.height / 2)}px`;
+        root.appendChild(thumb);
+        thumb.getBoundingClientRect();
+      }
+      fillThumb();
+      thumb.removeAttribute("zia-leaving");
+      const size = pictureSize();
+      sizeThumb(thumb, size.width, size.height);
+      thumb.style.left = `${Math.round(x)}px`;
+      thumb.style.top = `${Math.round(y)}px`;
+      if (!drag.moving.hasAttribute("zia-drag-away")) {
+        tap();
+      }
+      drag.moving.setAttribute("zia-drag-away", "true");
+    };
+
+    const hideThumb = (instant = false) => {
+      if (!thumb || thumb.hasAttribute("zia-leaving")) {
+        return;
+      }
+      const leaving = thumb;
+      const moving = drag?.moving;
+      const done = () => {
+        leaving.remove();
+        if (thumb === leaving) {
+          thumb = null;
+        }
+        moving?.removeAttribute("zia-drag-away");
+      };
+      if (instant || !moving?.isConnected) {
+        done();
+        return;
+      }
+      leaving.setAttribute("zia-leaving", "true");
+      const row = (bgOf(drag.tab) || moving).getBoundingClientRect();
+      sizeThumb(leaving, row.width, row.height);
+      leaving.style.left = `${Math.round(row.left + row.width / 2)}px`;
+      leaving.style.top = `${Math.round(row.top + row.height / 2)}px`;
+      thumbTimer = setTimeout(done, THUMB_MS);
+    };
+
+    const noLanding = () => {
+      const dnd = gBrowser.tabContainer.tabDragAndDrop;
+      if (!dnd || dnd._landDragImageOnElements?.ziaQuiet) {
+        return;
+      }
+      const original = dnd._landDragImageOnElements;
+      const quiet = function (elements, ...rest) {
+        try {
+          for (const element of elements || []) {
+            const { width, height } = element.getBoundingClientRect();
+            this.ZenDragAndDropService.addDropLandingRect(
+              Math.round(element.screenX),
+              Math.round(element.screenY),
+              Math.round(width),
+              Math.round(height)
+            );
+          }
+          this._landingElements = [];
+        } catch (err) {
+          return original?.call(this, elements, ...rest);
+        }
+        return undefined;
+      };
+      quiet.ziaQuiet = true;
+      dnd._landDragImageOnElements = quiet;
     };
 
     const begin = (target, event) => {
@@ -6359,12 +6401,15 @@
       }
       document.documentElement.setAttribute("zia-dragging-tab", "true");
       muteZenHaptics(true);
+
       const bg = folder || split ? null : bgOf(target);
       const content = folder || split ? null : contentOf(target);
       const margins = (node) => {
         const style = node ? getComputedStyle(node) : null;
         return { start: parseFloat(style?.marginInlineStart) || 0, end: parseFloat(style?.marginInlineEnd) || 0 };
       };
+      unclipAround(moving);
+      noLanding();
       drag = {
         split,
         bg,
@@ -6462,7 +6507,6 @@
       let dy = null;
       if (event.clientY) {
         dy = event.clientY - drag.clientY;
-        lastClientY = event.clientY;
       } else if (event.screenY && drag.screenY) {
         dy = event.screenY - drag.screenY;
       }
@@ -6484,8 +6528,12 @@
           debugDrag(event, point, sidebar, null);
           drag.essentials = false;
           hideProxy();
+          if (!drag.folder && !drag.split) {
+            showThumb(point.x, point.y);
+          }
           return;
         }
+        hideThumb();
         const essentials =
           document.getElementById("zen-essentials") ||
           window.gZenWorkspaces?.getCurrentEssentialsContainer?.() ||
@@ -6588,6 +6636,7 @@
     };
 
     let essentialDrag = null;
+    let essentialDropped = null;
     const ESSENTIAL_MS = 140;
 
     const sizeCopy = (node, width, height) => {
@@ -6603,6 +6652,22 @@
       }
     };
 
+    const moveCopyTo = (copy, host) => {
+      if (!host || copy.parentNode === host) {
+        return;
+      }
+      const box = copy.getBoundingClientRect();
+      const want = { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+      host.appendChild(copy);
+      copy.ziaHostShift = { x: 0, y: 0 };
+      copy.style.setProperty("left", `${Math.round(want.x)}px`, "important");
+      copy.style.setProperty("top", `${Math.round(want.y)}px`, "important");
+      const now = copy.getBoundingClientRect();
+      copy.ziaHostShift = { x: now.left + now.width / 2 - want.x, y: now.top + now.height / 2 - want.y };
+      copy.style.setProperty("left", `${Math.round(want.x - copy.ziaHostShift.x)}px`, "important");
+      copy.style.setProperty("top", `${Math.round(want.y - copy.ziaHostShift.y)}px`, "important");
+    };
+
     const plainTabSize = () => {
       const sample = [...gBrowser.visibleTabs].find(
         (tab) => !tab.hasAttribute("zen-essential") && !tab.hasAttribute("zen-empty-tab") && tab.getBoundingClientRect().height > 8
@@ -6615,11 +6680,51 @@
       return { width: (sidebar?.width || 240) - 16, height: 35 };
     };
 
+    const sweepLeftovers = () => {
+      const keep = new Set([essentialDrag?.copy, proxy].filter(Boolean));
+      for (const node of document.querySelectorAll(".tabbrowser-tab[zia-essential-proxy]")) {
+        if (!keep.has(node)) {
+          node.remove();
+        }
+      }
+      if (!essentialDrag) {
+        for (const tab of document.querySelectorAll(".tabbrowser-tab[zia-essential-dragged]")) {
+          tab.removeAttribute("zia-essential-dragged");
+          tab.style.visibility = "";
+        }
+      }
+      if (!drag) {
+        for (const tab of document.querySelectorAll(".tabbrowser-tab[zia-to-essential]")) {
+          if (tab !== landingTab) {
+            tab.removeAttribute("zia-to-essential");
+          }
+        }
+      }
+    };
+    window.addEventListener("mousedown", () => {
+      if (!drag && !essentialDrag) {
+        sweepLeftovers();
+      }
+    }, true);
+
+    window.addEventListener("mousemove", (event) => {
+      if (essentialDrag && event.buttons === 0 && Date.now() - (essentialDrag.startedAt || 0) > 300) {
+        endEssentialDrag();
+      }
+    }, true);
+
     const onEssentialStart = (event) => {
       const tab = event.target?.closest?.(".tabbrowser-tab[zen-essential]");
       if (!tab || tab.hasAttribute("zia-essential-proxy") || !featureOn("dia-tab-drag")) {
         return;
       }
+
+      if (essentialDrag) {
+        essentialDrag.copy?.remove();
+        essentialDrag.tab?.removeAttribute("zia-essential-dragged");
+        essentialDrag = null;
+      }
+      sweepLeftovers();
       const tile = tab.getBoundingClientRect();
       const drawn = tab.querySelector(".tab-background")?.getBoundingClientRect() || tile;
       const copy = tab.cloneNode(true);
@@ -6648,6 +6753,7 @@
         window.gZenPinnedTabManager?.setEssentialTabIcon?.(copy);
       } catch (err) {}
       tab.setAttribute("zia-essential-dragged", "true");
+      noLanding();
 
       muteZenHaptics(true);
       lastTileUnder = null;
@@ -6658,6 +6764,7 @@
         tile: { width: tile.width, height: drawn.height },
         offset: { x: point.x - (tile.left + tile.width / 2), y: point.y - (drawn.top + drawn.height / 2) },
         asTab: false,
+        startedAt: Date.now(),
       };
     };
 
@@ -6709,6 +6816,12 @@
       listRoom.pitch = best < Infinity ? best : (sorted[0]?.height || 35) + 4;
       listRoom.sepDelta = 0;
       listRoom.first = undefined;
+
+      listRoom.button = newTabButton();
+      listRoom.buttonTop = listRoom.button?.getBoundingClientRect().top ?? null;
+      listRoom.buttonDelta = 0;
+
+      unclipAround(listRoom.button || listRoom.rows[listRoom.rows.length - 1]?.node);
     };
     const shapeListRoom = (y) => {
       if (!listRoom.rows) {
@@ -6733,6 +6846,13 @@
           place(listRoom.sep, delta, false);
         }
       }
+      if (listRoom.button && listRoom.buttonTop != null) {
+        const delta = listRoom.buttonTop > y ? listRoom.pitch : 0;
+        if (listRoom.buttonDelta !== delta) {
+          listRoom.buttonDelta = delta;
+          place(listRoom.button, delta, false);
+        }
+      }
       if (first !== listRoom.first) {
         if (listRoom.first !== undefined) {
           tap();
@@ -6754,6 +6874,11 @@
         listRoom.sepDelta = 0;
         place(listRoom.sep, 0, false);
       }
+      if (listRoom.button && listRoom.buttonDelta) {
+        listRoom.buttonDelta = 0;
+        place(listRoom.button, 0, false);
+      }
+      reclip();
       listRoom.rows = null;
       listRoom.first = undefined;
     };
@@ -6807,11 +6932,19 @@
           "important"
         );
         if (asTab) {
+          const current = copy.getBoundingClientRect();
+          moveCopyTo(copy, document.getElementById("tabbrowser-tabs") || root);
+          sizeCopy(copy, current.width, current.height);
+          copy.getBoundingClientRect();
           copy.removeAttribute("zen-essential");
           copy.removeAttribute("pinned");
           const size = plainTabSize();
           sizeCopy(copy, size.width, size.height);
         } else {
+          const current = copy.getBoundingClientRect();
+          moveCopyTo(copy, root);
+          sizeCopy(copy, current.width, current.height);
+          copy.getBoundingClientRect();
           copy.setAttribute("zen-essential", "true");
           copy.setAttribute("pinned", "true");
           sizeCopy(copy, state.tile.width, state.tile.height);
@@ -6827,8 +6960,9 @@
       const x = asTab
         ? (document.getElementById("navigator-toolbox")?.getBoundingClientRect().left || 0) + 8 + plainTabSize().width / 2
         : point.x - state.offset.x;
-      copy.style.setProperty("left", `${Math.round(x)}px`, "important");
-      copy.style.setProperty("top", `${Math.round(point.y - (asTab ? 0 : state.offset.y))}px`, "important");
+      const shift = copy.ziaHostShift || { x: 0, y: 0 };
+      copy.style.setProperty("left", `${Math.round(x - shift.x)}px`, "important");
+      copy.style.setProperty("top", `${Math.round(point.y - (asTab ? 0 : state.offset.y) - shift.y)}px`, "important");
     };
 
     const dropPastLast = (tab, point) => {
@@ -6875,9 +7009,14 @@
         closeListRoom();
       }
       muteZenHaptics(false);
-      state.copy.remove();
+      essentialDropped = event?.type === "drop" ? state.tab : null;
+      setTimeout(sweepLeftovers, 400);
 
-      setTimeout(() => state.tab.removeAttribute("zia-essential-dragged"), 0);
+      setTimeout(() => {
+        state.tab.style.visibility = "";
+        state.tab.removeAttribute("zia-essential-dragged");
+        requestAnimationFrame(() => state.copy.remove());
+      }, 0);
     };
 
     window.addEventListener("dragstart", onEssentialStart, true);
@@ -6893,6 +7032,19 @@
       "drop",
       (event) => {
         const tab = drag?.tab;
+
+        if (tab && !drag.essentials && !drag.folder && !drag.split) {
+          const point = pointerOf(event);
+          const over = event.target;
+          if (
+            over?.closest?.("#zen-essentials, .zen-essentials-container") ||
+            inBox(document.getElementById("zen-essentials"), point) ||
+            inBox(window.gZenWorkspaces?.getCurrentEssentialsContainer?.(), point)
+          ) {
+            drag.essentials = true;
+            drag.target = null;
+          }
+        }
         if (tab && drag.essentials) {
           if (drag.noTiles) {
             setTimeout(() => {
@@ -6906,12 +7058,14 @@
           landProxy(tab);
         } else if (tab && !drag.folder && !drag.away && drag.target?.hand) {
           const target = drag.target;
+          pendingFinish = true;
           setTimeout(() => {
             try {
               finishDrop(tab, target);
             } catch (err) {
               console.error("[Zia] Tab drop failed:", err);
             }
+            pendingFinish = false;
           }, 0);
         }
         const dnd = gBrowser.tabContainer.tabDragAndDrop;
@@ -6954,21 +7108,78 @@
       }
     };
 
+    const unclipped = [];
+    const unclipAround = (node) => {
+      const stop = document.getElementById("navigator-toolbox");
+      const remember = (el, props) => {
+        unclipped.push([el, props.map((prop) => [prop, el.style.getPropertyValue(prop), el.style.getPropertyPriority(prop)])]);
+      };
+      const lift = (el) => {
+        const style = getComputedStyle(el);
+        const clips =
+          ["hidden", "auto", "scroll", "clip"].includes(style.overflowY) || /paint|strict|content/.test(style.contain);
+        const scrolls = el.scrollTop > 0 || el.scrollHeight > el.clientHeight + 1;
+        if (!clips || scrolls) {
+          return;
+        }
+        remember(el, ["overflow", "overflow-x", "overflow-y", "contain"]);
+        el.style.setProperty("overflow", "visible", "important");
+        el.style.setProperty("overflow-x", "visible", "important");
+        el.style.setProperty("overflow-y", "visible", "important");
+        el.style.setProperty("contain", "none", "important");
+      };
+      let el = node?.parentNode;
+      while (el && el !== stop && el !== document.documentElement) {
+        if (el.nodeType === 1) {
+          lift(el);
+          const inner = el.shadowRoot?.querySelector?.('[part~="scrollbox"]');
+          if (inner) {
+            lift(inner);
+          }
+        }
+        el = el.parentNode || el.host;
+      }
+    };
+    const reclip = () => {
+      while (unclipped.length) {
+        const [el, props] = unclipped.pop();
+        for (const [prop, value, priority] of props) {
+          if (value) {
+            el.style.setProperty(prop, value, priority);
+          } else {
+            el.style.removeProperty(prop);
+          }
+        }
+      }
+    };
+
+    let droppedFrom = null;
+    let isRealDrop = false;
+    let pendingFinish = false;
+    window.addEventListener("drop", () => (isRealDrop = true), true);
+    window.addEventListener("dragstart", () => (isRealDrop = false), true);
+
     const settle = () => {
-      const droppedTab = drag?.tab || null;
+      const droppedTab = drag?.tab || essentialDropped || null;
+      if (drag?.moving && !drag.essentials && !drag.away && droppedFrom === null && isRealDrop) {
+        const from = drag.moving.getBoundingClientRect();
+        droppedFrom = { node: drag.moving, top: from.top, left: from.left };
+      }
+      essentialDropped = null;
       if (drag?.bg) {
         const { bg, content } = drag;
         setTimeout(() => requestAnimationFrame(() => unmorphWidth(droppedTab, bg, content)), 0);
       }
-      clearTimeout(hoverTimer);
-      hoverTimer = 0;
       drag = null;
       pending = null;
       document.documentElement.removeAttribute("zia-dragging-tab");
       muteZenHaptics(false);
+      reclip();
       document.querySelectorAll("[zia-drop-slot]").forEach((folder) => folder.removeAttribute("zia-drop-slot"));
       clearFolderPaint();
       dropProxy();
+      hideThumb(true);
+      document.querySelectorAll("[zia-drag-away]").forEach((node) => node.removeAttribute("zia-drag-away"));
       makeRoom(null);
       document.querySelectorAll("[zia-sep-open]").forEach((node) => node.removeAttribute("zia-sep-open"));
 
@@ -6989,6 +7200,9 @@
         }
       }
       const strip = document.getElementById("tabbrowser-tabs");
+
+      const landing = droppedFrom;
+      droppedFrom = null;
       strip?.setAttribute("zia-settling", "true");
       const locked = new Set(moved);
       clearMoved();
@@ -6996,14 +7210,47 @@
         node.style.removeProperty("transform");
         node.setAttribute("zia-drop-lock", "true");
       }
+      if (landing?.node?.isConnected) {
+        const node = landing.node;
+
+        node.setAttribute("zia-landing", "true");
+        const held = node.getBoundingClientRect();
+        node.style.setProperty("transform", `translate(${landing.left - held.left}px, ${landing.top - held.top}px)`, "important");
+        const glideIn = () => {
+          if (pendingFinish) {
+            requestAnimationFrame(glideIn);
+            return;
+          }
+          node.style.removeProperty("transform");
+          const to = node.getBoundingClientRect();
+          const dy = landing.top - to.top;
+          const dx = landing.left - to.left;
+          if (!node.isConnected || node.hasAttribute("zen-essential") || (Math.abs(dy) < 2 && Math.abs(dx) < 2) || !to.height) {
+            node.removeAttribute("zia-landing");
+            return;
+          }
+          const glide = node.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "translate(0, 0)" }], {
+            duration: 180,
+            easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          });
+          glide.id = "zia-land";
+          const end = () => node.removeAttribute("zia-landing");
+          glide.finished.then(end, end);
+        };
+        requestAnimationFrame(glideIn);
+      }
       const wipe = () => {
         strip?.querySelectorAll(".tabbrowser-tab, .tab-group-label-container, tab-group, zen-folder").forEach((node) => {
+          const appearing = node === droppedTab && !node.group;
           for (const anim of node.getAnimations()) {
-            if (movesOnly(anim)) {
+            if (anim.id === "zia-land") {
+              continue;
+            }
+            if (movesOnly(anim) || appearing) {
               anim.cancel();
             }
           }
-          if (node.style.transform) {
+          if (node.style.transform && !node.hasAttribute("zia-landing")) {
             node.style.transform = "";
           }
 
@@ -7070,27 +7317,11 @@
       }
     } catch (err) {}
   }
+
   function quietZenHaptics() {
     const service = Services.zen;
-    const original = service?.playHapticFeedback;
-    if (typeof original !== "function" || original.ziaQuiet) {
-      zenHaptic = zenHaptic || (original ? () => original.call(service) : null);
-      return;
-    }
-    zenHaptic = () => original.call(service);
-    const quiet = function (...args) {
-      const busy = [...Services.wm.getEnumerator("navigator:browser")].some((win) =>
-        win.document.documentElement.hasAttribute("zia-dragging-tab")
-      );
-      if (busy) {
-        return undefined;
-      }
-      return original.apply(this, args);
-    };
-    quiet.ziaQuiet = true;
-    try {
-      service.playHapticFeedback = quiet;
-    } catch (err) {
+    if (typeof service?.playHapticFeedback === "function") {
+      zenHaptic = () => service.playHapticFeedback();
     }
   }
 
@@ -7140,7 +7371,7 @@
             }
           }
         }
-        if (rows[0] === tab || rows[rows.length - 1] === tab) {
+        if (rows[0] === tab) {
           tab.setAttribute("zia-no-glow", "true");
         }
         return;
@@ -7168,7 +7399,7 @@
         above ||= box.bottom <= mine.top + 1;
         below ||= box.top >= mine.bottom - 1;
       }
-      if (!above || !below) {
+      if (!above) {
         tab.setAttribute("zia-no-glow", "true");
       }
     };
