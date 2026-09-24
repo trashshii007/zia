@@ -101,21 +101,20 @@
   // Tucking. Two ways in: the tuck button, or drag the window against the
   // left or right side of the screen (a blue edge says "Let go to tuck
   // away"). Tucked, only a strip with an arrow shows. Pointing at it only
-  // nudges the video out a little, so passing over it does nothing; click
-  // it and the video slides back out, then tucks again when the pointer
-  // leaves. Press the button again ("Keep it out") or drag it away to leave
-  // it out.
+  // nudges the video out a little, so passing over it does nothing. Two
+  // ways out, and either way it stays out until you tuck it again: click
+  // the strip and the video slides back onto the screen, or hold the strip
+  // and drag it out sideways.
   const SLIVER = 24;
   const NUDGE = 12;
   const ZONE = 24;
   const MARGIN = 16;
-  let state = "free"; // "free", "tucked" or "out" (peeking from a tuck)
+  let state = "free"; // "free" or "tucked"
   let side = null;
   let animating = false;
   let lastX = window.screenX;
   let lastY = window.screenY;
   let movedAt = 0;
-  let leaveTimer = 0;
   let glideId = 0;
 
   const screenBox = () => {
@@ -139,8 +138,7 @@
   };
   const updateButton = () => {
     root.setAttribute("zia-edge", side || nearestEdge());
-    tuckButton.setAttribute("tooltip", state === "out" ? "Keep it out" : "Tuck into the side");
-    tuckButton.toggleAttribute("zia-keep", state === "out");
+    tuckButton.setAttribute("tooltip", "Tuck into the side");
   };
   // A newer glide takes over from one still running.
   const glide = (x, duration = 280, done = null) => {
@@ -168,7 +166,6 @@
     requestAnimationFrame(step);
   };
   const tuck = (edge) => {
-    clearTimeout(leaveTimer);
     side = edge;
     state = "tucked";
     root.removeAttribute("zia-drop-hint");
@@ -190,23 +187,21 @@
     root.toggleAttribute("zia-nudged", out);
     glide(tuckedX(out ? NUDGE : 0), 160);
   };
+  // Where the window sits fully back on the screen, by the side it was
+  // tucked into.
+  const outX = () => {
+    const box = screenBox();
+    return side === "right" ? box.right - window.outerWidth - MARGIN : box.left + MARGIN;
+  };
   // The strip stays over the window's edge and fades as the window slides
-  // in, so no slice of video flashes at the side of the screen first.
-  const slideOut = () => {
-    state = "out";
+  // in, so no slice of video flashes at the side of the screen first. Once
+  // out, the window is free and stays where it is.
+  const slideOut = (duration = 280) => {
     root.removeAttribute("zia-nudged");
     root.setAttribute("zia-emerging", "");
-    updateButton();
-    const box = screenBox();
-    glide(side === "right" ? box.right - window.outerWidth - MARGIN : box.left + MARGIN, 280, () => {
-      if (state === "out") {
-        root.removeAttribute("zia-tucked");
-      }
-      root.removeAttribute("zia-emerging");
-    });
+    glide(outX(), duration, release);
   };
   const release = () => {
-    clearTimeout(leaveTimer);
     state = "free";
     side = null;
     root.removeAttribute("zia-tucked");
@@ -218,18 +213,19 @@
 
   tuckButton.addEventListener("click", (event) => {
     event.stopPropagation();
-    if (state === "out") {
-      release();
-    } else if (state === "free") {
+    if (state === "free") {
       tuck(nearestEdge());
     }
   });
 
   // Pointing at the strip nudges the video out a little; clicking brings it
-  // all the way back. Dragging it up or down moves the tucked window along
-  // the side of the screen, and it stays tucked where it's left.
+  // all the way out. Holding it and dragging sideways, away from the side,
+  // pulls the window out under the pointer, and letting go settles it fully
+  // on the screen. Dragging it up or down instead moves the tucked window
+  // along the side, and it stays tucked where it's left.
+  const PULL_OUT = 4;
   let dragFrom = null;
-  let dragged = false;
+  let dragMode = null; // null until the pointer has moved: "along" or "out"
   sliver.addEventListener("mouseenter", () => nudge(true));
   sliver.addEventListener("mouseleave", () => {
     if (!dragFrom) {
@@ -240,63 +236,68 @@
     if (state !== "tucked" || event.button !== 0) {
       return;
     }
-    dragFrom = { pointer: event.screenY, window: window.screenY };
-    dragged = false;
+    glideId++;
+    animating = false;
+    dragFrom = { x: event.screenX, y: event.screenY, windowX: window.screenX, windowY: window.screenY };
+    dragMode = null;
     sliver.setPointerCapture(event.pointerId);
   });
   sliver.addEventListener("pointermove", (event) => {
     if (!dragFrom) {
       return;
     }
-    const dy = event.screenY - dragFrom.pointer;
-    if (!dragged && Math.abs(dy) < 4) {
-      return;
+    const dx = event.screenX - dragFrom.x;
+    const dy = event.screenY - dragFrom.y;
+    if (!dragMode) {
+      if (Math.abs(dx) < PULL_OUT && Math.abs(dy) < PULL_OUT) {
+        return;
+      }
+      const outward = side === "right" ? -dx : dx;
+      dragMode = outward > Math.abs(dy) ? "out" : "along";
+      root.setAttribute("zia-dragging", dragMode);
+      if (dragMode === "out") {
+        root.removeAttribute("zia-nudged");
+      }
     }
-    dragged = true;
-    root.setAttribute("zia-dragging", "");
     const s = window.screen;
-    const top = s.availTop;
-    const bottom = s.availTop + s.availHeight - window.outerHeight;
-    const y = Math.round(Math.min(bottom, Math.max(top, dragFrom.window + dy)));
-    window.moveTo(window.screenX, y);
-    lastX = window.screenX;
+    const y = Math.round(Math.min(s.availTop + s.availHeight - window.outerHeight, Math.max(s.availTop, dragFrom.windowY + dy)));
+    let x = window.screenX;
+    if (dragMode === "out") {
+      // Follows the pointer out, but never back past the tucked position or
+      // further than fully on the screen
+      const from = tuckedX(0);
+      const to = outX();
+      x = Math.round(Math.min(Math.max(from, to), Math.max(Math.min(from, to), dragFrom.windowX + dx)));
+    }
+    window.moveTo(x, y);
+    lastX = x;
     lastY = y;
   });
   const endDrag = (event) => {
     if (!dragFrom) {
       return;
     }
+    const mode = dragMode;
     dragFrom = null;
+    dragMode = null;
     root.removeAttribute("zia-dragging");
     if (sliver.hasPointerCapture?.(event.pointerId)) {
       sliver.releasePointerCapture(event.pointerId);
     }
-    if (!sliver.matches(":hover")) {
-      nudge(false);
+    if (mode === "out") {
+      // Pulled out: it stays out, sliding the rest of the way onto the screen
+      slideOut(200);
+    } else if (mode === "along") {
+      if (!sliver.matches(":hover")) {
+        nudge(false);
+      }
+    } else if (event.type === "pointerup" && state === "tucked") {
+      // A click, not a drag
+      slideOut();
     }
   };
   sliver.addEventListener("pointerup", endDrag);
   sliver.addEventListener("pointercancel", endDrag);
-  sliver.addEventListener("click", () => {
-    if (dragged) {
-      dragged = false;
-      return;
-    }
-    if (state === "tucked") {
-      slideOut();
-    }
-  });
-  document.addEventListener("mouseover", () => clearTimeout(leaveTimer));
-  root.addEventListener("mouseleave", () => {
-    if (state === "out") {
-      clearTimeout(leaveTimer);
-      leaveTimer = setTimeout(() => {
-        if (state === "out") {
-          tuck(side);
-        }
-      }, 800);
-    }
-  });
 
   setInterval(() => {
     const enabled = pref("zia.pip.tuck", true);
@@ -314,7 +315,8 @@
     const y = window.screenY;
     const now = Date.now();
     // Moved straight up or down while tucked: dragged along the side, so it
-    // stays tucked.
+    // stays tucked. (Dragging the strip moves the window itself and keeps
+    // lastX and lastY in step, so it never looks like a drag of the window.)
     if (state === "tucked" && x === lastX && y !== lastY) {
       lastY = y;
       return;

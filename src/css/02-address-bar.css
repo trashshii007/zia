@@ -306,7 +306,7 @@
 }
 
 #zia-copy-link-button image {
-  list-style-image: url("chrome://sine/content/zia/icons/copy-link.svg") !important;
+  list-style-image: url("chrome://sine/content/zia/icons/tabler/outline/paperclip.svg") !important;
   -moz-context-properties: fill, fill-opacity, stroke, stroke-opacity;
   fill: currentColor;
 }

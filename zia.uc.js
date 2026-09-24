@@ -5561,7 +5561,7 @@
     clearTimeout(button.ziaCopiedTimer);
     button.ziaCopiedTimer = setTimeout(() => {
       button.removeAttribute("zia-copied");
-      img?.setAttribute("src", "chrome://sine/content/zia/icons/copy-link.svg");
+      img?.setAttribute("src", "chrome://sine/content/zia/icons/tabler/outline/paperclip.svg");
     }, 1200);
   }
 

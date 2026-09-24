@@ -350,9 +350,33 @@
     justify-self: end;
   }
 
+  /* With more than one card, the whole stack opens without the spring too,
+   * height included */
+  &:hover:has(.zen-media-card ~ .zen-media-card) .zen-media-card:not([zen-reindexing]) {
+    transition:
+      transform 0.35s var(--zia-media-ease),
+      opacity 0.3s var(--zia-media-ease),
+      filter 0.3s var(--zia-media-ease),
+      height 0.3s var(--zia-media-ease),
+      background-color 0.3s var(--zia-media-ease) !important;
+  }
+
   &:hover {
     .zen-media-card {
       height: var(--zia-media-card-height-open) !important;
+      /* The stack fans open without the spring, which made the top card
+       * bounce; it keeps the spring when it closes, and the card still
+       * springs as it grows. */
+      transition:
+        transform 0.35s var(--zia-media-ease),
+        opacity 0.3s var(--zia-media-ease),
+        filter 0.3s var(--zia-media-ease),
+        height var(--zia-spring-time) var(--zia-spring),
+        background-color 0.3s var(--zia-media-ease) !important;
+
+      &[zen-reindexing] {
+        transition: none !important;
+      }
 
       background-color: var(--zia-media-solid, var(--zia-media-card-base)) !important;
     }
