@@ -17,6 +17,12 @@
     }
   }
 
+  // Address bar position (an option): at the bottom of the page instead of the
+  // top. Zen's single toolbar keeps its own layout.
+  function urlbarAtBottom() {
+    return root.getAttribute("zia-urlbar-position") === "bottom" && root.getAttribute("zen-single-toolbar") !== "true";
+  }
+
   const STRIP_HEIGHT = 8;
   const STRIP_SCALE = 0.5;
   const FULL_VIEW_SCALE = 0.125;
@@ -823,6 +829,14 @@
     if (!urlbar || urlbar.hasAttribute("breakout-extend") || root.getAttribute("zia-split") === "true") {
       return;
     }
+    // At the bottom, the opened pop-up is pinned by its bottom edge to where
+    // the closed bar sits, so it grows upwards instead of off the screen.
+    const bar = urlbar.getBoundingClientRect();
+    if (bar.width) {
+      root.style.setProperty("--zia-url-left", `${Math.round(bar.left)}px`);
+      root.style.setProperty("--zia-url-width", `${Math.round(bar.width)}px`);
+      root.style.setProperty("--zia-url-bottom", `${Math.round(window.innerHeight - bar.bottom)}px`);
+    }
     const title = document.getElementById("zia-url-title");
     const input = urlbar.querySelector(".urlbar-input");
     const titleRect = title?.getBoundingClientRect();
@@ -835,7 +849,7 @@
   function alignOpenedUrlbar() {
     const urlbar = gURLBar.textbox || document.getElementById("urlbar");
 
-    if (urlbar?.getAttribute("zen-floating-urlbar") === "true") {
+    if (urlbar?.getAttribute("zen-floating-urlbar") === "true" && !urlbarAtBottom()) {
       root.style.setProperty("--zia-urlbar-open-offset", "0px");
       root.style.setProperty("--zia-urlbar-open-offset-x", "0px");
       return;
@@ -849,7 +863,9 @@
     const input = urlbar.querySelector(".urlbar-input");
     const inputRect = input?.getBoundingClientRect();
 
-    const openedByClick = Date.now() - clickedUrlbarAt < 1500;
+    // At the bottom the pop-up grows upwards from the bar, so the text always
+    // stays where it was, however the bar was opened.
+    const openedByClick = urlbarAtBottom() || Date.now() - clickedUrlbarAt < 1500;
     if (!openedByClick && openOffsetX) {
       openOffsetX = 0;
       root.style.setProperty("--zia-urlbar-open-offset-x", "0px");
@@ -3143,6 +3159,7 @@
     root.style.setProperty("--zia-pane-url-left", `${Math.round(rect.left + 6)}px`);
     root.style.setProperty("--zia-pane-url-top", `${Math.round(rect.top + 4)}px`);
     root.style.setProperty("--zia-pane-url-width", `${Math.round(rect.width - 12)}px`);
+    root.style.setProperty("--zia-pane-url-bottom", `${Math.round(window.innerHeight - rect.bottom + 4)}px`);
   }
 
   function schedulePanes() {
@@ -3667,12 +3684,12 @@
   }
 
   const POP_BOTTOM_WANT = 8;
-  const POP_SCROLL_TRIM = 8;
+  const POP_SCROLL_TRIM = 12;
   let popBottomTrim = null;
 
   function fitPopoverBottom(passesLeft = 8) {
     const urlbar = gURLBar.textbox || document.getElementById("urlbar");
-    if (!urlbar?.hasAttribute("breakout-extend")) {
+    if (!urlbar?.hasAttribute("breakout-extend") || urlbarAtBottom()) {
       popBottomTrim = null;
       root.removeAttribute("zia-pop-scrolls");
       urlbar?.style.removeProperty("--zia-pop-bottom-trim");
@@ -3769,6 +3786,10 @@
     }
     set("zia.tabs.favicon-glow", false);
     set("zia.essentials.fill-row", false);
+    try {
+      defaults.setStringPref("zia.urlbar.position", "top");
+    } catch (err) {
+    }
   }
 
   // Options in Sine's settings. All on, except the favicon glow.
@@ -3781,6 +3802,26 @@
     "zia.page.rounding",
   ];
   const WATCHED_OPTIONS = ["zia.urlbar.dia-style", "zia.newtab.real-tab", "zia.toolbar.site-color", "zia.split.drop-cards"];
+
+  const URLBAR_POSITION_PREF = "zia.urlbar.position";
+
+  function watchUrlbarPosition() {
+    const apply = () => {
+      let position = "top";
+      try {
+        position = Services.prefs.getStringPref(URLBAR_POSITION_PREF, "top");
+      } catch (err) {
+      }
+      root.setAttribute("zia-urlbar-position", position === "bottom" ? "bottom" : "top");
+      requestAnimationFrame(() => {
+        rememberClosedText();
+        schedulePanes();
+      });
+    };
+    apply();
+    Services.prefs.addObserver(URLBAR_POSITION_PREF, apply);
+    window.addEventListener("unload", () => Services.prefs.removeObserver(URLBAR_POSITION_PREF, apply));
+  }
 
   function watchOptions() {
     const urlbar = gURLBar?.textbox || document.getElementById("urlbar");
@@ -7982,6 +8023,7 @@
 
     safely("applyZenDefaults", applyZenDefaults);
     safely("watchOptions", watchOptions);
+    safely("watchUrlbarPosition", watchUrlbarPosition);
     safely("watchNewTabPage", watchNewTabPage);
     safely("createWorkspaceSlot", createWorkspaceSlot);
     safely("watchTabAnimations", watchTabAnimations);
