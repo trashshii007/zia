@@ -2,6 +2,8 @@
   "id": "zia",
   "name": "Zia",
   "description": "Makes Zen's browser frame look like Dia: page card, site-colored toolbar, Dia-style sidebar.",
+  "image": "https://github.com/user-attachments/assets/998f92b8-74ea-4bac-8131-6ab4a9993ab7",
+  "readme": "https://raw.githubusercontent.com/z1n-k/zia/main/README.md",
   "author": "z1n-k",
   "version": "2.39.1",
   "style": {
