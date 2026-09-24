@@ -11,7 +11,8 @@ Every release of Zia, newest first. The format follows
 - The address pop-up is 2px taller when its list scrolls, giving the last
   row a touch more room at the bottom.
 - Scrolled results no longer show through below the bottom edge of the
-  address pop-up.
+  address pop-up. Mid-scroll they run right up to its edge, and scrolled to
+  the end, the last result has the same gap below it as at the sides.
 
 ## [2.33.0] — 2026-09-24
 
