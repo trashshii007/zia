@@ -16,7 +16,7 @@ Every release of Zia, newest first. The format follows
 - **Tuck picture-in-picture away.** Press the new tuck button beside Close,
   or drag the window against the left or right side of the screen (a blue
   edge says "Let go to tuck away"), and it slides off, leaving a thin strip
-  with sound bars and an arrow. Point at the strip to peek the video back
+  with an arrow pointing back out. Point at the strip to peek the video back
   out; it tucks away again when you move off it. Press **Keep it out** (the
   same button) or drag it away from the edge to leave it out.
 - The music player always shows its picture-in-picture button when you hover

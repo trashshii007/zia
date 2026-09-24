@@ -219,7 +219,6 @@
 
 :root[zia-dia] #controls:not(.playing) #playpause {
   background-image: url("chrome://sine/content/zia/icons/pip/play.svg") !important;
-  background-position: 62% center !important;
 }
 
 :root[zia-dia] #seekBackward {
@@ -378,8 +377,8 @@
   scale: -1 1;
 }
 
-/* Tucked: only a strip of the window shows. It has sound bars and an
- * arrow pointing back out, and hovering it brings the video back. */
+/* Tucked: only a strip of the window shows, with an arrow pointing back
+ * out. Hovering it brings the video back. */
 .zia-pip-sliver {
   display: none;
 }
@@ -394,7 +393,6 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
   background: rgba(24, 24, 27, 0.9);
   cursor: pointer;
   -moz-window-dragging: no-drag;
@@ -410,26 +408,11 @@
   box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.12);
 }
 
-.zia-pip-sliver::before,
 .zia-pip-sliver::after {
   content: "";
   width: 14px;
   height: 14px;
-  background: center / contain no-repeat;
-  -moz-context-properties: fill;
-  fill: #fff;
-}
-
-.zia-pip-sliver::before {
-  background-image: url("chrome://sine/content/zia/icons/sound-still.svg");
-}
-
-:root:has(#controls.playing) .zia-pip-sliver::before {
-  background-image: url("chrome://sine/content/zia/icons/sound-wave.svg");
-}
-
-.zia-pip-sliver::after {
-  background-image: url("chrome://sine/content/zia/icons/pip/chevron.svg");
+  background: url("chrome://sine/content/zia/icons/pip/chevron.svg") center / contain no-repeat;
   opacity: 0.7;
   transition: translate 200ms ease, opacity 200ms ease;
 }

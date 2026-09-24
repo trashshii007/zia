@@ -97,9 +97,9 @@
     });
   }
 
-  // Tucking. Three ways in: the tuck button, or drag the window against the
+  // Tucking. Two ways in: the tuck button, or drag the window against the
   // left or right side of the screen (a blue edge says "Let go to tuck
-  // away"). Tucked, only a strip with sound bars shows; point at it and the
+  // away"). Tucked, only a strip with an arrow shows; point at it and the
   // video slides back out, then tucks again when the pointer leaves. Press
   // the button again ("Keep it out") or drag it away to leave it out.
   const SLIVER = 24;
