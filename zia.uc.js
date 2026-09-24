@@ -6888,8 +6888,11 @@
       document.querySelector("#tabs-newtab-button, #vertical-tabs-newtab-button");
 
     let lastTap = 0;
+    // Zia's own tap. Only if haptics are on in Zen; while a drag has them
+    // muted, they're let through for just this one.
     const tap = () => {
-      if (hapticsWereOn === false) {
+      const muted = hapticsWereOn !== null;
+      if (muted ? !hapticsWereOn : !Services.prefs.getBoolPref(HAPTIC_PREF, true)) {
         return;
       }
       const now = Date.now();
@@ -6899,12 +6902,14 @@
       }
       lastTap = now;
       try {
-        Services.prefs.setBoolPref(HAPTIC_PREF, true);
+        if (muted) {
+          Services.prefs.setBoolPref(HAPTIC_PREF, true);
+        }
         zenHaptic?.();
       } catch (err) {
         noteError("tab dragging: tap", err);
       } finally {
-        if (hapticsWereOn !== null) {
+        if (muted) {
           Services.prefs.setBoolPref(HAPTIC_PREF, false);
         }
       }
@@ -8433,24 +8438,70 @@
 
   let zenHaptic = null;
 
+  // Zen buzzes on its own drag events, which would double up with Zia's taps,
+  // so its haptics are switched off for the length of a drag. That's a saved
+  // pref, so Zia marks when it's done so (MUTE_MARK) and undoes its own change
+  // rather than writing one: a drag that never finishes cleanly (Zen quit
+  // mid-drag, a cancelled drop) is put right shortly after the pointer is
+  // released, or on the next launch at the latest.
   const HAPTIC_PREF = "zen.haptic-feedback.enabled";
+  const MUTE_MARK = "zia.haptics.muted";
   let hapticsWereOn = null;
+  let hapticsHadUserValue = false;
+  function restoreHaptics(hadUserValue) {
+    if (hadUserValue) {
+      Services.prefs.setBoolPref(HAPTIC_PREF, true);
+    } else {
+      Services.prefs.clearUserPref(HAPTIC_PREF);
+      if (!Services.prefs.getBoolPref(HAPTIC_PREF, true)) {
+        Services.prefs.setBoolPref(HAPTIC_PREF, true);
+      }
+    }
+    Services.prefs.clearUserPref(MUTE_MARK);
+  }
   function muteZenHaptics(muted) {
     try {
       if (muted && hapticsWereOn === null) {
         hapticsWereOn = Services.prefs.getBoolPref(HAPTIC_PREF, true);
+        hapticsHadUserValue = Services.prefs.prefHasUserValue(HAPTIC_PREF);
         if (hapticsWereOn) {
+          Services.prefs.setBoolPref(MUTE_MARK, true);
           Services.prefs.setBoolPref(HAPTIC_PREF, false);
         }
       } else if (!muted && hapticsWereOn !== null) {
         const was = hapticsWereOn;
         hapticsWereOn = null;
         if (was) {
-          Services.prefs.setBoolPref(HAPTIC_PREF, true);
+          restoreHaptics(hapticsHadUserValue);
         }
       }
     } catch (err) {
       noteError("start: muteZenHaptics", err);
+    }
+  }
+
+  function watchHapticsMute() {
+    // Left muted by a drag that didn't finish (or a quit mid-drag)
+    try {
+      if (Services.prefs.getBoolPref(MUTE_MARK, false) && hapticsWereOn === null) {
+        restoreHaptics(false);
+      }
+    } catch (err) {
+      noteError("start: watchHapticsMute", err);
+    }
+    let timer = 0;
+    const settle = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        const dragging =
+          root.hasAttribute("zia-dragging-tab") || !!document.querySelector(".tabbrowser-tab[zia-essential-dragged]");
+        if (hapticsWereOn !== null && !dragging) {
+          muteZenHaptics(false);
+        }
+      }, 800);
+    };
+    for (const type of ["dragend", "drop", "mouseup"]) {
+      window.addEventListener(type, settle, true);
     }
   }
 
@@ -8737,6 +8788,7 @@
     safely("addCopyLinkButton", addCopyLinkButton);
     safely("watchEdgeGlow", watchEdgeGlow);
     safely("quietZenHaptics", quietZenHaptics);
+    safely("watchHapticsMute", watchHapticsMute);
     safely("watchUnloadable", watchUnloadable);
     safely("revertTypedTextOnLeave", () => revertTypedTextOnLeave(urlbar));
     safely("neverShowScheme", neverShowScheme);

@@ -402,8 +402,11 @@
       document.querySelector("#tabs-newtab-button, #vertical-tabs-newtab-button");
 
     let lastTap = 0;
+    // Zia's own tap. Only if haptics are on in Zen; while a drag has them
+    // muted, they're let through for just this one.
     const tap = () => {
-      if (hapticsWereOn === false) {
+      const muted = hapticsWereOn !== null;
+      if (muted ? !hapticsWereOn : !Services.prefs.getBoolPref(HAPTIC_PREF, true)) {
         return;
       }
       const now = Date.now();
@@ -413,12 +416,14 @@
       }
       lastTap = now;
       try {
-        Services.prefs.setBoolPref(HAPTIC_PREF, true);
+        if (muted) {
+          Services.prefs.setBoolPref(HAPTIC_PREF, true);
+        }
         zenHaptic?.();
       } catch (err) {
         noteError("tab dragging: tap", err);
       } finally {
-        if (hapticsWereOn !== null) {
+        if (muted) {
           Services.prefs.setBoolPref(HAPTIC_PREF, false);
         }
       }
