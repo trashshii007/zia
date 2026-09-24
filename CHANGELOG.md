@@ -8,16 +8,17 @@ Every release of Zia, newest first. The format follows
 
 ### Added
 
-- **Tuck picture-in-picture into any side or corner.** The top, the bottom
-  and all four corners join the left and right sides. Throw the window at
-  one, and a throw that lands near a corner is pulled into it. Tucked in a
-  corner, a small frosted square shows instead of a strip.
+- **Tuck picture-in-picture into the bottom and the bottom corners.** They
+  join the left and right sides. Throw the window at one, and a throw that
+  lands near a bottom corner is pulled into it. Tucked in a corner, a small
+  frosted square shows instead of a strip. (No top spots: macOS won't move a
+  window up past the top of the screen.)
 - **Pick where it tucks.** A small arrow beside the tuck button opens a map
-  of the screen with its eight spots, and can make one the default, which
+  of the screen with its five spots, and can make one the default, which
   the tuck button then uses. The default is also in Zia's settings as
   **Picture-in-picture tucks into**.
-- Drag a tucked strip along its side to move it; near the end of a side it
-  snaps into the corner, and dragged out of a corner along an edge it
+- Drag a tucked strip along its side to move it; near the bottom of a side
+  it snaps into the corner, and dragged out of a corner along an edge it
   becomes that side again.
 
 ### Fixed

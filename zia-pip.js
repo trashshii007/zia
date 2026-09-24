@@ -119,8 +119,8 @@
     });
   }
 
-  // Tucking. The window tucks into any side or corner of its screen that
-  // has no other screen beyond it (with two screens side by side, a tucked
+  // Tucking. The window tucks into the left or right side, the bottom or a
+  // bottom corner of its screen, wherever there's no other screen beyond it (with two screens side by side, a tucked
   // window at the edge they share would just show on the other one). Ways
   // in: the tuck button, which uses the default spot (Zia's settings, or
   // "Make this the default" in the picker beside it); the picker itself; or
@@ -143,7 +143,8 @@
   const UNSNAP = 48; // dragged this far out of a corner, it's a side again
   const MARGIN = 16;
   const SPOT_PREF = "zia.pip.tuck-spot";
-  const SPOTS = ["top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right"];
+  // No top spots: macOS won't move a window up past the top of the screen
+  const SPOTS = ["left", "right", "bottom-left", "bottom", "bottom-right"];
   // Which way the arrows point (the chevron points left at 0deg)
   const TURN = { right: 0, left: 180, top: -90, bottom: 90, "top-right": -45, "top-left": -135, "bottom-right": 45, "bottom-left": 135 };
   let state = "free"; // "free" or "tucked"
@@ -203,6 +204,9 @@
     };
   };
   const spotOpen = (name, open = openSides()) => {
+    if (!SPOTS.includes(name)) {
+      return false;
+    }
     const parts = name.split("-");
     return parts.every((part) => open[part]) && (parts.length === 1 || open.corner(parts[0], parts[1]));
   };
@@ -310,7 +314,7 @@
     const go = {
       left: open.left && (off.left >= TUCK_OFF || (vx < -FLING_SPEED && x - b.left < FLING_REACH)),
       right: open.right && (off.right >= TUCK_OFF || (vx > FLING_SPEED && b.right - (x + W()) < FLING_REACH)),
-      top: open.top && (off.top >= TUCK_OFF || (vy < -FLING_SPEED && y - b.top < FLING_REACH)),
+      top: false,
       bottom: open.bottom && (off.bottom >= TUCK_OFF || (vy > FLING_SPEED && b.bottom - (y + H()) < FLING_REACH)),
     };
     const v = go.top ? "top" : go.bottom ? "bottom" : "";
@@ -528,6 +532,8 @@
   let dragFrom = null;
   let dragMode = null; // null until the pointer has moved: "along" or "out"
   let snapping = false;
+  let pointer = null; // the latest pointer position during a drag
+  let settleUntil = 0; // just after a drag, the window may still be arriving
   const inward = (name) => {
     const x = name.endsWith("left") ? 1 : name.endsWith("right") ? -1 : 0;
     const y = name.startsWith("top") ? 1 : name.startsWith("bottom") ? -1 : 0;
@@ -543,7 +549,7 @@
     snapping = true;
     glide(...tuckedPos(name), 200, () => {
       snapping = false;
-      restartDrag(event);
+      restartDrag(pointer || event);
     }, true);
   };
   // Out of a corner along one of its edges: that side again, a little way
@@ -560,7 +566,7 @@
     snapping = true;
     glide(...tuckedPos(name, 0, at), 180, () => {
       snapping = false;
-      restartDrag(event);
+      restartDrag(pointer || event);
     }, true);
   };
   const moveAlong = (event) => {
@@ -650,7 +656,11 @@
     sliver.setPointerCapture(event.pointerId);
   });
   sliver.addEventListener("pointermove", (event) => {
-    if (!dragFrom || snapping) {
+    if (!dragFrom) {
+      return;
+    }
+    pointer = { screenX: event.screenX, screenY: event.screenY };
+    if (snapping) {
       return;
     }
     if (!dragMode) {
@@ -680,6 +690,8 @@
     }
     const mode = dragMode;
     dragFrom = null;
+    pointer = null;
+    settleUntil = Date.now() + 300;
     dragMode = null;
     root.removeAttribute("zia-dragging");
     if (sliver.hasPointerCapture?.(event.pointerId)) {
@@ -708,14 +720,21 @@
       }
       return;
     }
-    if (animating) {
+    // Zia is moving the window itself: gliding it, or following a drag of
+    // the tucked strip. The window's position can lag a moment behind, so
+    // none of that counts as the window being dragged.
+    if (animating || dragFrom || snapping) {
       return;
     }
     const x = window.screenX;
     const y = window.screenY;
     const now = Date.now();
-    // Dragging the strip moves the window itself and keeps lastX and lastY
-    // in step, so any other move is the window being dragged.
+    if (state === "tucked" && (now < settleUntil || (Math.abs(x - lastX) <= 1 && Math.abs(y - lastY) <= 1))) {
+      lastX = x;
+      lastY = y;
+      return;
+    }
+    // Any other move is the window being dragged.
     if (x !== lastX || y !== lastY) {
       if (now - movedAt > 300) {
         trail = [];

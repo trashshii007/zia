@@ -174,20 +174,8 @@
         "value": "right"
       },
       {
-        "label": "Top",
-        "value": "top"
-      },
-      {
         "label": "Bottom",
         "value": "bottom"
-      },
-      {
-        "label": "Top-left corner",
-        "value": "top-left"
-      },
-      {
-        "label": "Top-right corner",
-        "value": "top-right"
       },
       {
         "label": "Bottom-left corner",
