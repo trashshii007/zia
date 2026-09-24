@@ -2378,6 +2378,23 @@
     refresh();
   }
 
+
+  // A music player card could be dragged out of the sidebar like a toolbar
+  // button, which took it away from Zen's media player and left the player
+  // broken until Zen restarted. Nothing on the card is meant to be dragged
+  // (the scrubber and buttons don't use drags), so no drag starts there.
+  function keepMediaCardsInPlace() {
+    window.addEventListener(
+      "dragstart",
+      (event) => {
+        if (event.target?.closest?.("#zen-media-controls-toolbar")) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      },
+      true
+    );
+  }
   const TAB_DROP_TYPE = "application/x-moz-tabbrowser-tab";
   const HTML = "http://www.w3.org/1999/xhtml";
   const MAGNET_SHARE = 0.32;
@@ -8488,6 +8505,7 @@
     safely("hideWwwInUrlbar", hideWwwInUrlbar);
     safely("watchRightEdges", watchRightEdges);
     ifOn("media-player", "watchMediaGlow", watchMediaGlow);
+    safely("keepMediaCardsInPlace", keepMediaCardsInPlace);
     safely("watchTabSoundBars", watchTabSoundBars);
     safely("watchSelectedTabGlow", watchSelectedTabGlow);
     safely("watchSplitDrop", watchSplitDrop);

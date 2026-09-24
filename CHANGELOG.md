@@ -22,6 +22,9 @@ Every release of Zia, newest first. The format follows
 
 - The copy-link button in the address bar uses the same Tabler paperclip as
   the hover cards.
+- A music player card can no longer be dragged out of the sidebar. Dragging
+  one took it away from Zen's media player, which then stayed broken until
+  Zen restarted.
 
 ## [2.43.1] — 2026-09-24
 
