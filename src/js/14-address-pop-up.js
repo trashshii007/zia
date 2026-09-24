@@ -22,7 +22,9 @@
         if (icon) {
           return spec;
         }
-      } catch (err) {}
+      } catch (err) {
+        noteError("address pop up: knownIconPage", err);
+      }
     }
     return null;
   }

@@ -71,7 +71,9 @@
     Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper).copyString(uri.displaySpec);
     try {
       window.gZenUIManager?.showToast?.("zen-copy-current-url-confirmation");
-    } catch (err) {}
+    } catch (err) {
+      noteError("copy link: copyLink", err);
+    }
   }
 
   function showCopied(button) {

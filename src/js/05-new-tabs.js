@@ -4,6 +4,7 @@
         return engine.searchForm;
       }
     } catch (err) {
+      noteError("new tabs: searchEngineHomePage", err);
     }
     try {
       const prePath = engine.getSubmission("zia").uri.prePath;
@@ -44,6 +45,7 @@
       try {
         AboutNewTabModule.newTabURL = searchHomeUrl;
       } catch (err) {
+        noteError("new tabs: applyNewTabPage", err);
       }
       console.info(`[Zia] New tabs open: ${searchHomeUrl}`);
     } catch (err) {
@@ -88,6 +90,7 @@
         urlbar.blur();
         gBrowser.selectedBrowser?.focus();
       } catch (err) {
+        noteError("new tabs: closeNewTabUrlbar", err);
       }
     });
   }

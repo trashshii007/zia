@@ -64,6 +64,7 @@
       try {
         add(tab.linkedBrowser?.currentURI?.host?.replace(/^www\./, ""), 0.5);
       } catch (err) {
+        noteError("folder names local model: add", err);
       }
     }
     return weights;
@@ -132,6 +133,7 @@
           hosts.push(host);
         }
       } catch (err) {
+        noteError("folder names local model: folderTabHosts", err);
       }
     }
     return hosts;
@@ -268,6 +270,7 @@
         return iconVectors;
       }
     } catch (err) {
+      noteError("folder names local model: loadIconVectors", err);
     }
     return null;
   }
@@ -488,6 +491,7 @@
       try {
         label?.[method]?.();
       } catch (err) {
+        noteError("folder names local model: renameFolder", err);
       }
     }
     label?.removeAttribute?.("editing");

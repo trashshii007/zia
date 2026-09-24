@@ -6,6 +6,7 @@
       try {
         position = Services.prefs.getStringPref(URLBAR_POSITION_PREF, "top");
       } catch (err) {
+        noteError("options: apply", err);
       }
       root.setAttribute("zia-urlbar-position", position === "bottom" ? "bottom" : "top");
       requestAnimationFrame(() => {
@@ -29,6 +30,7 @@
         defaults.setBoolPref("zen.urlbar.replace-newtab", !Services.prefs.getBoolPref("zia.newtab.real-tab", true));
         defaults.setBoolPref("zen.splitView.enable-tab-drop", !Services.prefs.getBoolPref("zia.split.drop-cards", true));
       } catch (err) {
+        noteError("options: apply (2)", err);
       }
     };
     const onChange = () => {

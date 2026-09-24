@@ -416,6 +416,7 @@
         Services.prefs.setBoolPref(HAPTIC_PREF, true);
         zenHaptic?.();
       } catch (err) {
+        noteError("tab dragging: tap", err);
       } finally {
         if (hapticsWereOn !== null) {
           Services.prefs.setBoolPref(HAPTIC_PREF, false);
@@ -521,7 +522,9 @@
         } else if (!pinned && tab.pinned) {
           gBrowser.unpinTab(tab);
         }
-      } catch (err) {}
+      } catch (err) {
+        noteError("tab dragging: pinFor", err);
+      }
     };
 
     const placeBefore = (tab, before) => {
@@ -532,13 +535,17 @@
         if (typeof gBrowser.moveTabBefore === "function" && (gBrowser.isTab(before) || isFolderEl(before) || before.localName === "tab-group")) {
           gBrowser.moveTabBefore(tab, before);
         }
-      } catch (err) {}
+      } catch (err) {
+        noteError("tab dragging: placeBefore", err);
+      }
       if (tab.nextElementSibling !== before) {
         try {
           if (tab.group && !before.closest?.("tab-group")) {
             gBrowser.ungroupTab?.(tab);
           }
-        } catch (err) {}
+        } catch (err) {
+          noteError("tab dragging: placeBefore (2)", err);
+        }
         before.parentNode.insertBefore(tab, before);
       }
     };
@@ -546,7 +553,9 @@
     const placeAfter = (tab, after) => {
       try {
         gBrowser.moveTabAfter(tab, after);
-      } catch (err) {}
+      } catch (err) {
+        noteError("tab dragging: placeAfter", err);
+      }
       if (after.nextElementSibling !== tab) {
         after.after(tab);
       }
@@ -559,7 +568,9 @@
       if (target.below && tab.group && !tab.group.hasAttribute("split-view-group")) {
         try {
           gBrowser.ungroupTab?.(tab);
-        } catch (err) {}
+        } catch (err) {
+          noteError("tab dragging: finishDrop", err);
+        }
       }
       pinFor(tab, !target.below);
       const folder = target.folder;
@@ -583,7 +594,9 @@
       if (target.below) {
         try {
           gBrowser.moveTabToEnd?.(tab);
-        } catch (err) {}
+        } catch (err) {
+          noteError("tab dragging: finishDrop (2)", err);
+        }
         return;
       }
       if (!target.below) {
@@ -734,7 +747,9 @@
         host.appendChild(proxy);
         try {
           window.gZenPinnedTabManager?.setEssentialTabIcon?.(proxy);
-        } catch (err) {}
+        } catch (err) {
+          noteError("tab dragging: showProxy", err);
+        }
         moveProxy(x, y);
 
         const box = proxy.getBoundingClientRect();
@@ -1382,7 +1397,9 @@
       root.appendChild(copy);
       try {
         window.gZenPinnedTabManager?.setEssentialTabIcon?.(copy);
-      } catch (err) {}
+      } catch (err) {
+        noteError("tab dragging: onEssentialStart", err);
+      }
       tab.setAttribute("zia-essential-dragged", "true");
       noLanding();
 

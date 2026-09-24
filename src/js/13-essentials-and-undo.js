@@ -64,6 +64,7 @@
         return entry.url;
       }
     } catch (err) {
+      noteError("essentials and undo: savedUrlOf", err);
     }
     return tab.linkedBrowser?.currentURI?.spec || "";
   }
@@ -102,6 +103,7 @@
         return true;
       }
     } catch (err) {
+      noteError("essentials and undo: reopenLastClose", err);
     }
     try {
       if (window.SessionStore?.undoCloseTab) {
@@ -109,6 +111,7 @@
         return true;
       }
     } catch (err) {
+      noteError("essentials and undo: reopenLastClose (2)", err);
     }
     try {
       const command = document.getElementById("History:UndoCloseTab");
@@ -117,6 +120,7 @@
         return true;
       }
     } catch (err) {
+      noteError("essentials and undo: reopenLastClose (3)", err);
     }
     return false;
   }
@@ -229,6 +233,7 @@
       try {
         undoState.closed.push(closedTabRecord(tab));
       } catch (err) {
+        noteError("essentials and undo: watchUndoClose", err);
       }
     });
 

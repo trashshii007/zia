@@ -16,6 +16,7 @@
       Services.prefs.setBoolPref("browser.urlbar.untrimOnUserInteraction", false);
       Services.prefs.setBoolPref("browser.urlbar.trimHttps", true);
     } catch (err) {
+      noteError("zen defaults: set", err);
     }
 
     for (const feature of FEATURES) {
@@ -37,6 +38,7 @@
     try {
       defaults.setStringPref("zia.urlbar.position", "top");
     } catch (err) {
+      noteError("zen defaults: set (2)", err);
     }
   }
 

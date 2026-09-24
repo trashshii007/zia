@@ -230,6 +230,7 @@
     try {
       reading = await sampleTopColor(browser);
     } catch (err) {
+      noteError("site colour: updateColor", err);
     }
     if (id !== colorRequestId || browser !== gBrowser.selectedBrowser || (isLoading(browser) && !duringLoad)) {
       return;
@@ -292,6 +293,7 @@
         siteColors.set(host, value);
       }
     } catch (err) {
+      noteError("site colour: loadSiteColors", err);
     }
     return siteColors;
   }

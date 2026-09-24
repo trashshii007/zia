@@ -35,7 +35,9 @@
           Services.prefs.setBoolPref(HAPTIC_PREF, true);
         }
       }
-    } catch (err) {}
+    } catch (err) {
+      noteError("start: muteZenHaptics", err);
+    }
   }
 
   function quietZenHaptics() {

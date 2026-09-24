@@ -7,6 +7,18 @@
 
   const root = document.documentElement;
 
+  // Errors Zia can carry on past (a pref that isn't set, a tab that's gone)
+  // are logged once per place at debug level instead of vanishing: visible in
+  // the Browser Console, but not noisy.
+  const notedErrors = new Set();
+  function noteError(where, err) {
+    if (notedErrors.has(where)) {
+      return;
+    }
+    notedErrors.add(where);
+    console.debug(`[Zia] ${where}:`, err);
+  }
+
   function setFlag(name, on) {
     if (on === root.hasAttribute(name)) {
       return;

@@ -457,6 +457,7 @@
             try {
               card.updateIcon();
             } catch (err) {
+              noteError("music and sound bars: watchTabSoundBars", err);
             }
           }
         }
@@ -677,6 +678,7 @@
             repaintSoundTabs();
           }
         } catch (err) {
+          noteError("music and sound bars: useMediaArtwork", err);
         }
         return result;
       };
@@ -694,6 +696,7 @@
       try {
         art = bestArtwork(this.controller?.getMetadata?.()?.artwork);
       } catch (err) {
+        noteError("music and sound bars: useMediaArtwork (2)", err);
       }
       if (!button) {
         return;
@@ -720,6 +723,7 @@
       front.updateIcon();
       front.updatePosition?.();
     } catch (err) {
+      noteError("music and sound bars: showArt", err);
     }
     return true;
   }

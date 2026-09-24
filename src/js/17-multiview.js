@@ -82,7 +82,9 @@
       if (state && Number.isFinite(state.duration) && state.duration > 0 && state.duration < 1e7) {
         return state.position;
       }
-    } catch (err) {}
+    } catch (err) {
+      noteError("multiview: multiviewPosition", err);
+    }
     return 0;
   }
 
@@ -110,7 +112,9 @@
     let choice = "zia";
     try {
       choice = Services.prefs.getStringPref(MULTIVIEW_COLOR_PREF, "zia");
-    } catch (err) {}
+    } catch (err) {
+      noteError("multiview: multiviewColor", err);
+    }
     if (choice === "space" && root.getAttribute("zen-default-theme") !== "true") {
       const m = getComputedStyle(root).getPropertyValue("--zen-primary-color").match(/\d+(\.\d+)?/g);
       if (m && m.length >= 3) {

@@ -54,6 +54,7 @@
     const browser = PictureInPicture.weakWinToBrowser?.get(window);
     host.textContent = browser?.currentURI?.host || "";
   } catch (err) {
+    console.debug("[Zia] picture-in-picture: site name", err);
   }
   const end = make("div", "zia-pip-end", topBar);
   const tuckButton = make("button", "zia-pip-pill zia-pip-tuck-button control-item", end);

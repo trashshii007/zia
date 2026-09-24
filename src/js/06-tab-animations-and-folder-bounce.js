@@ -128,6 +128,7 @@
     try {
       gURLBar.setURI();
     } catch (err) {
+      noteError("tab animations and folder bounce: hideWwwInUrlbar", err);
     }
   }
 

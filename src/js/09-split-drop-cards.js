@@ -133,6 +133,7 @@
       dt.updateDragImage(blankDragImage, 16, 16);
       splitDrop.dragImageSet = true;
     } catch (err) {
+      noteError("split drop cards: hideSystemDragImage", err);
     }
   }
 
@@ -272,6 +273,7 @@
           event.dataTransfer.updateDragImage(...original);
         }
       } catch (err) {
+        noteError("split drop cards: hideSplitDrop", err);
       }
     }
     splitDrop.tab = null;

@@ -240,6 +240,7 @@
     try {
       reading = await sampleTopColor(browser);
     } catch (err) {
+      noteError("split panes: colorPaneBar", err);
     }
     if (!reading?.rgb) {
       return;
