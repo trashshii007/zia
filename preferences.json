@@ -51,7 +51,7 @@
   },
   {
     "type": "checkbox",
-    "label": "Selected tab glows faintly in its favicon's colours",
+    "label": "Tint the selected tab's glow and the sound bars with the site's colours",
     "property": "zia.tabs.favicon-glow",
     "defaultValue": false
   },

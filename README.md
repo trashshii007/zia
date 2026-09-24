@@ -72,7 +72,7 @@ Covers come from an icon picker Zia adds as a third tab beside Zen's own: 1,512 
 
 ### Media and split view
 
-Playing music gives you a card with the track's artwork and a glow in its colours. Three sound bars in those same colours replace Zen's speaker on playing tabs (white on essentials), shrinking to three dots when muted, and clicking them toggles the sound. It handles livestreams as well as ordinary videos.
+Playing music gives you a card with the track's artwork and a glow in its colours. Sound bars replace Zen's speaker on playing tabs and appear on essentials, turning to dots when muted, and clicking them toggles the sound. They're white; turn on the tint option to colour the tabs' bars with the site's colours. It handles livestreams as well as ordinary videos.
 
 ![The music player card](https://github.com/user-attachments/assets/5b4e2542-61a9-4fd6-b2ee-7fb58970ef5b)
 
@@ -96,7 +96,7 @@ Parts of the theme can be switched on or off individually.
 | --- | --- |
 | Music player card | on |
 | Sound bars on playing tabs (off: Zen's speaker) | on |
-| Selected tab glows faintly in its favicon's colours | off |
+| Tint the selected tab's glow and the sound bars with the site's colours | off |
 | Dia-style address bar pop-up (off: Zen's own) | on |
 | Cmd/Ctrl+T and **+ New Tab** open a real tab (off: Zen's floating address bar) | on |
 | Find in page bar | on |

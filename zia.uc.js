@@ -867,6 +867,9 @@
   }
 
   function alignOpenedUrlbarSoon() {
+    // Straight away, before the opened bar is first drawn, so the text doesn't
+    // visibly jump; the later passes only catch late layout changes.
+    alignOpenedUrlbar();
     requestAnimationFrame(alignOpenedUrlbar);
     setTimeout(alignOpenedUrlbar, 60);
     setTimeout(alignOpenedUrlbar, 200);
@@ -1706,7 +1709,10 @@
     for (const type of ["TabGrouped", "TabUngrouped"]) {
       window.addEventListener(type, () => setTimeout(glowSelectedTab, 50));
     }
-    const onPref = () => glowSelectedTab();
+    const onPref = () => {
+      glowSelectedTab();
+      repaintSoundTabs();
+    };
     Services.prefs.addObserver("zia.tabs.favicon-glow", onPref);
     window.addEventListener("unload", () => Services.prefs.removeObserver("zia.tabs.favicon-glow", onPref));
     glowSelectedTab();
@@ -1765,13 +1771,14 @@
   }
 
   let soundBarToken = 0;
-  // Three bars in the artwork's colours; they shrink into three dots when muted.
-  const BAR_X = [3.3, 6.8, 10.3];
-  const BAR_W = 2.4;
+  // Four bars; they shrink into four dots when muted.
+  const BAR_X = [1.6, 5.2, 8.8, 12.4];
+  const BAR_W = 2;
   const BAR_REST = [
     [4.5, 7],
     [2.5, 11],
-    [5.5, 5],
+    [3.5, 9],
+    [5.25, 5.5],
   ];
 
   function soundBarImages(colors) {
@@ -1782,8 +1789,8 @@
     }
     const a = colors ? lighten(colors[0]) : "rgb(255, 255, 255)";
     const b = colors ? lighten(colors[1]) : "rgb(255, 255, 255)";
-    const gradient = `<defs><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="3.3" y1="0" x2="12.7" y2="0"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>`;
-    const moving = [[0.55], [0.68], [0.5]];
+    const gradient = `<defs><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="1.6" y1="0" x2="14.4" y2="0"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>`;
+    const moving = [[0.55], [0.68], [0.5], [0.74]];
     const wave =
       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">${gradient}` +
       `<style>rect{transform-box:fill-box;transform-origin:center;animation:grow .26s cubic-bezier(.2,.9,.3,1) both,z .6s .26s ease-in-out infinite alternate}` +
@@ -1792,19 +1799,19 @@
       `@keyframes z{from{transform:scaleY(.22)}to{transform:scaleY(1)}}` +
       `@media (prefers-reduced-motion:reduce){rect{animation:none;transform:scaleY(.6)}}</style>` +
       `<g fill="url(#g)">` +
-      BAR_X.map((x, i) => `<rect class="b${i}" x="${x}" y="2.5" width="${BAR_W}" height="11" rx="1.2"/>`).join("") +
+      BAR_X.map((x, i) => `<rect class="b${i}" x="${x}" y="2.5" width="${BAR_W}" height="11" rx="1"/>`).join("") +
       `</g></svg>`;
     const dots =
       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">${gradient}` +
       `<style>rect{animation:shrink .28s cubic-bezier(.4,0,.2,1) forwards}@keyframes shrink{to{height:${BAR_W}px;y:${8 - BAR_W / 2}px}}` +
       `@media (prefers-reduced-motion:reduce){rect{animation-duration:1ms}}</style>` +
       `<g fill="url(#g)">` +
-      BAR_X.map((x, i) => `<rect x="${x}" y="${BAR_REST[i][0]}" width="${BAR_W}" height="${BAR_REST[i][1]}" rx="1.2"/>`).join("") +
+      BAR_X.map((x, i) => `<rect x="${x}" y="${BAR_REST[i][0]}" width="${BAR_W}" height="${BAR_REST[i][1]}" rx="1"/>`).join("") +
       `</g></svg>`;
     const still =
       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">${gradient}` +
       `<g fill="url(#g)">` +
-      BAR_X.map((x, i) => `<rect x="${x}" y="${BAR_REST[i][0]}" width="${BAR_W}" height="${BAR_REST[i][1]}" rx="1.2"/>`).join("") +
+      BAR_X.map((x, i) => `<rect x="${x}" y="${BAR_REST[i][0]}" width="${BAR_W}" height="${BAR_REST[i][1]}" rx="1"/>`).join("") +
       `</g></svg>`;
     const encoded = (svg) => `data:image/svg+xml,${encodeURIComponent(svg)}`;
     images = { waveData: encoded(wave), dotsData: encoded(dots), stillData: encoded(still) };
@@ -1887,10 +1894,12 @@
     return palette ? [palette[0], palette[1] || palette[0]] : null;
   }
 
+  // Tab bars are white. With the tint option on, tabs (not essentials) take
+  // the artwork's colours instead.
   function applyTabSoundBars(tab) {
-    // Essentials keep white bars; tabs take the artwork's colours.
     const essential = tab.hasAttribute("zen-essential");
-    const colors = essential ? null : tabMediaColors(tab) || tabFallbackColors(tab);
+    const tinted = !essential && Services.prefs.getBoolPref("zia.tabs.favicon-glow", false);
+    const colors = tinted ? tabMediaColors(tab) || tabFallbackColors(tab) : null;
     const key = `${colors ? colors.join("|") : "white"}|${essential}|${tab.hasAttribute("soundplaying")}|${tab.hasAttribute("muted")}`;
     if (tab.__ziaSoundKey === key) {
       return;
@@ -3413,6 +3422,7 @@
   }
 
   const POP_STEP = 0.5;
+  const ALIGN_STEP = 1;
   let popIconStart = null;
   let popTextGap = null;
   let popLayout = null;
@@ -3422,9 +3432,9 @@
   function alignTypedTextWithRows(results, passesLeft = 8) {
     const urlbar = gURLBar.textbox || document.getElementById("urlbar");
 
+    // Keep the measured spacing between opens (it only resets when the bar's
+    // size or position changes), so reopening doesn't nudge the text again.
     if (!urlbar?.hasAttribute("breakout-extend")) {
-      popIconStart = null;
-      popTextGap = null;
       return;
     }
     const row = results.querySelector(".urlbarView-row");
@@ -3466,12 +3476,12 @@
 
     let moved = false;
     if (Math.abs(iconError) > 0.3) {
-      popIconStart = clamp(popIconStart + iconError * POP_STEP, 0, 60);
+      popIconStart = clamp(popIconStart + iconError * ALIGN_STEP, 0, 60);
       urlbar.style.setProperty("--zia-pop-icon-start", `${popIconStart}px`);
       moved = true;
     }
     if (Math.abs(gapError) > 0.3) {
-      popTextGap = clamp(popTextGap + gapError * POP_STEP, 0, 40);
+      popTextGap = clamp(popTextGap + gapError * ALIGN_STEP, 0, 40);
       urlbar.style.setProperty("--zia-pop-text-gap", `${popTextGap}px`);
       moved = true;
     }
@@ -3481,7 +3491,7 @@
   }
 
   const POP_BOTTOM_WANT = 8;
-  const POP_SCROLL_TRIM = 4;
+  const POP_SCROLL_TRIM = 8;
   let popBottomTrim = null;
 
   function fitPopoverBottom(passesLeft = 8) {

@@ -4,6 +4,23 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.31.2] — 2026-09-24
+
+### Changed
+
+- The sound bars are back to four bars, shrinking to four dots when muted.
+- Sound bars on tabs are white. The tint option (off by default) now also
+  colours them with the site's artwork or favicon; essentials stay white.
+- The tint option's glow on the selected tab is now mostly the usual white
+  glow with only a hint of the favicon's colours.
+
+### Fixed
+
+- Opening the address bar pop-up no longer nudges the address text for a
+  moment; it stays where it was.
+- The pop-up is 4px shorter when its list scrolls, so the space below the
+  last row matches the space at its sides.
+
 ## [2.31.0] — 2026-09-24
 
 ### Added
