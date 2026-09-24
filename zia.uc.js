@@ -18,14 +18,9 @@
   }
 
   // Address bar position (an option): at the bottom of the page instead of the
-  // top. Only in the usual layout; compact mode and Zen's single toolbar keep
-  // theirs.
+  // top. Zen's single toolbar keeps its own layout.
   function urlbarAtBottom() {
-    return (
-      root.getAttribute("zia-urlbar-position") === "bottom" &&
-      root.getAttribute("zen-compact-mode") !== "true" &&
-      root.getAttribute("zen-single-toolbar") !== "true"
-    );
+    return root.getAttribute("zia-urlbar-position") === "bottom" && root.getAttribute("zen-single-toolbar") !== "true";
   }
 
   const STRIP_HEIGHT = 8;
@@ -854,7 +849,7 @@
   function alignOpenedUrlbar() {
     const urlbar = gURLBar.textbox || document.getElementById("urlbar");
 
-    if (urlbar?.getAttribute("zen-floating-urlbar") === "true") {
+    if (urlbar?.getAttribute("zen-floating-urlbar") === "true" && !urlbarAtBottom()) {
       root.style.setProperty("--zia-urlbar-open-offset", "0px");
       root.style.setProperty("--zia-urlbar-open-offset-x", "0px");
       return;

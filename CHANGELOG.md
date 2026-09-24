@@ -11,9 +11,9 @@ Every release of Zia, newest first. The format follows
 - **Address bar position** in the settings: Top (the default) or Bottom. At
   the bottom, the toolbar sits under the page, the page's rounded corners
   move to the top, and the address pop-up opens upwards from the bar. In
-  split view each pane's toolbar moves to the bottom of its pane. Compact
-  mode and Zen's single-toolbar layout keep the address bar where they put
-  it.
+  split view each pane's toolbar moves to the bottom of its pane, and in
+  compact mode the hidden toolbar slides in from the bottom edge. Zen's
+  single-toolbar layout keeps the address bar in the sidebar.
 
 ## [2.32.0] — 2026-09-24
 
