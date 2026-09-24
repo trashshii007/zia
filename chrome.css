@@ -3157,6 +3157,16 @@ findbar {
     top: auto !important;
     bottom: var(--zia-pane-url-bottom, 8px) !important;
   }
+
+  &:not([zia-split="true"]) #urlbar[breakout-extend]:not([zia-classic], [zen-floating-urlbar="true"]) {
+    position: fixed !important;
+    top: auto !important;
+    bottom: var(--zia-url-bottom, 8px) !important;
+    left: var(--zia-url-left, 0px) !important;
+    width: var(--zia-url-width, 50vw) !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
 }
 
 :root[inDOMFullscreen="true"] .zia-pane-bar {

@@ -834,6 +834,14 @@
     if (!urlbar || urlbar.hasAttribute("breakout-extend") || root.getAttribute("zia-split") === "true") {
       return;
     }
+    // At the bottom, the opened pop-up is pinned by its bottom edge to where
+    // the closed bar sits, so it grows upwards instead of off the screen.
+    const bar = urlbar.getBoundingClientRect();
+    if (bar.width) {
+      root.style.setProperty("--zia-url-left", `${Math.round(bar.left)}px`);
+      root.style.setProperty("--zia-url-width", `${Math.round(bar.width)}px`);
+      root.style.setProperty("--zia-url-bottom", `${Math.round(window.innerHeight - bar.bottom)}px`);
+    }
     const title = document.getElementById("zia-url-title");
     const input = urlbar.querySelector(".urlbar-input");
     const titleRect = title?.getBoundingClientRect();
