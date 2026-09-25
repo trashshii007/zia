@@ -338,8 +338,10 @@
     backdrop-filter: blur(24px) saturate(1.6) !important;
   }
 
-  /* the page behind a card blurs too (the compositing trick from Floaty UI) */
-  #tabbrowser-tabpanels .browserSidebarContainer {
+  /* the page and the sidebar behind a card blur too: each drawn as a layer
+     Firefox composites itself (the trick from Floaty UI) */
+  #tabbrowser-tabpanels .browserSidebarContainer,
+  #navigator-toolbox {
     will-change: transform !important;
     backface-visibility: hidden !important;
   }
