@@ -8,10 +8,9 @@ Every release of Zia, newest first. The format follows
 
 ### Changed
 
-- Every loaded essential now wears the selected one's look (its favicon's
-  colours glowing behind a glass panel), dimmed, instead of only the
-  selected one having it. The selected essential stays brightest, and
-  asleep ones stay plain grey. It follows Zen's own essential favicon
+- Every essential now wears the selected one's look (its favicon's colours
+  glowing behind a glass panel), not only the selected one: loaded ones at
+  full strength, asleep ones dimmed. It follows Zen's own essential favicon
   background setting.
 
 ## [2.53.1] — 2026-09-25
