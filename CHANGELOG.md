@@ -4,6 +4,16 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.54.0] — 2026-09-25
+
+### Added
+
+- **See-through hover cards.** The tab, folder and essential cards get the
+  same frosted look as the compact sidebar and the address bar pop-up:
+  slightly see-through, with the page behind them blurred. It's on by
+  default; turn off **Hover cards are slightly see-through** in Zia's
+  settings for solid cards.
+
 ## [2.53.2] — 2026-09-25
 
 ### Changed

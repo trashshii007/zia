@@ -2001,6 +2001,23 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
   margin-inline-end: 0 !important;
 }
 
+
+/* Optionally the tab, folder and essential hover cards are a touch
+   see-through, with what's behind them blurred, like the compact sidebar
+   and the address bar pop-up. */
+@media -moz-pref("zia.cards.blur") {
+  #zia-tab-card,
+  #zia-folder-card {
+    background-color: color-mix(in srgb, var(--zia-tab-card-bg) 76%, transparent) !important;
+    backdrop-filter: blur(24px) saturate(1.6) !important;
+  }
+
+  /* the page behind a card blurs too (the compositing trick from Floaty UI) */
+  #tabbrowser-tabpanels .browserSidebarContainer {
+    will-change: transform !important;
+    backface-visibility: hidden !important;
+  }
+}
 #urlbar:not([breakout-extend]) .urlbar-input {
   color: rgb(255, 255, 255) !important;
 }
