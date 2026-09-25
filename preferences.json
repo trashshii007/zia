@@ -106,6 +106,12 @@
     "defaultValue": false
   },
   {
+    "type": "checkbox",
+    "label": "Address bar pop-up is slightly see-through, with the page blurred behind it",
+    "property": "zia.urlbar.pop-up-blur",
+    "defaultValue": false
+  },
+  {
     "type": "dropdown",
     "label": "Address bar position",
     "property": "zia.urlbar.position",

@@ -183,6 +183,7 @@ Almost every part of Zia can be switched on or off on its own. The settings are 
 | **Address bar** | |
 | Dia-style address bar pop-up (off: Zen's own) | on |
 | Address bar pop-up takes the toolbar's colour as it opens (needs the site-coloured toolbar) | off |
+| Address bar pop-up is slightly see-through, with the page blurred behind it | off |
 | Address bar position: top or bottom (not with Zen's single toolbar) | top |
 | **New tabs** | |
 | Cmd/Ctrl+T and **+ New Tab** open a real tab (off: Zen's floating address bar) | on |

@@ -16,6 +16,16 @@ Every release of Zia, newest first. The format follows
   comment), and folds it away again. The sidebar is just the pages, in a
   square blue frame for the current one, on Dia's darker grey. Turn off
   **PDFs open in Dia's viewer look** in Zia's settings for Firefox's own.
+- **A see-through address bar pop-up, as an option.** Turn on **Address bar
+  pop-up is slightly see-through, with the page blurred behind it** (it's
+  off by default). It works with the dark, light and site-coloured pop-ups.
+
+### Changed
+
+- A new folder mostly of one site gets that site's own icon when there is
+  one (YouTube's, GitHub's, Reddit's…), rather than one guessed from its
+  tabs' titles, which for a folder of videos or repositories could be
+  anything.
 
 ### Fixed
 

@@ -5993,6 +5993,49 @@
     }
   }
 
+  // A folder mostly of one site gets that site's own icon when Tabler has
+  // it (a folder of YouTube videos gets YouTube's, not one guessed from the
+  // videos' titles). The site is its name without subdomains or the ending
+  // (music.youtube.com and youtu.be are both YouTube).
+  const BRAND_ALIASES = { youtu: "youtube", twitter: "x", fb: "facebook", ycombinator: "ycombinator", googleusercontent: "google" };
+  const BRAND_MAJORITY = 0.5;
+
+  function siteBrand(host) {
+    const parts = String(host || "").toLowerCase().replace(/^www\./, "").split(".").filter(Boolean);
+    if (parts.length < 2) {
+      return null;
+    }
+    // co.uk, com.au and the like: the name is one further in
+    const secondLevel = parts.length > 2 && parts[parts.length - 2].length <= 3 && parts[parts.length - 1].length === 2;
+    const name = parts[parts.length - (secondLevel ? 3 : 2)];
+    return BRAND_ALIASES[name] || name;
+  }
+
+  function brandIconForFolder(folder) {
+    const tabs = folder.tabs || [];
+    if (!tabs.length) {
+      return null;
+    }
+    const counts = new Map();
+    for (const tab of tabs) {
+      let brand = null;
+      try {
+        brand = siteBrand(tab.linkedBrowser?.currentURI?.host);
+      } catch (err) {
+        brand = null;
+      }
+      if (brand) {
+        counts.set(brand, (counts.get(brand) || 0) + 1);
+      }
+    }
+    const [brand, count] = [...counts].sort((a, b) => b[1] - a[1])[0] || [];
+    if (!brand || count / tabs.length < BRAND_MAJORITY) {
+      return null;
+    }
+    const name = `brand-${brand}`;
+    return suggestableIcons().some((icon) => icon.name === name) ? iconURL(name) : null;
+  }
+
   function applySuggestedFolderIcon(folder) {
     if (!featureOn("folder-icon-suggest")) {
       return;
@@ -6009,11 +6052,13 @@
           return;
         }
         if (!folderIconURL(folder)) {
-          let icon = null;
-          try {
-            icon = await suggestIconByMeaning(folder);
-          } catch (err) {
-            console.warn("[Zia] The embedding model wasn't available:", err);
+          let icon = brandIconForFolder(folder);
+          if (!icon) {
+            try {
+              icon = await suggestIconByMeaning(folder);
+            } catch (err) {
+              console.warn("[Zia] The embedding model wasn't available:", err);
+            }
           }
           icon = icon || suggestFolderIcon(folder);
           if (icon && !folderIconURL(folder)) {
