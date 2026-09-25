@@ -84,6 +84,12 @@
     "defaultValue": true
   },
   {
+    "type": "checkbox",
+    "label": "PDFs open in Dia's viewer look (off: Firefox's own; reopen a PDF to see the change)",
+    "property": "zia.pdf.dia-style",
+    "defaultValue": true
+  },
+  {
     "type": "separator",
     "label": "Address bar"
   },

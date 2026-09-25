@@ -6,6 +6,17 @@ Every release of Zia, newest first. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **PDFs in Dia's viewer look.** Firefox's PDF viewer gets Dia's grey
+  toolbar: the document's name on the left; the page ("1 / 2"), zoom
+  (− 100% +), fit to page, rotate, the pen and undo/redo in the middle;
+  download, print and more on the right. The pen opens a slim second row
+  with Firefox's own tools (draw, highlight, text, signature, image and
+  comment), and folds it away again. The sidebar is just the pages, in a
+  square blue frame for the current one, on Dia's darker grey. Turn off
+  **PDFs open in Dia's viewer look** in Zia's settings for Firefox's own.
+
 ### Fixed
 
 - A page peeked at with Option-click sat on its tab in a dark, blurred box.
