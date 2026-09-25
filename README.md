@@ -74,7 +74,7 @@ The address pop-up follows Dia's shape: short rows with room around them, one si
 
 ### Picture-in-picture
 
-Picture-in-picture looks like Dia's. At rest it's just the video, with nothing laid over it. Hover it and the video dims to show **Back to Tab** and **Close** at the top with the site between them, big 15-second skip and play/pause buttons in the middle, and a thin progress line along the bottom.
+Picture-in-picture looks like Dia's. At rest it's just the video, with nothing laid over it. Hover it and the video dims to show **Back to Tab** and **Close** at the top with the site between them, big 15-second skip and play/pause buttons in the middle, a speaker, volume line and the time in the bottom left, and a thin progress line along the bottom.
 
 ![Picture-in-picture with its controls](<https://raw.githubusercontent.com/z1n-k/zia/readme-images/pip-controls.webp>)
 

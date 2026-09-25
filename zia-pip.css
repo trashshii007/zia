@@ -284,6 +284,108 @@
   scale: 1.5;
 }
 
+/* Sound and time, bottom left (zia-pip.js gathers Firefox's mute button,
+ * volume line and time here): a speaker, a thin volume line like the
+ * progress line, and the time. */
+#controls .zia-pip-sound {
+  display: none;
+}
+
+:root[zia-dia] #controls .zia-pip-sound {
+  position: absolute;
+  left: 12px;
+  bottom: 26px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+:root[zia-dia] #controls .zia-pip-sound > * {
+  pointer-events: auto;
+}
+
+:root[zia-dia] #audio {
+  width: 28px !important;
+  min-width: 0 !important;
+  height: 28px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 7px !important;
+  background-color: transparent !important;
+  background-size: 16px !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-image: url("chrome://sine/content/zia/icons/pip/volume.svg") !important;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.3));
+}
+
+:root[zia-dia] #controls.muted #audio {
+  background-image: url("chrome://sine/content/zia/icons/pip/volume-muted.svg") !important;
+}
+
+:root[zia-dia] #audio:hover {
+  background-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+:root[zia-dia] #audio-scrubber {
+  display: block !important;
+  width: 64px !important;
+  height: 16px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background-color: transparent !important;
+}
+
+:root[zia-dia] #audio-scrubber::-moz-range-track {
+  height: 4px !important;
+  border-radius: 2px !important;
+  background-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+:root[zia-dia] #audio-scrubber::-moz-range-progress {
+  height: 4px !important;
+  border-radius: 2px !important;
+  background-color: #fff !important;
+}
+
+:root[zia-dia] #audio-scrubber::-moz-range-thumb {
+  width: 8px !important;
+  height: 8px !important;
+  border: none !important;
+  border-radius: 50% !important;
+  background-color: #fff !important;
+  transition: scale 120ms ease;
+}
+
+:root[zia-dia] #audio-scrubber:hover::-moz-range-thumb {
+  scale: 1.5;
+}
+
+:root[zia-dia] #timestamp {
+  display: block !important;
+  width: auto !important;
+  margin-left: 6px !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  font: 500 12px/1 -apple-system, BlinkMacSystemFont, "Helvetica Neue", system-ui, sans-serif !important;
+  font-variant-numeric: tabular-nums !important;
+  white-space: nowrap;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+:root[zia-dia] #timestamp[hidden],
+:root[zia-dia][zia-live] #timestamp {
+  display: none !important;
+}
+
+/* too narrow for the line and the time: just the speaker */
+@media (max-width: 279px) {
+  :root[zia-dia] :is(#audio-scrubber, #timestamp) {
+    display: none !important;
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /* Tucking into the side of the screen                                 */
 /* ------------------------------------------------------------------ */

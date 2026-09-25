@@ -71,8 +71,34 @@
 
   const sliver = make("div", "zia-pip-sliver", document.body);
 
+  // Sound and time, bottom left: Firefox's own mute button, volume line and
+  // time, gathered into one group while Dia's look is on (and put back
+  // where they were when it's off). Firefox only shows mute and volume
+  // behind a pref; they work either way, so Zia shows them itself.
+  const sound = make("div", "zia-pip-sound", controls);
+  const soundParts = ["audio", "audio-scrubber", "timestamp"]
+    .map((id) => document.getElementById(id))
+    .filter(Boolean)
+    .map((el) => ({ el, parent: el.parentNode, next: el.nextSibling, wasHidden: el.hidden }));
+  const placeSound = (dia) => {
+    for (const part of soundParts) {
+      if (dia) {
+        if (part.el.id !== "timestamp") {
+          part.el.hidden = false;
+        }
+        sound.appendChild(part.el);
+      } else if (part.el.parentNode === sound) {
+        part.parent.insertBefore(part.el, part.next?.parentNode === part.parent ? part.next : null);
+        if (part.el.id !== "timestamp") {
+          part.el.hidden = part.wasHidden;
+        }
+      }
+    }
+  };
+
   const applyPrefs = () => {
     root.toggleAttribute("zia-dia", pref("zia.pip.dia-style", true));
+    placeSound(root.hasAttribute("zia-dia"));
     root.toggleAttribute("zia-tuck-on", pref("zia.pip.tuck", true));
   };
   applyPrefs();

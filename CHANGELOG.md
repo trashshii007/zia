@@ -4,6 +4,15 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Volume and mute in picture-in-picture.** With Dia-style controls, the
+  bottom left now has a speaker (click to mute), a thin volume line and
+  the time, fading in with the other controls. In a very small window only
+  the speaker shows; live streams still show no time.
+
 ## [2.51.0] — 2026-09-25
 
 ### Changed
