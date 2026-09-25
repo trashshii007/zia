@@ -4,6 +4,14 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- The copy link button on a split pane's bar was an empty square until it
+  was first clicked. It pointed at an icon that went when Zia moved to
+  Tabler's icons; it's the paperclip from the start now.
+
 ## [2.52.0] — 2026-09-25
 
 ### Added

@@ -21,13 +21,13 @@
     return container?.querySelector(":scope .zia-pane-bar") ? container : null;
   }
 
-  function paneButton(name, label, onClick) {
+  function paneButton(name, label, onClick, icon = `${ICONS}${name}.svg`) {
     const button = document.createElementNS(HTML_NS, "button");
     button.className = `zia-pane-button zia-pane-${name}`;
     button.setAttribute("title", label);
     button.setAttribute("aria-label", label);
     const img = document.createElementNS(HTML_NS, "img");
-    img.setAttribute("src", `${ICONS}${name}.svg`);
+    img.setAttribute("src", icon);
     img.setAttribute("alt", "");
     button.appendChild(img);
     button.addEventListener("click", (event) => {
@@ -98,14 +98,19 @@
     bar.appendChild(extensions);
 
     bar.appendChild(
-      paneButton("copy-link", "Copy link", (event, button) => {
-        try {
-          copyLink(tabOf());
-          showCopied(button);
-        } catch (err) {
-          console.error("[Zia] Copy link failed:", err);
-        }
-      })
+      paneButton(
+        "copy-link",
+        "Copy link",
+        (event, button) => {
+          try {
+            copyLink(tabOf());
+            showCopied(button);
+          } catch (err) {
+            console.error("[Zia] Copy link failed:", err);
+          }
+        },
+        COPY_ICON
+      )
     );
     bar.appendChild(
       paneButton("site-settings", "Site settings and extensions", () => {
