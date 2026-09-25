@@ -188,11 +188,11 @@
   }
 }
 
-/* The sidebar's bottom buttons stay dim when clicked or while their menu is
-   open, at their hover brightness, rather than turning white. */
+/* The sidebar's bottom buttons turn fully white while pressed or while their
+   menu is open; resting and hovered they keep their dimmer levels. */
 #zen-sidebar-foot-buttons toolbarbutton:not(#downloads-button):is(:active, [open], [checked]) > .toolbarbutton-icon,
 #alltabs-button:is(:active, [open]) .toolbarbutton-icon {
-  opacity: 0.7 !important;
+  opacity: 1 !important;
 }
 
 /* Firefox's own reload/stop animation would play over Zia's. */
