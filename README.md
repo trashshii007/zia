@@ -170,7 +170,7 @@ Almost every part of Zia can be switched on or off on its own. The settings are 
 | Icon picker (5,166 Tabler icons, outline and solid) | on |
 | Undo a closed tab with Cmd/Ctrl+Z | on |
 | Tab and folder hover cards | on |
-| Hover cards are slightly see-through, with what's behind them blurred | off |
+| Hover cards are slightly see-through, with what's behind them blurred | on |
 | Name new folders and choose their icons with a local model ([see above](#folder-names-and-icons-from-a-local-model)) | off |
 | **Tabs** | |
 | Sound bars on playing tabs (off: Zen's speaker) | on |

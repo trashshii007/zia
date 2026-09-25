@@ -37,7 +37,7 @@
     "type": "checkbox",
     "label": "Hover cards are slightly see-through, with what's behind them blurred",
     "property": "zia.cards.blur",
-    "defaultValue": false
+    "defaultValue": true
   },
   {
     "type": "checkbox",
