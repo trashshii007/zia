@@ -1088,7 +1088,7 @@
   // and the arc shortens with it, on Zia's spring. The CSS reads the angle
   // from --zia-reload-cut, eased here frame by frame.
   const RELOAD_HOVER_CUT = 20;
-  const RELOAD_HOVER_MS = 260;
+  const RELOAD_HOVER_MS = 380;
 
   function springReloadHover() {
     const button = document.getElementById("reload-button");

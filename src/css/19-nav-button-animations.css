@@ -61,7 +61,7 @@
 }
 
 :is(#back-button, #forward-button):not([disabled]):hover::before {
-  scale: 0.72 1.08;
+  scale: 0.82 1.05;
 }
 
 :is(#back-button, #forward-button)::after,
@@ -100,12 +100,12 @@
 }
 
 @keyframes zia-nav-out-back {
-  from { translate: 0 0; scale: 0.72 1.08; opacity: 1; }
+  from { translate: 0 0; scale: 0.82 1.05; opacity: 1; }
   to { translate: -9px 0; scale: 1 1; opacity: 0; }
 }
 
 @keyframes zia-nav-out-forward {
-  from { translate: 0 0; scale: 0.72 1.08; opacity: 1; }
+  from { translate: 0 0; scale: 0.82 1.05; opacity: 1; }
   to { translate: 9px 0; scale: 1 1; opacity: 0; }
 }
 
