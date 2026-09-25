@@ -786,8 +786,14 @@
 
   let urlbarTyping = false;
 
+  // A site's address with nothing after it ends in a bare "/", which Zia
+  // leaves off: youtube.com, not youtube.com/.
+  const BARE_SLASH = /^([^/?#\s]+)\/$/;
+
   function plainAddress(value) {
-    return typeof value === "string" ? value.replace(/^https?:\/\//i, "").replace(/^www\./i, "") : value;
+    return typeof value === "string"
+      ? value.replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(BARE_SLASH, "$1")
+      : value;
   }
 
   function neverShowScheme() {
@@ -816,7 +822,10 @@
       },
       set(next) {
         const typing = urlbarTyping && gURLBar.focused;
-        desc.set.call(this, typing ? next : plainAddress(next));
+        // While typing, the only writes are Firefox's own, like autofill
+        // completing "yo" to "youtube.com/": that loses its bare "/" too.
+        // Typed characters don't come through here.
+        desc.set.call(this, typing ? (typeof next === "string" ? next.replace(BARE_SLASH, "$1") : next) : plainAddress(next));
 
         if (holdWholeSelection && gURLBar.focused) {
           this.select();
@@ -1088,7 +1097,7 @@
   // and the arc shortens with it, on Zia's spring. The CSS reads the angle
   // from --zia-reload-cut, eased here frame by frame.
   const RELOAD_HOVER_CUT = 20;
-  const RELOAD_HOVER_MS = 260;
+  const RELOAD_HOVER_MS = 380;
 
   function springReloadHover() {
     const button = document.getElementById("reload-button");
@@ -6546,13 +6555,6 @@
       hidden: (tab) => !tab.hasAttribute("zen-essential") && !tab.pinned,
     },
     {
-      name: "bookmark",
-      icon: "bookmark",
-      label: "Bookmark",
-      run: (tab) => bookmarkTab(tab),
-      keepsCard: true,
-    },
-    {
       name: "split",
       icon: "layout-columns",
       label: "Add to Split",
@@ -6715,20 +6717,6 @@
       }
     }
     return best;
-  }
-
-  async function bookmarkTab(tab) {
-    const url = tab.linkedBrowser?.currentURI?.spec;
-
-    if (!url || tabCardKind(tab) === "new") {
-      return;
-    }
-    const existing = await PlacesUtils.bookmarks.fetch({ url });
-    if (existing) {
-      return;
-    }
-    const parentGuid = await PlacesUIUtils.defaultParentGuid;
-    await PlacesUtils.bookmarks.insert({ parentGuid, url, title: tab.label || url });
   }
 
   const NEW_TAB_PAGES = new Set(["about:newtab", "about:home", "about:blank", "about:privatebrowsing"]);

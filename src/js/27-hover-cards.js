@@ -11,20 +11,6 @@
     return best;
   }
 
-  async function bookmarkTab(tab) {
-    const url = tab.linkedBrowser?.currentURI?.spec;
-
-    if (!url || tabCardKind(tab) === "new") {
-      return;
-    }
-    const existing = await PlacesUtils.bookmarks.fetch({ url });
-    if (existing) {
-      return;
-    }
-    const parentGuid = await PlacesUIUtils.defaultParentGuid;
-    await PlacesUtils.bookmarks.insert({ parentGuid, url, title: tab.label || url });
-  }
-
   const NEW_TAB_PAGES = new Set(["about:newtab", "about:home", "about:blank", "about:privatebrowsing"]);
 
   function tabCardKind(tab) {

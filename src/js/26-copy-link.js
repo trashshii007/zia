@@ -30,13 +30,6 @@
       hidden: (tab) => !tab.hasAttribute("zen-essential") && !tab.pinned,
     },
     {
-      name: "bookmark",
-      icon: "bookmark",
-      label: "Bookmark",
-      run: (tab) => bookmarkTab(tab),
-      keepsCard: true,
-    },
-    {
       name: "split",
       icon: "layout-columns",
       label: "Add to Split",

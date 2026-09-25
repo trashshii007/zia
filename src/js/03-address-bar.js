@@ -90,8 +90,14 @@
 
   let urlbarTyping = false;
 
+  // A site's address with nothing after it ends in a bare "/", which Zia
+  // leaves off: youtube.com, not youtube.com/.
+  const BARE_SLASH = /^([^/?#\s]+)\/$/;
+
   function plainAddress(value) {
-    return typeof value === "string" ? value.replace(/^https?:\/\//i, "").replace(/^www\./i, "") : value;
+    return typeof value === "string"
+      ? value.replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(BARE_SLASH, "$1")
+      : value;
   }
 
   function neverShowScheme() {
@@ -120,7 +126,10 @@
       },
       set(next) {
         const typing = urlbarTyping && gURLBar.focused;
-        desc.set.call(this, typing ? next : plainAddress(next));
+        // While typing, the only writes are Firefox's own, like autofill
+        // completing "yo" to "youtube.com/": that loses its bare "/" too.
+        // Typed characters don't come through here.
+        desc.set.call(this, typing ? (typeof next === "string" ? next.replace(BARE_SLASH, "$1") : next) : plainAddress(next));
 
         if (holdWholeSelection && gURLBar.focused) {
           this.select();
@@ -392,7 +401,7 @@
   // and the arc shortens with it, on Zia's spring. The CSS reads the angle
   // from --zia-reload-cut, eased here frame by frame.
   const RELOAD_HOVER_CUT = 20;
-  const RELOAD_HOVER_MS = 260;
+  const RELOAD_HOVER_MS = 380;
 
   function springReloadHover() {
     const button = document.getElementById("reload-button");
