@@ -381,6 +381,7 @@
     safely("keepWholeUrlSelected", () => keepWholeUrlSelected(urlbar));
     safely("matchTabCorners", matchTabCorners);
     safely("addCopyLinkButton", addCopyLinkButton);
+    safely("addToastCloseButtons", addToastCloseButtons);
     safely("animateNavButtons", animateNavButtons);
     safely("springReloadHover", springReloadHover);
     safely("watchEdgeGlow", watchEdgeGlow);

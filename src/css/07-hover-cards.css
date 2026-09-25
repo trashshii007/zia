@@ -280,6 +280,35 @@
   display: none !important;
 }
 
+/* ...and a true square, the icon in its middle: Zia's usual tab height and
+   padding would otherwise stretch it wider than it is tall. */
+.tabbrowser-tab[zen-glance-tab]:not(#zia-none) {
+  --zia-glance-size: var(--size-item-medium, 26px);
+  width: var(--zia-glance-size) !important;
+  min-width: var(--zia-glance-size) !important;
+  max-width: var(--zia-glance-size) !important;
+  height: var(--zia-glance-size) !important;
+  min-height: var(--zia-glance-size) !important;
+  padding: 0 !important;
+  margin-block: 0 !important;
+
+  & > .tab-stack {
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+
+  & > .tab-stack > .tab-background {
+    margin: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  & .tab-content {
+    justify-content: center !important;
+    padding: 0 !important;
+  }
+}
+
 :root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group])) > .tab-group-container > .tabbrowser-tab {
   margin-inline-end: 0 !important;
 }

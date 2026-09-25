@@ -1948,6 +1948,35 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
   display: none !important;
 }
 
+/* ...and a true square, the icon in its middle: Zia's usual tab height and
+   padding would otherwise stretch it wider than it is tall. */
+.tabbrowser-tab[zen-glance-tab]:not(#zia-none) {
+  --zia-glance-size: var(--size-item-medium, 26px);
+  width: var(--zia-glance-size) !important;
+  min-width: var(--zia-glance-size) !important;
+  max-width: var(--zia-glance-size) !important;
+  height: var(--zia-glance-size) !important;
+  min-height: var(--zia-glance-size) !important;
+  padding: 0 !important;
+  margin-block: 0 !important;
+
+  & > .tab-stack {
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+
+  & > .tab-stack > .tab-background {
+    margin: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  & .tab-content {
+    justify-content: center !important;
+    padding: 0 !important;
+  }
+}
+
 :root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group])) > .tab-group-container > .tabbrowser-tab {
   margin-inline-end: 0 !important;
 }
@@ -3967,6 +3996,33 @@ zen-folder .tab-reset-button {
     will-change: transform !important;
     backface-visibility: hidden !important;
   }
+}
+
+/* the ✕ Zia adds to Zen's toasts (28b-toast-close.js) */
+#zen-toast-container .zen-toast .zia-toast-close {
+  appearance: none !important;
+  flex: none;
+  width: 20px !important;
+  min-width: 20px !important;
+  height: 20px !important;
+  min-height: 20px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.12) url("chrome://sine/content/zia/icons/close.svg") center / 10px no-repeat !important;
+  -moz-context-properties: fill, fill-opacity, stroke;
+  fill: currentColor;
+  stroke: currentColor;
+  box-shadow: none !important;
+  outline: none !important;
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+#zen-toast-container .zen-toast .zia-toast-close:hover {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  opacity: 1;
 }
 /* Back, forward and reload move like Dia's.
    Zen draws a toolbar button's hover square on the same element as its
