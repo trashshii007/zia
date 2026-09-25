@@ -4,7 +4,11 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.53.2] — 2026-09-25
+
+### Changed
+
+- Asleep tabs, essentials and folders are dimmed a little less.
 
 ### Fixed
 
@@ -50,7 +54,7 @@ Every release of Zia, newest first. The format follows
   looks wrong.
 
 - **Asleep tabs look asleep.** A tab or essential that's unloaded (not
-  using memory) fades its icon and title to about half, and a folder does
+  using memory) fades its icon and title, and a folder does
   the same once every tab in it is asleep. The selected tab is always
   awake. It's on by default; turn off **Asleep (unloaded) tabs, essentials
   and folders look dimmed** in Zia's settings to have them look the same.
