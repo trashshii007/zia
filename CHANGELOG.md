@@ -22,6 +22,12 @@ Every release of Zia, newest first. The format follows
   and blurs web pages as well as Zen's own (on macOS that takes drawing the
   page as a layer Zen composites itself, a trick from Floaty UI).
 
+- **A see-through compact mode sidebar.** In compact mode the flyout
+  sidebar (and top toolbar) is slightly see-through, with the page blurred
+  behind it, websites included. It's on by default; turn off **Compact
+  mode's sidebar is slightly see-through** in Zia's settings if it ever
+  looks wrong.
+
 ### Changed
 
 - A new folder mostly of one site gets that site's own icon when there is

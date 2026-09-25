@@ -3679,6 +3679,33 @@ tooltip[default="true"] {
   display: none !important;
 }
 
+
+/* Compact mode's flyout sidebar (and top toolbar) is a touch see-through,
+   with the page blurred behind it; on by default, off in Zia's settings.
+   Zen paints it as an opaque base with two cross-fading colour layers (the
+   old space and the new one); the base goes and both layers are scaled
+   down, so switching spaces still fades as before. */
+@media -moz-pref("zia.compact.sidebar-blur") {
+  :root[zen-compact-mode="true"] .zen-toolbar-background {
+    background: transparent !important;
+    backdrop-filter: blur(28px) saturate(1.6) !important;
+
+    &::after {
+      opacity: calc(var(--zen-background-opacity, 1) * 0.78) !important;
+    }
+
+    &::before {
+      opacity: calc((1 - var(--zen-background-opacity, 1)) * 0.78) !important;
+    }
+  }
+
+  /* On macOS a web page is a separate layer the blur can't see through to;
+     drawn as a layer Firefox composites itself, it can. (From Floaty UI.) */
+  :root[zen-compact-mode="true"] #tabbrowser-tabpanels .browserSidebarContainer {
+    will-change: transform !important;
+    backface-visibility: hidden !important;
+  }
+}
 .tabbrowser-tab .tab-reset-button,
 zen-folder .tab-reset-button {
   -moz-context-properties: fill, fill-opacity !important;

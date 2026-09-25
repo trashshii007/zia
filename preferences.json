@@ -62,6 +62,12 @@
     "defaultValue": false
   },
   {
+    "type": "checkbox",
+    "label": "Compact mode's sidebar is slightly see-through, with the page blurred behind it",
+    "property": "zia.compact.sidebar-blur",
+    "defaultValue": true
+  },
+  {
     "type": "separator",
     "label": "Page"
   },

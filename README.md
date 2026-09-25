@@ -175,6 +175,7 @@ Almost every part of Zia can be switched on or off on its own. The settings are 
 | Sound bars on playing tabs (off: Zen's speaker) | on |
 | Tint the selected tab's glow and the sound bars with the site's colours | off |
 | The last essential stretches across the rest of its row | off |
+| Compact mode's sidebar is slightly see-through, with the page blurred behind it | on |
 | **Page** | |
 | Toolbar takes the colour of the site (off: the theme's colour) | on |
 | Zia's rounded page corners (off: Zen's own) | on |
@@ -214,7 +215,6 @@ Changed at the default level only. If you've set either yourself in `about:confi
 
 ## Known gaps
 
-- Compact mode has no transparency or backdrop blur yet
 - Light mode is untested and will very likely need work
 - Other sidebar layouts, Windows and Linux are untested
 
