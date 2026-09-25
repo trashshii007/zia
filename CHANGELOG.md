@@ -15,7 +15,8 @@ Every release of Zia, newest first. The format follows
 ### Fixed
 
 - The tile behind a peeked page's icon on its tab (Option-click) was
-  stretched wider than tall. It's a true square now, the icon centred.
+  stretched wider than tall, its icon off centre. It's a true square now,
+  the icon in its middle.
 
 ## [2.53.0] — 2026-09-25
 

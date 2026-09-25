@@ -304,8 +304,22 @@
   }
 
   & .tab-content {
+    position: absolute !important;
+    inset: 0 !important;
+    display: flex !important;
+    align-items: center !important;
     justify-content: center !important;
+    margin: 0 !important;
     padding: 0 !important;
+  }
+
+  /* only the icon: nothing beside it to push it off centre */
+  & .tab-content > :not(.tab-icon-stack) {
+    display: none !important;
+  }
+
+  & .tab-icon-stack {
+    margin: 0 !important;
   }
 }
 
