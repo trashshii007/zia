@@ -13,6 +13,9 @@ Every release of Zia, newest first. The format follows
   tilts and fades, then the tick springs in, running a touch past full
   size. After a moment the tick pops back into the paperclip. It used to
   swap in a single frame.
+- **The reload button is Dia's.** A slightly bigger circle, with no tail
+  on the arrow: just the arrowhead sitting on top of the circle, a little
+  right of centre, and the gap running from it round to three o'clock.
 
 ### Fixed
 
