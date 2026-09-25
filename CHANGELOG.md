@@ -8,8 +8,8 @@ Every release of Zia, newest first. The format follows
 
 ### Changed
 
-- **Back, forward and reload move like Dia's.** Hold back or forward and
-  the chevron squeezes; let go and it slides out the way it points while a
+- **Back, forward and reload move like Dia's.** Hover back or forward and
+  the chevron squeezes; click and it slides out the way it points while a
   fresh one slides in behind it. When a page starts loading, the reload
   arrow spins as it shrinks away and the stop cross grows out of a small
   plus; when it's done, the cross turns back into a plus as it shrinks and

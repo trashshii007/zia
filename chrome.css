@@ -3901,7 +3901,7 @@ zen-folder .tab-reset-button {
    icon, so the icons here are left in place but see-through (keeping the
    square still), and the glyphs are drawn on top by the buttons' ::before
    and ::after, which are the only things that move.
-   Back and forward: held down, the chevron (::before) squeezes narrower and
+   Back and forward: hovered, the chevron (::before) squeezes narrower and
    a touch taller; let go and it slides out the way it points (::after)
    while a fresh one slides in from behind (::before).
    Reload and stop: the one going away is drawn by #stop-reload-button's
@@ -3935,8 +3935,9 @@ zen-folder .tab-reset-button {
   pointer-events: none;
 }
 
-:is(#back-button, #forward-button, #reload-button, #stop-button)[disabled]::before,
-#reload-button[disabled]::after {
+/* Reload isn't dimmed when disabled: Firefox disables it for a moment
+   after every load, which flashed it dim. */
+:is(#back-button, #forward-button, #stop-button)[disabled]::before {
   opacity: 0.4;
 }
 
@@ -3957,7 +3958,7 @@ zen-folder .tab-reset-button {
   transition: scale 110ms ease-out;
 }
 
-:is(#back-button, #forward-button):not([disabled]):hover:active::before {
+:is(#back-button, #forward-button):not([disabled]):hover::before {
   scale: 0.72 1.08;
 }
 

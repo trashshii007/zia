@@ -421,10 +421,6 @@
       };
       frame = requestAnimationFrame(step);
     };
-    button.addEventListener("mouseenter", () => {
-      if (!button.hasAttribute("disabled")) {
-        go(RELOAD_HOVER_CUT);
-      }
-    });
+    button.addEventListener("mouseenter", () => go(RELOAD_HOVER_CUT));
     button.addEventListener("mouseleave", () => go(0));
   }
