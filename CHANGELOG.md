@@ -4,6 +4,15 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- The address bar pop-up is now see-through by default, with the page
+  blurred behind it, like the compact sidebar and the hover cards. Turn
+  off **Address bar pop-up is slightly see-through** in Zia's settings for
+  a solid one.
+
 ## [2.54.0] — 2026-09-25
 
 ### Added
