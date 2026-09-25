@@ -1359,6 +1359,61 @@
   const FOLDER_CLOSE_BOUNCE_PX = 1.5;
   const FOLDER_SELECTOR = "zen-folder, tab-group:not([split-view-group])";
 
+  // The spring moves the folder by fractions of a pixel, and the folder's
+  // box has a one-pixel outline that fades out for a frame when it sits
+  // between two pixels, so the bottom edge flickered as the spring settled.
+  // The motion is sampled into small held steps instead, each landing on a
+  // whole screen pixel counted from where the folder comes to rest.
+  const cubicBezier = (x1, y1, x2, y2) => (t) => {
+    let u = t;
+    for (let i = 0; i < 8; i++) {
+      const x = 3 * (1 - u) * (1 - u) * u * x1 + 3 * (1 - u) * u * u * x2 + u * u * u - t;
+      const dx = 3 * (1 - u) * (1 - u) * x1 + 6 * (1 - u) * u * (x2 - x1) + 3 * u * u * (1 - x2);
+      if (Math.abs(x) < 1e-5 || !dx) {
+        break;
+      }
+      u = Math.min(1, Math.max(0, u - x / dx));
+    }
+    return 3 * (1 - u) * (1 - u) * u * y1 + 3 * (1 - u) * u * u * y2 + u * u * u;
+  };
+  const EASE_OUT = cubicBezier(0.25, 1, 0.5, 1);
+  const EASE_IN_OUT = cubicBezier(0.42, 0, 0.58, 1);
+  const STEPS_PER_SECOND = 120;
+
+  // points: [offset, value, easing to the next point]
+  function pixelSteps(prop, points, duration, restValue) {
+    const scale = window.devicePixelRatio || 1;
+    const count = Math.max(2, Math.ceil((duration / 1000) * STEPS_PER_SECOND));
+    const valueAt = (t) => {
+      for (let i = 0; i < points.length - 1; i++) {
+        const [a, from, ease] = points[i];
+        const [b, to] = points[i + 1];
+        if (t <= b) {
+          const local = b > a ? (t - a) / (b - a) : 1;
+          return from + (to - from) * (ease ? ease(local) : local);
+        }
+      }
+      return points.at(-1)[1];
+    };
+    const frames = [];
+    let last = null;
+    for (let i = 0; i <= count; i++) {
+      const offset = i / count;
+      const exact = i === count ? restValue : valueAt(offset);
+      const value = i === count ? restValue : restValue + Math.round((exact - restValue) * scale) / scale;
+      if (value === last && i !== count) {
+        continue;
+      }
+      last = value;
+      frames.push({ [prop]: `${value}px`, offset, easing: "steps(1, end)" });
+    }
+    if (frames[0].offset !== 0) {
+      frames.unshift({ [prop]: `${points[0][1]}px`, offset: 0, easing: "steps(1, end)" });
+    }
+    delete frames.at(-1).easing;
+    return frames;
+  }
+
   const isFolder = (el) =>
     el?.localName === "zen-folder" || (el?.localName === "tab-group" && !el.hasAttribute("split-view-group"));
 
@@ -1390,11 +1445,7 @@
     const past = to + Math.sign(to - from) * Math.min(FOLDER_OVERSHOOT_PX, Math.abs(to - from) / 4);
     return {
       closing: to < from,
-      keyframes: [
-        { marginTop: `${from}px`, offset: 0, easing: "cubic-bezier(0.25, 1, 0.5, 1)" },
-        { marginTop: `${past}px`, offset: 0.62, easing: "ease-in-out" },
-        { marginTop: `${to}px`, offset: 1 },
-      ],
+      keyframes: pixelSteps("marginTop", [[0, from, EASE_OUT], [0.62, past, EASE_IN_OUT], [1, to]], FOLDER_SPRING_MS, to),
       options: { ...options, duration: FOLDER_SPRING_MS, easing: "linear" },
     };
   }
@@ -1402,20 +1453,16 @@
   // Closing, the folder's contents shrink to nothing before the slide
   // overshoots, and a height can't go below nothing, so the overshoot alone
   // moves nothing. The folder's contents also pull up by the same few pixels
-  // (a little less than opening) with a negative bottom margin as they arrive, so the folder's box and
-  // everything below it rise past their place and drop back.
+  // (a little less than opening) with a negative bottom margin as they
+  // arrive, so the folder's box and everything below it rise past their
+  // place and drop back.
   function bounceUpAfterClosing(container, animate) {
     if (!container?.classList?.contains("tab-group-container")) {
       return;
     }
     animate.call(
       container,
-      [
-        { marginBottom: "0px", offset: 0 },
-        { marginBottom: "0px", offset: 0.45, easing: "cubic-bezier(0.25, 1, 0.5, 1)" },
-        { marginBottom: `${-FOLDER_CLOSE_BOUNCE_PX}px`, offset: 0.66, easing: "ease-in-out" },
-        { marginBottom: "0px", offset: 1 },
-      ],
+      pixelSteps("marginBottom", [[0, 0, null], [0.45, 0, EASE_OUT], [0.66, -FOLDER_CLOSE_BOUNCE_PX, EASE_IN_OUT], [1, 0]], FOLDER_SPRING_MS, 0),
       { duration: FOLDER_SPRING_MS }
     );
   }

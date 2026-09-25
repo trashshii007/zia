@@ -24,6 +24,10 @@ Every release of Zia, newest first. The format follows
   (dropped in another window or on the desktop, or its tab moved or closed
   mid-drag) never cleared that. Zia now tidies up as soon as the mouse moves
   with no button held.
+- The bottom edge of a folder's box flickered as the folder's spring
+  settled. The spring moved it by fractions of a pixel, where the box's
+  one-pixel outline fades out for a frame. The motion now lands on a whole
+  screen pixel every step.
 
 ## [2.47.0] — 2026-09-24
 
