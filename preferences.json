@@ -63,6 +63,12 @@
   },
   {
     "type": "checkbox",
+    "label": "Asleep (unloaded) tabs, essentials and folders look dimmed",
+    "property": "zia.tabs.dim-asleep",
+    "defaultValue": true
+  },
+  {
+    "type": "checkbox",
     "label": "Compact mode's sidebar is slightly see-through, with the page blurred behind it",
     "property": "zia.compact.sidebar-blur",
     "defaultValue": true

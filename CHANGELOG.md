@@ -28,6 +28,12 @@ Every release of Zia, newest first. The format follows
   mode's sidebar is slightly see-through** in Zia's settings if it ever
   looks wrong.
 
+- **Asleep tabs look asleep.** A tab or essential that's unloaded (not
+  using memory) fades its icon and title to about half, and a folder does
+  the same once every tab in it is asleep. The selected tab is always
+  awake. It's on by default; turn off **Asleep (unloaded) tabs, essentials
+  and folders look dimmed** in Zia's settings to have them look the same.
+
 ### Changed
 
 - A new folder mostly of one site gets that site's own icon when there is

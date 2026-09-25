@@ -175,6 +175,7 @@ Almost every part of Zia can be switched on or off on its own. The settings are 
 | Sound bars on playing tabs (off: Zen's speaker) | on |
 | Tint the selected tab's glow and the sound bars with the site's colours | off |
 | The last essential stretches across the rest of its row | off |
+| Asleep (unloaded) tabs, essentials and folders look dimmed | on |
 | Compact mode's sidebar is slightly see-through, with the page blurred behind it | on |
 | **Page** | |
 | Toolbar takes the colour of the site (off: the theme's colour) | on |
