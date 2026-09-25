@@ -4,6 +4,37 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.48.0] — 2026-09-25
+
+### Added
+
+- **The toolbar's colour checks itself.** Every few seconds, while the tab is
+  showing and the page has settled, Zia reads the top of the page again. If
+  two readings in a row agree with each other but not with the toolbar,
+  the toolbar changes to match and the colour remembered for that site is
+  corrected. This catches pages that change after loading (a banner
+  closing, a header recolouring itself) and pages whose very top edge is a
+  thin line of another colour. It also checks when the window comes back
+  into view or is resized.
+- **Folder names and icons from a local model are back, as an option.**
+  Turn on **Name new folders and choose their icons with a local model** in
+  Zia's settings (it's off by default, because the first use downloads a
+  model of about 25MB). A new folder with a default name and no icon gets a
+  name and a Tabler icon chosen from its tabs, on your machine. See the
+  README for turning on Firefox's local AI runtime first.
+
+### Fixed
+
+- Tabs' close buttons could vanish until Zen restarted. They're hidden while
+  a tab is dragged, and a drag that ended somewhere the window couldn't see
+  (dropped in another window or on the desktop, or its tab moved or closed
+  mid-drag) never cleared that. Zia now tidies up as soon as the mouse moves
+  with no button held.
+- The bottom edge of a folder's box flickered as the folder's spring
+  settled. The spring moved it by fractions of a pixel, where the box's
+  one-pixel outline fades out for a frame. The motion now lands on a whole
+  screen pixel every step.
+
 ## [2.47.0] — 2026-09-24
 
 ### Added

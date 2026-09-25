@@ -34,6 +34,12 @@
     "defaultValue": true
   },
   {
+    "type": "checkbox",
+    "label": "Name new folders and choose their icons with a local model (downloads ~25MB the first time)",
+    "property": "zia.features.folder-icon-suggest",
+    "defaultValue": false
+  },
+  {
     "type": "separator",
     "label": "Tabs"
   },

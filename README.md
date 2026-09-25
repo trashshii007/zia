@@ -66,7 +66,7 @@ Workspace and folder icons do a lot of the work in the Dia look, so they're wort
 
 ### The page and the toolbar
 
-The page and toolbar sit together in one rounded card. The toolbar picks up the colour of the site underneath and follows it as you scroll, switching to dark text on light sites. Colours are remembered per site, so pages open already in their colour instead of fading into it. While a page loads, a glow runs along the address bar. The address itself reads as `domain / title`, and hovering it shows the full URL.
+The page and toolbar sit together in one rounded card. The toolbar picks up the colour of the site underneath and follows it as you scroll, switching to dark text on light sites. Colours are remembered per site, so pages open already in their colour instead of fading into it. Every few seconds Zia checks the colour against the page again, and if the page has changed or the first reading was off, the toolbar corrects itself. While a page loads, a glow runs along the address bar. The address itself reads as `domain / title`, and hovering it shows the full URL.
 
 ### The address bar
 
@@ -126,6 +126,30 @@ Playing music brings up a card with the track's artwork and a soft glow in its c
 
 ![The music player card](https://github.com/user-attachments/assets/5b4e2542-61a9-4fd6-b2ee-7fb58970ef5b)
 
+### Folder names and icons from a local model
+
+Make a folder and Zia can name it and choose its icon for you, with a model that
+runs on your machine. Three tabs from Levi's, Gucci and Louis Vuitton become a
+folder called **Clothing** with a clothing icon; PayPal, Stripe and Cash App
+become **Financial**. Nothing is sent anywhere.
+
+It's **off by default**, because the first use downloads a model (about 25MB).
+To turn it on:
+
+1. Open `about:config` and set **`browser.ml.enable`** to `true`. This is
+   Firefox's local AI runtime, which Zen ships but leaves switched off.
+2. Restart Zen.
+3. In **Settings → Sine Mods → Zia**, turn on **Name new folders and choose
+   their icons with a local model**.
+
+The first folder you make takes a little while as the model downloads and the
+5,166 icon names are read once. After that it's immediate, and the icon names
+are cached in your profile.
+
+It only ever fills in a folder that has no icon and still has its default name,
+so anything you've named or chosen yourself is left alone. Groups made with
+Advanced Tab Groups get the same treatment, with the icon saved through that mod.
+
 ---
 
 ## Options
@@ -142,6 +166,7 @@ Almost every part of Zia can be switched on or off on its own. The settings are 
 | Icon picker (5,166 Tabler icons, outline and solid) | on |
 | Undo a closed tab with Cmd/Ctrl+Z | on |
 | Tab and folder hover cards | on |
+| Name new folders and choose their icons with a local model ([see above](#folder-names-and-icons-from-a-local-model)) | off |
 | **Tabs** | |
 | Sound bars on playing tabs (off: Zen's speaker) | on |
 | Tint the selected tab's glow and the sound bars with the site's colours | off |

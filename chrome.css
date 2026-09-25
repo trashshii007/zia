@@ -3697,6 +3697,31 @@ zen-folder .tab-reset-button {
 #urlbar .identity-icon-label {
   display: none !important;
 }
+
+/* A folder being named by the local model shimmers (zia.uc.js) */
+.tab-group-label-container[zia-skeleton-on="true"] > *:not(.zia-skeleton-overlay) {
+  opacity: 0 !important;
+}
+
+.zia-skeleton-block {
+  background-image: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0.06) 40%,
+    rgba(255, 255, 255, 0.14) 50%,
+    rgba(255, 255, 255, 0.06) 60%
+  );
+  background-size: 300% 100%;
+  animation: zia-suggesting-shimmer 1.1s ease-in-out infinite;
+}
+
+@keyframes zia-suggesting-shimmer {
+  from {
+    background-position: 130% 0;
+  }
+  to {
+    background-position: -30% 0;
+  }
+}
 @media -moz-pref("layout.css.prefers-color-scheme.content-override", 1),
        (-moz-pref("layout.css.prefers-color-scheme.content-override", 2)) and (not (-moz-system-dark-theme)) {
   :root:not([privatebrowsingmode="temporary"]) #urlbar[breakout-extend]:not([zia-classic]),

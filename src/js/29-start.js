@@ -258,6 +258,7 @@
     ifOn("icon-picker", "addIconPicker", addIconPicker);
     safely("watchCompactTopRow", watchCompactTopRow);
     safely("watchOldIcons", watchOldIcons);
+    safely("watchNewFolders", watchNewFolders);
     safely("watchFolderColors", watchFolderColors);
     safely("addFolderColorPicker", addFolderColorPicker);
     safely("watchFolderCloseButtons", watchFolderCloseButtons);
@@ -380,6 +381,7 @@
     safely("matchTabCorners", matchTabCorners);
     safely("addCopyLinkButton", addCopyLinkButton);
     safely("watchEdgeGlow", watchEdgeGlow);
+    safely("watchColorDrift", watchColorDrift);
     safely("quietZenHaptics", quietZenHaptics);
     safely("watchHapticsMute", watchHapticsMute);
     safely("watchUnloadable", watchUnloadable);
