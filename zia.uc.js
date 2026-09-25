@@ -6546,13 +6546,6 @@
       hidden: (tab) => !tab.hasAttribute("zen-essential") && !tab.pinned,
     },
     {
-      name: "bookmark",
-      icon: "bookmark",
-      label: "Bookmark",
-      run: (tab) => bookmarkTab(tab),
-      keepsCard: true,
-    },
-    {
       name: "split",
       icon: "layout-columns",
       label: "Add to Split",
@@ -6715,20 +6708,6 @@
       }
     }
     return best;
-  }
-
-  async function bookmarkTab(tab) {
-    const url = tab.linkedBrowser?.currentURI?.spec;
-
-    if (!url || tabCardKind(tab) === "new") {
-      return;
-    }
-    const existing = await PlacesUtils.bookmarks.fetch({ url });
-    if (existing) {
-      return;
-    }
-    const parentGuid = await PlacesUIUtils.defaultParentGuid;
-    await PlacesUtils.bookmarks.insert({ parentGuid, url, title: tab.label || url });
   }
 
   const NEW_TAB_PAGES = new Set(["about:newtab", "about:home", "about:blank", "about:privatebrowsing"]);

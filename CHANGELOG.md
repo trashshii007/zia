@@ -11,6 +11,10 @@ Every release of Zia, newest first. The format follows
 - Back and forward squeeze a little less on hover, and reload's arrowhead
   draws back a little more slowly.
 
+### Removed
+
+- The bookmark button on tab hover cards.
+
 ## [2.50.1] — 2026-09-25
 
 ### Fixed
