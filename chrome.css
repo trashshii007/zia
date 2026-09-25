@@ -1178,9 +1178,6 @@ zen-essentials-promo {
     corner-shape: round;
     pointer-events: none;
     background-color: transparent;
-    /* eases between the folder's colour and its hover colour, which would
-     * otherwise snap as a dragged tab lands in it or leaves it */
-    transition: background-color 180ms ease;
   }
 
   &::after {
@@ -1310,7 +1307,7 @@ zen-essentials-promo {
   &::after {
     top: calc(var(--zia-folder-box-top) + var(--zia-drag-bg-top, 0px)) !important;
     bottom: calc(var(--zia-folder-box-bottom) - var(--zia-folder-bottom-extra, 0px) - var(--zia-drag-bg-grow, 0px)) !important;
-    transition: top 100ms ease-out, bottom 100ms ease-out, background-color 100ms ease-out, opacity 100ms ease-out !important;
+    transition: top 100ms ease-out, bottom 100ms ease-out !important;
   }
 }
 

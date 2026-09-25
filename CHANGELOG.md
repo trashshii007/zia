@@ -10,6 +10,8 @@ Every release of Zia, newest first. The format follows
 
 - Back and forward squeeze a little less on hover, and reload's arrowhead
   draws back a little more slowly.
+- A folder's hover colour (and its edge) comes and goes at once instead of
+  fading, also while a dragged tab passes over it.
 
 ### Removed
 
