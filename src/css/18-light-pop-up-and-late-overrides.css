@@ -69,3 +69,106 @@
 :root:not(#zia-none) .tabbrowser-tab[zia-morph-done] > .tab-stack > :is(.tab-background, .tab-content) {
   transition: none !important;
 }
+
+/* The pop-up in the toolbar's colour, copied as it opened (the "Address bar
+   pop-up takes the toolbar's colour" option). Its text and rows follow the
+   colour, light or dark, whatever the theme. */
+:root:not(#zia-none) #urlbar#urlbar[breakout-extend][zia-pop-site]:not([zia-classic]) {
+  --zia-urlbar-open-bg: var(--zia-pop-site-bg) !important;
+
+  & > .urlbar-background {
+    background: var(--zia-pop-site-bg) !important;
+  }
+}
+
+:root:not(#zia-none) #urlbar#urlbar[breakout-extend][zia-pop-site="dark"]:not([zia-classic]) {
+  color-scheme: dark !important;
+  color: rgb(251, 251, 254) !important;
+  --toolbar-field-color: rgb(251, 251, 254) !important;
+  --toolbar-field-focus-color: rgb(251, 251, 254) !important;
+  --urlbarView-highlight-background: rgba(255, 255, 255, 0.1) !important;
+  --urlbarView-highlight-color: rgb(251, 251, 254) !important;
+
+  & > .urlbar-background {
+    outline: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5) !important;
+  }
+
+  & .urlbar-input,
+  & .urlbarView,
+  & .urlbarView-title,
+  & .urlbarView-title strong {
+    color: rgb(251, 251, 254) !important;
+  }
+
+  & .urlbar-input::placeholder {
+    color: rgba(251, 251, 254, 0.55) !important;
+    opacity: 1 !important;
+  }
+
+  & :is(.urlbarView-url, .urlbarView-action, .urlbarView-title-separator, .urlbarView-tags) {
+    color: rgba(251, 251, 254, 0.6) !important;
+  }
+
+  & .urlbar-icon,
+  & .urlbarView-shortcutContent {
+    color: rgb(251, 251, 254) !important;
+    fill: currentColor !important;
+  }
+
+  & .urlbarView-row:hover {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+  }
+
+  & .urlbarView-row[selected] {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+  }
+}
+
+:root:not(#zia-none) #urlbar#urlbar[breakout-extend][zia-pop-site="light"]:not([zia-classic]) {
+  color-scheme: light !important;
+  color: rgb(28, 28, 30) !important;
+  --toolbar-field-color: rgb(28, 28, 30) !important;
+  --toolbar-field-focus-color: rgb(28, 28, 30) !important;
+  --urlbarView-highlight-background: rgba(28, 28, 30, 0.09) !important;
+  --urlbarView-highlight-color: rgb(28, 28, 30) !important;
+
+  & > .urlbar-background {
+    outline: 1px solid rgba(28, 28, 30, 0.12) !important;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  & .urlbar-input,
+  & .urlbarView,
+  & .urlbarView-title,
+  & .urlbarView-title strong {
+    color: rgb(28, 28, 30) !important;
+  }
+
+  & .urlbar-input::placeholder {
+    color: rgb(100, 103, 108) !important;
+    opacity: 1 !important;
+  }
+
+  & :is(.urlbarView-url, .urlbarView-action, .urlbarView-title-separator, .urlbarView-tags) {
+    color: rgb(90, 94, 100) !important;
+  }
+
+  & .urlbar-icon,
+  & .urlbarView-shortcutContent {
+    color: rgb(28, 28, 30) !important;
+    fill: currentColor !important;
+  }
+
+  & .urlbarView-row:hover {
+    background-color: rgba(28, 28, 30, 0.05) !important;
+  }
+
+  & .urlbarView-row[selected] {
+    background-color: rgba(28, 28, 30, 0.09) !important;
+  }
+
+  & .urlbarView-row[selected] .urlbarView-shortcutContent {
+    fill: rgb(28, 28, 30) !important;
+  }
+}

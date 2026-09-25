@@ -6,6 +6,17 @@ Every release of Zia, newest first. The format follows
 
 ## [2.49.0] — 2026-09-25
 
+### Added
+
+- **The address bar's pop-up can take the toolbar's colour.** Turn on
+  **Address bar pop-up takes the toolbar's colour as it opens** (it's off
+  by default). Clicking the address bar then opens the pop-up in the same
+  colour as the site-coloured toolbar, with dark text on light sites and
+  light text on dark ones. The colour is taken once, as the pop-up opens,
+  and kept until it closes, so scrolling the page underneath doesn't change
+  it. With the toolbar in the theme's colour, or Zen's own pop-up, nothing
+  changes.
+
 ### Changed
 
 - **Copying a link pops the paperclip into a tick.** In the address bar,

@@ -373,6 +373,53 @@
     });
   }
 
+  // Optionally the address bar's pop-up takes the toolbar's colour as it
+  // opens, so it reads as the same bar growing. The colour is copied once,
+  // when the pop-up opens, and kept until it closes: scrolling the page
+  // underneath (which can recolour the toolbar) doesn't change it. With the
+  // toolbar in the theme's colour, or Zen's own pop-up, nothing changes.
+  const POP_UP_SITE_COLOR_PREF = "zia.urlbar.site-color";
+
+  function freezePopUpColor(urlbar) {
+    const text = root.style.getPropertyValue("--zia-site-bg").trim();
+    if (
+      !text ||
+      !siteColorOn() ||
+      !Services.prefs.getBoolPref(POP_UP_SITE_COLOR_PREF, false) ||
+      urlbar.hasAttribute("zia-classic") ||
+      urlbar.getAttribute("zen-floating-urlbar") === "true"
+    ) {
+      return;
+    }
+    // A see-through colour is laid over what the page would show behind it,
+    // so the pop-up is solid.
+    const behind = matchMedia("(prefers-color-scheme: dark)").matches ? [0, 0, 0, 255] : [255, 255, 255, 255];
+    const rgb = colorOver(parseColor(text), behind);
+    urlbar.style.setProperty("--zia-pop-site-bg", cssColor(rgb.slice(0, 3)));
+    urlbar.setAttribute("zia-pop-site", brightnessOf(rgb) > LIGHT_THRESHOLD ? "light" : "dark");
+  }
+
+  function watchPopUpColor() {
+    const urlbar = gURLBar?.textbox || document.getElementById("urlbar");
+    if (!urlbar) {
+      return;
+    }
+    let open = urlbar.hasAttribute("breakout-extend");
+    new MutationObserver(() => {
+      const nowOpen = urlbar.hasAttribute("breakout-extend");
+      if (nowOpen === open) {
+        return;
+      }
+      open = nowOpen;
+      if (nowOpen) {
+        freezePopUpColor(urlbar);
+      } else {
+        urlbar.removeAttribute("zia-pop-site");
+        urlbar.style.removeProperty("--zia-pop-site-bg");
+      }
+    }).observe(urlbar, { attributes: true, attributeFilter: ["breakout-extend"] });
+  }
+
   const SITE_COLORS_PREF = "zia.siteColors";
   const SITE_COLORS_MAX = 200;
   let siteColors = null;
@@ -9624,6 +9671,7 @@
     safely("addCopyLinkButton", addCopyLinkButton);
     safely("watchEdgeGlow", watchEdgeGlow);
     safely("watchColorDrift", watchColorDrift);
+    safely("watchPopUpColor", watchPopUpColor);
     safely("quietZenHaptics", quietZenHaptics);
     safely("watchHapticsMute", watchHapticsMute);
     safely("watchUnloadable", watchUnloadable);
