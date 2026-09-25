@@ -920,6 +920,28 @@
   content: url("chrome://sine/content/zia/icons/tab-default.svg") !important;
 }
 
+
+/* Asleep (unloaded) tabs and essentials fade their icon and title to about
+   half; a folder does too once every tab in it is asleep. The selected tab
+   is always awake. On by default, off in Zia's settings. */
+@media -moz-pref("zia.tabs.dim-asleep") {
+  :root:not(#zia-none) .tabbrowser-tab[pending]:not([selected], [visuallyselected]) {
+    & :is(.tab-icon-stack, .tab-icon-image) {
+      opacity: 0.45 !important;
+      transition: opacity 0.15s ease;
+    }
+
+    & :is(.tab-label-container, .tab-label) {
+      opacity: 0.5 !important;
+      transition: opacity 0.15s ease;
+    }
+  }
+
+  :root:not(#zia-none) :is(zen-folder, tab-group:not([split-view-group])):has(.tabbrowser-tab[pending]):not(:has(.tabbrowser-tab:not([pending]))) > .tab-group-label-container {
+    opacity: 0.5 !important;
+    transition: opacity 0.15s ease;
+  }
+}
 .tabbrowser-tab[drag-image] {
   margin: 0 !important;
   translate: none !important;
@@ -1913,10 +1935,17 @@ zen-folder > .tab-group-label-container > .zia-folder-close:hover {
   padding-inline-end: calc((var(--zia-tab-height) - var(--zia-close-size)) / 2) !important;
 }
 
-.tabbrowser-tab[zen-glance-tab] > .tab-stack > .tab-background {
-  background: rgba(24, 24, 26, 0.85) !important;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
-  backdrop-filter: blur(8px) !important;
+/* A page peeked at with Option-click shows as a small tab tucked into the
+   right of the tab it came from: a soft light tile behind its icon, with
+   none of the selected tab's glow or edge. */
+.tabbrowser-tab[zen-glance-tab]:not(#zia-none) > .tab-stack > .tab-background {
+  background: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.tabbrowser-tab[zen-glance-tab]:not(#zia-none) > .tab-stack > .tab-background::after {
+  display: none !important;
 }
 
 :root[zen-sidebar-expanded="true"] :is(zen-folder, tab-group:not([split-view-group])) > .tab-group-container > .tabbrowser-tab {
@@ -3672,6 +3701,33 @@ tooltip[default="true"] {
   display: none !important;
 }
 
+
+/* Compact mode's flyout sidebar (and top toolbar) is a touch see-through,
+   with the page blurred behind it; on by default, off in Zia's settings.
+   Zen paints it as an opaque base with two cross-fading colour layers (the
+   old space and the new one); the base goes and both layers are scaled
+   down, so switching spaces still fades as before. */
+@media -moz-pref("zia.compact.sidebar-blur") {
+  :root[zen-compact-mode="true"] .zen-toolbar-background {
+    background: transparent !important;
+    backdrop-filter: blur(28px) saturate(1.6) !important;
+
+    &::after {
+      opacity: calc(var(--zen-background-opacity, 1) * 0.78) !important;
+    }
+
+    &::before {
+      opacity: calc((1 - var(--zen-background-opacity, 1)) * 0.78) !important;
+    }
+  }
+
+  /* On macOS a web page is a separate layer the blur can't see through to;
+     drawn as a layer Firefox composites itself, it can. (From Floaty UI.) */
+  :root[zen-compact-mode="true"] #tabbrowser-tabpanels .browserSidebarContainer {
+    will-change: transform !important;
+    backface-visibility: hidden !important;
+  }
+}
 .tabbrowser-tab .tab-reset-button,
 zen-folder .tab-reset-button {
   -moz-context-properties: fill, fill-opacity !important;
@@ -3891,6 +3947,25 @@ zen-folder .tab-reset-button {
 
   & .urlbarView-row[selected] .urlbarView-shortcutContent {
     fill: rgb(28, 28, 30) !important;
+  }
+}
+
+/* Optionally the pop-up is a touch see-through, with the page blurred
+   behind it. Whichever colour it has (dark, light or the site's) comes
+   from --zia-urlbar-open-bg, so this works with all of them. */
+@media -moz-pref("zia.urlbar.pop-up-blur") {
+  :root:not(#zia-none):not(#zia-none-2) #urlbar#urlbar[breakout-extend]:not([zia-classic]) > .urlbar-background {
+    background: color-mix(in srgb, var(--zia-urlbar-open-bg) 78%, transparent) !important;
+    backdrop-filter: blur(24px) saturate(1.6) !important;
+  }
+
+  /* On macOS a web page is handed to the system as a layer of its own,
+     which a blur in Zen's window can't see through to, so the blur only
+     worked over Zen's own pages. Drawn as a layer Firefox composites
+     itself, the page can be blurred too. (From Floaty UI, by moktavizen.) */
+  #tabbrowser-tabpanels .browserSidebarContainer {
+    will-change: transform !important;
+    backface-visibility: hidden !important;
   }
 }
 /* Back, forward and reload move like Dia's.

@@ -62,6 +62,18 @@
     "defaultValue": false
   },
   {
+    "type": "checkbox",
+    "label": "Asleep (unloaded) tabs, essentials and folders look dimmed",
+    "property": "zia.tabs.dim-asleep",
+    "defaultValue": true
+  },
+  {
+    "type": "checkbox",
+    "label": "Compact mode's sidebar is slightly see-through, with the page blurred behind it",
+    "property": "zia.compact.sidebar-blur",
+    "defaultValue": true
+  },
+  {
     "type": "separator",
     "label": "Page"
   },
@@ -84,6 +96,12 @@
     "defaultValue": true
   },
   {
+    "type": "checkbox",
+    "label": "PDFs open in Dia's viewer look (off: Firefox's own; reopen a PDF to see the change)",
+    "property": "zia.pdf.dia-style",
+    "defaultValue": true
+  },
+  {
     "type": "separator",
     "label": "Address bar"
   },
@@ -97,6 +115,12 @@
     "type": "checkbox",
     "label": "Address bar pop-up takes the toolbar's colour as it opens (needs the site-coloured toolbar)",
     "property": "zia.urlbar.site-color",
+    "defaultValue": false
+  },
+  {
+    "type": "checkbox",
+    "label": "Address bar pop-up is slightly see-through, with the page blurred behind it",
+    "property": "zia.urlbar.pop-up-blur",
     "defaultValue": false
   },
   {

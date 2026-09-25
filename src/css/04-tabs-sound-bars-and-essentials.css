@@ -189,3 +189,25 @@
   content: url("chrome://sine/content/zia/icons/tab-default.svg") !important;
 }
 
+
+/* Asleep (unloaded) tabs and essentials fade their icon and title to about
+   half; a folder does too once every tab in it is asleep. The selected tab
+   is always awake. On by default, off in Zia's settings. */
+@media -moz-pref("zia.tabs.dim-asleep") {
+  :root:not(#zia-none) .tabbrowser-tab[pending]:not([selected], [visuallyselected]) {
+    & :is(.tab-icon-stack, .tab-icon-image) {
+      opacity: 0.45 !important;
+      transition: opacity 0.15s ease;
+    }
+
+    & :is(.tab-label-container, .tab-label) {
+      opacity: 0.5 !important;
+      transition: opacity 0.15s ease;
+    }
+  }
+
+  :root:not(#zia-none) :is(zen-folder, tab-group:not([split-view-group])):has(.tabbrowser-tab[pending]):not(:has(.tabbrowser-tab:not([pending]))) > .tab-group-label-container {
+    opacity: 0.5 !important;
+    transition: opacity 0.15s ease;
+  }
+}

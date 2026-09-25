@@ -576,6 +576,32 @@
     });
   }
 
+  // PDFs in Dia's look (actors/ZiaPdfChild.sys.mjs). The query string
+  // changes every session: Firefox caches these modules by address, and
+  // would otherwise keep running an older copy after Zia updates.
+  function registerPdfActor() {
+    const version = `?v=${Date.now()}`;
+    try {
+      ChromeUtils.registerWindowActor("ZiaPdf", {
+        parent: { esModuleURI: `chrome://sine/content/zia/actors/ZiaPdfParent.sys.mjs${version}` },
+        child: {
+          esModuleURI: `chrome://sine/content/zia/actors/ZiaPdfChild.sys.mjs${version}`,
+          events: { DOMContentLoaded: {} },
+        },
+        allFrames: false,
+        messageManagerGroups: ["browsers"],
+        // Firefox only starts a helper inside a website's process when told
+        // it's safe there; this one's browser side does nothing.
+        safeForUntrustedWebProcess: true,
+      });
+      console.info("[Zia] PDF view: helper registered");
+    } catch (err) {
+      if (err?.name !== "NotSupportedError") {
+        console.error("[Zia] Could not register the PDF view:", err);
+      }
+    }
+  }
+
   function registerScrollActor() {
     try {
       ChromeUtils.registerWindowActor("Zia", {
@@ -590,6 +616,9 @@
         },
         allFrames: false,
         messageManagerGroups: ["browsers"],
+        // Firefox only starts a helper inside a website's process when told
+        // it's safe there; this one only reports how far a page scrolled.
+        safeForUntrustedWebProcess: true,
       });
     } catch (err) {
       if (err?.name !== "NotSupportedError") {
@@ -3295,13 +3324,13 @@
     return container?.querySelector(":scope .zia-pane-bar") ? container : null;
   }
 
-  function paneButton(name, label, onClick) {
+  function paneButton(name, label, onClick, icon = `${ICONS}${name}.svg`) {
     const button = document.createElementNS(HTML_NS, "button");
     button.className = `zia-pane-button zia-pane-${name}`;
     button.setAttribute("title", label);
     button.setAttribute("aria-label", label);
     const img = document.createElementNS(HTML_NS, "img");
-    img.setAttribute("src", `${ICONS}${name}.svg`);
+    img.setAttribute("src", icon);
     img.setAttribute("alt", "");
     button.appendChild(img);
     button.addEventListener("click", (event) => {
@@ -3372,14 +3401,19 @@
     bar.appendChild(extensions);
 
     bar.appendChild(
-      paneButton("copy-link", "Copy link", (event, button) => {
-        try {
-          copyLink(tabOf());
-          showCopied(button);
-        } catch (err) {
-          console.error("[Zia] Copy link failed:", err);
-        }
-      })
+      paneButton(
+        "copy-link",
+        "Copy link",
+        (event, button) => {
+          try {
+            copyLink(tabOf());
+            showCopied(button);
+          } catch (err) {
+            console.error("[Zia] Copy link failed:", err);
+          }
+        },
+        COPY_ICON
+      )
     );
     bar.appendChild(
       paneButton("site-settings", "Site settings and extensions", () => {
@@ -5966,6 +6000,49 @@
     }
   }
 
+  // A folder mostly of one site gets that site's own icon when Tabler has
+  // it (a folder of YouTube videos gets YouTube's, not one guessed from the
+  // videos' titles). The site is its name without subdomains or the ending
+  // (music.youtube.com and youtu.be are both YouTube).
+  const BRAND_ALIASES = { youtu: "youtube", twitter: "x", fb: "facebook", ycombinator: "ycombinator", googleusercontent: "google" };
+  const BRAND_MAJORITY = 0.5;
+
+  function siteBrand(host) {
+    const parts = String(host || "").toLowerCase().replace(/^www\./, "").split(".").filter(Boolean);
+    if (parts.length < 2) {
+      return null;
+    }
+    // co.uk, com.au and the like: the name is one further in
+    const secondLevel = parts.length > 2 && parts[parts.length - 2].length <= 3 && parts[parts.length - 1].length === 2;
+    const name = parts[parts.length - (secondLevel ? 3 : 2)];
+    return BRAND_ALIASES[name] || name;
+  }
+
+  function brandIconForFolder(folder) {
+    const tabs = folder.tabs || [];
+    if (!tabs.length) {
+      return null;
+    }
+    const counts = new Map();
+    for (const tab of tabs) {
+      let brand = null;
+      try {
+        brand = siteBrand(tab.linkedBrowser?.currentURI?.host);
+      } catch (err) {
+        brand = null;
+      }
+      if (brand) {
+        counts.set(brand, (counts.get(brand) || 0) + 1);
+      }
+    }
+    const [brand, count] = [...counts].sort((a, b) => b[1] - a[1])[0] || [];
+    if (!brand || count / tabs.length < BRAND_MAJORITY) {
+      return null;
+    }
+    const name = `brand-${brand}`;
+    return suggestableIcons().some((icon) => icon.name === name) ? iconURL(name) : null;
+  }
+
   function applySuggestedFolderIcon(folder) {
     if (!featureOn("folder-icon-suggest")) {
       return;
@@ -5982,11 +6059,13 @@
           return;
         }
         if (!folderIconURL(folder)) {
-          let icon = null;
-          try {
-            icon = await suggestIconByMeaning(folder);
-          } catch (err) {
-            console.warn("[Zia] The embedding model wasn't available:", err);
+          let icon = brandIconForFolder(folder);
+          if (!icon) {
+            try {
+              icon = await suggestIconByMeaning(folder);
+            } catch (err) {
+              console.warn("[Zia] The embedding model wasn't available:", err);
+            }
           }
           icon = icon || suggestFolderIcon(folder);
           if (icon && !folderIconURL(folder)) {
@@ -9607,6 +9686,7 @@
     ifOn("undo-close", "watchUndoClose", watchUndoClose);
     safely("watchTypedAddress", watchTypedAddress);
     safely("registerScrollActor", registerScrollActor);
+    safely("registerPdfActor", registerPdfActor);
     safely("watchScrollInput", watchScrollInput);
     safely("createTitleElement", createTitleElement);
     safely("addDownloadProgress", addDownloadProgress);

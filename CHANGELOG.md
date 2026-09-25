@@ -4,6 +4,55 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.53.0] — 2026-09-25
+
+### Added
+
+- **PDFs in Dia's viewer look.** Firefox's PDF viewer gets Dia's grey
+  toolbar: the document's name on the left; the page ("1 / 2"), zoom
+  (− 100% +), fit to page, rotate, the pen and undo/redo in the middle;
+  download, print and more on the right. The pen opens a slim second row
+  with Firefox's own tools (draw, highlight, text, signature, image and
+  comment), and folds it away again. The sidebar is just the pages, in a
+  square blue frame for the current one, on Dia's darker grey. Turn off
+  **PDFs open in Dia's viewer look** in Zia's settings for Firefox's own.
+- **A see-through address bar pop-up, as an option.** Turn on **Address bar
+  pop-up is slightly see-through, with the page blurred behind it** (it's
+  off by default). It works with the dark, light and site-coloured pop-ups,
+  and blurs web pages as well as Zen's own (on macOS that takes drawing the
+  page as a layer Zen composites itself, a trick from Floaty UI).
+
+- **A see-through compact mode sidebar.** In compact mode the flyout
+  sidebar (and top toolbar) is slightly see-through, with the page blurred
+  behind it, websites included. It's on by default; turn off **Compact
+  mode's sidebar is slightly see-through** in Zia's settings if it ever
+  looks wrong.
+
+- **Asleep tabs look asleep.** A tab or essential that's unloaded (not
+  using memory) fades its icon and title to about half, and a folder does
+  the same once every tab in it is asleep. The selected tab is always
+  awake. It's on by default; turn off **Asleep (unloaded) tabs, essentials
+  and folders look dimmed** in Zia's settings to have them look the same.
+
+### Changed
+
+- A new folder mostly of one site gets that site's own icon when there is
+  one (YouTube's, GitHub's, Reddit's…), rather than one guessed from its
+  tabs' titles, which for a folder of videos or repositories could be
+  anything.
+
+### Fixed
+
+- Zia's helper inside web pages was blocked by newer Firefox, which only
+  lets such helpers into a website's process when they're marked as safe
+  there. It's marked now, so the toolbar's colour follows the page as you
+  scroll again, and PDFs get their Dia look.
+- A page peeked at with Option-click sat on its tab in a dark, blurred box.
+  It's a soft light tile now, without the selected tab's glow or edge.
+- The copy link button on a split pane's bar was an empty square until it
+  was first clicked. It pointed at an icon that went when Zia moved to
+  Tabler's icons; it's the paperclip from the start now.
+
 ## [2.52.0] — 2026-09-25
 
 ### Added

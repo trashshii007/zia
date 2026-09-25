@@ -72,6 +72,10 @@ The page and toolbar sit together in one rounded card. The toolbar picks up the 
 
 The address pop-up follows Dia's shape: short rows with room around them, one size and weight of text throughout, and none of Firefox's chips, row menus or extra engine bars. What you type lines up exactly with the results underneath. As you type an address, the site's own icon takes the place of the magnifying glass. A paperclip beside site settings copies the page's link. The whole bar can also move to the **bottom**, under the page, with the pop-up opening upwards, in a single page or a split.
 
+### PDF view
+
+PDFs open in Dia's viewer look: a grey toolbar with the document's name on the left, the page and zoom in the middle beside fit to page, rotate and undo/redo, and download, print and more on the right. The pen opens a second row with Firefox's tools (draw, highlight, text, signature, image and comment). The sidebar is just the pages, the current one framed in blue.
+
 ### Picture-in-picture
 
 Picture-in-picture looks like Dia's. At rest it's just the video, with nothing laid over it. Hover it and the video dims to show **Back to Tab** and **Close** at the top with the site between them, big 15-second skip and play/pause buttons in the middle, a speaker, volume line and the time in the bottom left, and a thin progress line along the bottom.
@@ -171,13 +175,17 @@ Almost every part of Zia can be switched on or off on its own. The settings are 
 | Sound bars on playing tabs (off: Zen's speaker) | on |
 | Tint the selected tab's glow and the sound bars with the site's colours | off |
 | The last essential stretches across the rest of its row | off |
+| Asleep (unloaded) tabs, essentials and folders look dimmed | on |
+| Compact mode's sidebar is slightly see-through, with the page blurred behind it | on |
 | **Page** | |
 | Toolbar takes the colour of the site (off: the theme's colour) | on |
 | Zia's rounded page corners (off: Zen's own) | on |
 | Split view drop cards when dragging a tab onto the page (off: Zen's own) | on |
+| PDFs open in Dia's viewer look (off: Firefox's own) | on |
 | **Address bar** | |
 | Dia-style address bar pop-up (off: Zen's own) | on |
 | Address bar pop-up takes the toolbar's colour as it opens (needs the site-coloured toolbar) | off |
+| Address bar pop-up is slightly see-through, with the page blurred behind it | off |
 | Address bar position: top or bottom (not with Zen's single toolbar) | top |
 | **New tabs** | |
 | Cmd/Ctrl+T and **+ New Tab** open a real tab (off: Zen's floating address bar) | on |
@@ -208,7 +216,6 @@ Changed at the default level only. If you've set either yourself in `about:confi
 
 ## Known gaps
 
-- Compact mode has no transparency or backdrop blur yet
 - Light mode is untested and will very likely need work
 - Other sidebar layouts, Windows and Linux are untested
 
