@@ -181,4 +181,13 @@
     background: color-mix(in srgb, var(--zia-urlbar-open-bg) 78%, transparent) !important;
     backdrop-filter: blur(24px) saturate(1.6) !important;
   }
+
+  /* On macOS a web page is handed to the system as a layer of its own,
+     which a blur in Zen's window can't see through to, so the blur only
+     worked over Zen's own pages. Drawn as a layer Firefox composites
+     itself, the page can be blurred too. (From Floaty UI, by moktavizen.) */
+  #tabbrowser-tabpanels .browserSidebarContainer {
+    will-change: transform !important;
+    backface-visibility: hidden !important;
+  }
 }

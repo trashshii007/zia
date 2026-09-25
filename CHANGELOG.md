@@ -18,7 +18,9 @@ Every release of Zia, newest first. The format follows
   **PDFs open in Dia's viewer look** in Zia's settings for Firefox's own.
 - **A see-through address bar pop-up, as an option.** Turn on **Address bar
   pop-up is slightly see-through, with the page blurred behind it** (it's
-  off by default). It works with the dark, light and site-coloured pop-ups.
+  off by default). It works with the dark, light and site-coloured pop-ups,
+  and blurs web pages as well as Zen's own (on macOS that takes drawing the
+  page as a layer Zen composites itself, a trick from Floaty UI).
 
 ### Changed
 
