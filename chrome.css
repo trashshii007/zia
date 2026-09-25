@@ -937,6 +937,12 @@
     }
   }
 
+  /* an asleep essential's tile fades with it */
+  :root:not(#zia-none) .tabbrowser-tab[zen-essential][pending]:not([selected], [visuallyselected]) > .tab-stack > .tab-background {
+    opacity: 0.5 !important;
+    transition: opacity 0.15s ease;
+  }
+
   :root:not(#zia-none) :is(zen-folder, tab-group:not([split-view-group])):has(.tabbrowser-tab[pending]):not(:has(.tabbrowser-tab:not([pending]))) > .tab-group-label-container {
     opacity: 0.5 !important;
     transition: opacity 0.15s ease;
