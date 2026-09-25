@@ -1,4 +1,4 @@
-// Zia: Firefox's PDF viewer in Dia's look. ZiaChild calls diaPdf() for each
+// Zia: Firefox's PDF viewer in Dia's look. ZiaPdfChild calls diaPdf() for each
 // PDF viewer page; the styles are zia-pdf.css (loaded here, since the viewer
 // is a page of its own, not part of Zen's window).
 //
@@ -10,7 +10,9 @@
 // title, "/ 2", the zoom percentage, fit, rotate, the pen and undo/redo),
 // and each drives PDF.js itself.
 
-const SHEET_URL = "chrome://sine/content/zia/zia-pdf.css";
+// Same session-changing query as this module, so a Zia update is never
+// shown with last session's styles.
+const SHEET_URL = "chrome://sine/content/zia/zia-pdf.css" + new URL(import.meta.url).search;
 const UPDATE_MS = 300;
 
 export function diaPdf(win) {

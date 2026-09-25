@@ -252,6 +252,7 @@
     ifOn("undo-close", "watchUndoClose", watchUndoClose);
     safely("watchTypedAddress", watchTypedAddress);
     safely("registerScrollActor", registerScrollActor);
+    safely("registerPdfActor", registerPdfActor);
     safely("watchScrollInput", watchScrollInput);
     safely("createTitleElement", createTitleElement);
     safely("addDownloadProgress", addDownloadProgress);

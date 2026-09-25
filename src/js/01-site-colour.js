@@ -538,6 +538,28 @@
     });
   }
 
+  // PDFs in Dia's look (actors/ZiaPdfChild.sys.mjs). The query string
+  // changes every session: Firefox caches these modules by address, and
+  // would otherwise keep running an older copy after Zia updates.
+  function registerPdfActor() {
+    const version = `?v=${Date.now()}`;
+    try {
+      ChromeUtils.registerWindowActor("ZiaPdf", {
+        parent: { esModuleURI: `chrome://sine/content/zia/actors/ZiaPdfParent.sys.mjs${version}` },
+        child: {
+          esModuleURI: `chrome://sine/content/zia/actors/ZiaPdfChild.sys.mjs${version}`,
+          events: { DOMContentLoaded: {} },
+        },
+        allFrames: false,
+        messageManagerGroups: ["browsers"],
+      });
+    } catch (err) {
+      if (err?.name !== "NotSupportedError") {
+        console.error("[Zia] Could not register the PDF view:", err);
+      }
+    }
+  }
+
   function registerScrollActor() {
     try {
       ChromeUtils.registerWindowActor("Zia", {
