@@ -43,6 +43,10 @@ Every release of Zia, newest first. The format follows
 
 ### Fixed
 
+- Zia's helper inside web pages was blocked by newer Firefox, which only
+  lets such helpers into a website's process when they're marked as safe
+  there. It's marked now, so the toolbar's colour follows the page as you
+  scroll again, and PDFs get their Dia look.
 - A page peeked at with Option-click sat on its tab in a dark, blurred box.
   It's a soft light tile now, without the selected tab's glow or edge.
 - The copy link button on a split pane's bar was an empty square until it

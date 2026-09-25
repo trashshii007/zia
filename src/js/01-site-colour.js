@@ -552,6 +552,9 @@
         },
         allFrames: false,
         messageManagerGroups: ["browsers"],
+        // Firefox only starts a helper inside a website's process when told
+        // it's safe there; this one's browser side does nothing.
+        safeForUntrustedWebProcess: true,
       });
       console.info("[Zia] PDF view: helper registered");
     } catch (err) {
@@ -575,6 +578,9 @@
         },
         allFrames: false,
         messageManagerGroups: ["browsers"],
+        // Firefox only starts a helper inside a website's process when told
+        // it's safe there; this one only reports how far a page scrolled.
+        safeForUntrustedWebProcess: true,
       });
     } catch (err) {
       if (err?.name !== "NotSupportedError") {

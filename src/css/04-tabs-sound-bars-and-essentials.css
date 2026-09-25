@@ -194,20 +194,20 @@
    half; a folder does too once every tab in it is asleep. The selected tab
    is always awake. On by default, off in Zia's settings. */
 @media -moz-pref("zia.tabs.dim-asleep") {
-  .tabbrowser-tab[pending]:not([selected], [visuallyselected]) {
-    & .tab-icon-stack {
-      opacity: 0.45;
+  :root:not(#zia-none) .tabbrowser-tab[pending]:not([selected], [visuallyselected]) {
+    & :is(.tab-icon-stack, .tab-icon-image) {
+      opacity: 0.45 !important;
       transition: opacity 0.15s ease;
     }
 
-    & .tab-label-container {
-      opacity: 0.5;
+    & :is(.tab-label-container, .tab-label) {
+      opacity: 0.5 !important;
       transition: opacity 0.15s ease;
     }
   }
 
-  :is(zen-folder, tab-group:not([split-view-group])):has(.tabbrowser-tab[pending]):not(:has(.tabbrowser-tab:not([pending]))) > .tab-group-label-container {
-    opacity: 0.5;
+  :root:not(#zia-none) :is(zen-folder, tab-group:not([split-view-group])):has(.tabbrowser-tab[pending]):not(:has(.tabbrowser-tab:not([pending]))) > .tab-group-label-container {
+    opacity: 0.5 !important;
     transition: opacity 0.15s ease;
   }
 }
