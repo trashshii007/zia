@@ -8,6 +8,8 @@ Every release of Zia, newest first. The format follows
 
 ### Fixed
 
+- A page peeked at with Option-click sat on its tab in a dark, blurred box.
+  It's a soft light tile now, without the selected tab's glow or edge.
 - The copy link button on a split pane's bar was an empty square until it
   was first clicked. It pointed at an icon that went when Zia moved to
   Tabler's icons; it's the paperclip from the start now.
