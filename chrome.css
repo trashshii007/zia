@@ -3897,13 +3897,18 @@ zen-folder .tab-reset-button {
   }
 }
 /* Back, forward and reload move like Dia's.
-   Back and forward: held down, the chevron squeezes narrower and a touch
-   taller; let go and it slides out the way it points while a fresh one
-   slides in from behind (the leaving one is drawn by ::after).
-   Reload and stop: the one going away is drawn by the incoming button's
+   Zen draws a toolbar button's hover square on the same element as its
+   icon, so the icons here are left in place but see-through (keeping the
+   square still), and the glyphs are drawn on top by the buttons' ::before
+   and ::after, which are the only things that move.
+   Back and forward: held down, the chevron (::before) squeezes narrower and
+   a touch taller; let go and it slides out the way it points (::after)
+   while a fresh one slides in from behind (::before).
+   Reload and stop: the one going away is drawn by #stop-reload-button's
    ::after and shrinks away (the arrow spinning, the cross turning into a
-   plus) while the incoming icon grows in. Reload on hover: its arrowhead
-   (::before) draws back round the circle and the arc shortens with it. */
+   plus) while the incoming glyph grows in. Reload on hover: its arrowhead
+   (::after) draws back round the circle and the arc (::before) shortens
+   with it. */
 
 @property --zia-reload-cut {
   syntax: "<angle>";
@@ -3911,12 +3916,18 @@ zen-folder .tab-reset-button {
   initial-value: 0deg;
 }
 
+#stop-reload-button,
 :is(#back-button, #forward-button, #reload-button, #stop-button) {
   position: relative;
 }
 
-:is(#back-button, #forward-button, #reload-button, #stop-button)::after,
-#reload-button::before {
+:is(#back-button, #forward-button, #reload-button, #stop-button) > .toolbarbutton-icon {
+  fill: transparent !important;
+}
+
+:is(#back-button, #forward-button, #reload-button, #stop-button)::before,
+:is(#back-button, #forward-button, #reload-button)::after,
+#stop-reload-button::after {
   content: "";
   position: absolute;
   left: 50%;
@@ -3930,24 +3941,42 @@ zen-folder .tab-reset-button {
   pointer-events: none;
 }
 
-:is(#back-button, #forward-button, #reload-button, #stop-button)::after {
-  display: none;
+:is(#back-button, #forward-button, #reload-button, #stop-button)[disabled]::before,
+#reload-button[disabled]::after {
+  opacity: 0.4;
+}
+
+#back-button::before {
+  background-image: url("chrome://sine/content/zia/icons/back.svg");
+}
+
+#forward-button::before {
+  background-image: url("chrome://sine/content/zia/icons/forward.svg");
+}
+
+#stop-button::before {
+  background-image: url("chrome://sine/content/zia/icons/stop.svg");
 }
 
 /* Back and forward */
-:is(#back-button, #forward-button) > .toolbarbutton-icon {
+:is(#back-button, #forward-button)::before {
   transition: scale 110ms ease-out;
 }
 
-:is(#back-button, #forward-button):not([disabled]):hover:active > .toolbarbutton-icon {
+:is(#back-button, #forward-button):not([disabled]):hover:active::before {
   scale: 0.72 1.08;
 }
 
-#back-button[zia-slide] > .toolbarbutton-icon {
+:is(#back-button, #forward-button)::after,
+#stop-reload-button::after {
+  display: none;
+}
+
+#back-button[zia-slide]::before {
   animation: zia-nav-in-back 220ms cubic-bezier(0.3, 1.35, 0.5, 1) 50ms both;
 }
 
-#forward-button[zia-slide] > .toolbarbutton-icon {
+#forward-button[zia-slide]::before {
   animation: zia-nav-in-forward 220ms cubic-bezier(0.3, 1.35, 0.5, 1) 50ms both;
 }
 
@@ -3983,8 +4012,8 @@ zen-folder .tab-reset-button {
   to { translate: 9px 0; scale: 1 1; opacity: 0; }
 }
 
-/* Reload: the arc is the button's icon, the arrowhead its ::before, both
-   turning about the circle's centre (1px below the icon's middle). */
+/* Reload: the arc (::before) and the arrowhead (::after) both turn about
+   the circle's centre, 1px below the middle of the icon. */
 #reload-button {
   --zia-reload-cut: 0deg;
   transition: --zia-reload-cut 260ms cubic-bezier(0.3, 1.35, 0.5, 1);
@@ -3994,27 +4023,24 @@ zen-folder .tab-reset-button {
   --zia-reload-cut: 20deg;
 }
 
-#reload-button > .toolbarbutton-icon {
+#reload-button::before {
+  background-image: url("chrome://sine/content/zia/icons/reload-arc.svg");
   transform-origin: 50% calc(50% + 1px);
   mask: conic-gradient(from 90deg at 50% calc(50% + 1px), #000 calc(301.6deg - var(--zia-reload-cut) * 1.35), transparent 0);
 }
 
-#reload-button::before {
+#reload-button::after {
   background-image: url("chrome://sine/content/zia/icons/reload-head.svg");
   transform-origin: 50% calc(50% + 1px);
   rotate: calc(var(--zia-reload-cut) * -1);
 }
 
-#reload-button[disabled]::before {
-  opacity: 0.4;
-}
-
 /* Reload to stop */
-#stop-reload-button[zia-morph="to-stop"] > #stop-button > .toolbarbutton-icon {
+#stop-reload-button[zia-morph="to-stop"] > #stop-button::before {
   animation: zia-stop-in 200ms 100ms both;
 }
 
-#stop-reload-button[zia-morph="to-stop"] > #stop-button::after {
+#stop-reload-button[zia-morph="to-stop"]::after {
   display: block;
   background-image: url("chrome://sine/content/zia/icons/reload.svg");
   transform-origin: 50% calc(50% + 1px);
@@ -4022,12 +4048,12 @@ zen-folder .tab-reset-button {
 }
 
 /* Stop to reload */
-#stop-reload-button[zia-morph="to-reload"] > #reload-button > .toolbarbutton-icon,
-#stop-reload-button[zia-morph="to-reload"] > #reload-button::before {
+#stop-reload-button[zia-morph="to-reload"] > #reload-button::before,
+#stop-reload-button[zia-morph="to-reload"] > #reload-button::after {
   animation: zia-reload-in 240ms 90ms both;
 }
 
-#stop-reload-button[zia-morph="to-reload"] > #reload-button::after {
+#stop-reload-button[zia-morph="to-reload"]::after {
   display: block;
   background-image: url("chrome://sine/content/zia/icons/stop.svg");
   animation: zia-stop-out 110ms ease-in both;
@@ -4056,14 +4082,14 @@ zen-folder .tab-reset-button {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :is(#back-button, #forward-button, #reload-button, #stop-button) > .toolbarbutton-icon,
-  :is(#back-button, #forward-button, #reload-button, #stop-button)::after,
-  #reload-button::before {
+  :is(#back-button, #forward-button, #reload-button, #stop-button)::before,
+  :is(#back-button, #forward-button, #reload-button)::after {
     animation: none !important;
     transition: none !important;
   }
 
-  :is(#back-button, #forward-button, #reload-button, #stop-button)::after {
+  :is(#back-button, #forward-button)::after,
+  #stop-reload-button::after {
     display: none !important;
   }
 }
@@ -4073,4 +4099,9 @@ zen-folder .tab-reset-button {
 #zen-sidebar-foot-buttons toolbarbutton:not(#downloads-button):is(:active, [open], [checked]) > .toolbarbutton-icon,
 #alltabs-button:is(:active, [open]) .toolbarbutton-icon {
   opacity: 0.7 !important;
+}
+
+/* Firefox's own reload/stop animation would play over Zia's. */
+#stop-reload-button .toolbarbutton-animatable-box {
+  display: none !important;
 }
