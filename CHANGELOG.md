@@ -4,6 +4,17 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.53.2] — 2026-09-25
+
+### Changed
+
+- Asleep tabs, essentials and folders are dimmed a little less.
+
+### Fixed
+
+- An asleep essential dimmed its icon but not its tile. The tile fades with
+  it now.
+
 ## [2.53.1] — 2026-09-25
 
 ### Added

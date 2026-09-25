@@ -927,18 +927,24 @@
 @media -moz-pref("zia.tabs.dim-asleep") {
   :root:not(#zia-none) .tabbrowser-tab[pending]:not([selected], [visuallyselected]) {
     & :is(.tab-icon-stack, .tab-icon-image) {
-      opacity: 0.45 !important;
+      opacity: 0.55 !important;
       transition: opacity 0.15s ease;
     }
 
     & :is(.tab-label-container, .tab-label) {
-      opacity: 0.5 !important;
+      opacity: 0.6 !important;
       transition: opacity 0.15s ease;
     }
   }
 
+  /* an asleep essential's tile fades with it */
+  :root:not(#zia-none) .tabbrowser-tab[zen-essential][pending]:not([selected], [visuallyselected]) > .tab-stack > .tab-background {
+    opacity: 0.6 !important;
+    transition: opacity 0.15s ease;
+  }
+
   :root:not(#zia-none) :is(zen-folder, tab-group:not([split-view-group])):has(.tabbrowser-tab[pending]):not(:has(.tabbrowser-tab:not([pending]))) > .tab-group-label-container {
-    opacity: 0.5 !important;
+    opacity: 0.6 !important;
     transition: opacity 0.15s ease;
   }
 }
