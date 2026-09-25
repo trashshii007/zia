@@ -151,6 +151,123 @@
     );
   }
 
+  // With a tab selected inside it, Zen leaves the folder's start where it
+  // is and shrinks the other tabs away instead (or grows them back), so the
+  // spring above never ran. Those tabs' own animations get the spring's
+  // first leg, arriving at 62% of the way through, and the folder's contents
+  // stretch a couple of pixels past (or pull up past) where they land, then
+  // settle, the same shape as a folder with nothing selected.
+  const FOLDER_ARRIVE = 0.62;
+  let folderMotion = null;
+
+  function noteFolderMotion(event) {
+    const group = event.target;
+    if (!isFolder(group)) {
+      return;
+    }
+    const motion = {
+      group,
+      closing: event.type === "TabGroupCollapse",
+      hadActive: group.hasAttribute("has-active"),
+      bounced: false,
+    };
+    folderMotion = motion;
+    setTimeout(() => {
+      if (folderMotion === motion) {
+        folderMotion = null;
+      }
+    }, 0);
+  }
+
+  function springFolderItem(element, keyframes, options) {
+    const motion = folderMotion;
+    if (
+      !motion ||
+      !Array.isArray(keyframes) ||
+      keyframes.length !== 2 ||
+      !(typeof options === "object" && options?.duration > 0) ||
+      !(motion.closing ? motion.group.hasAttribute("has-active") : motion.hadActive)
+    ) {
+      return null;
+    }
+    const container = motion.group.groupContainer;
+    if (!container?.contains(element) || container === element) {
+      return null;
+    }
+    const [a, b] = keyframes;
+    const props = Object.keys(b).filter((prop) => prop !== "offset" && prop !== "easing" && prop !== "composite");
+    if (!props.includes("height")) {
+      return null;
+    }
+    const scale = window.devicePixelRatio || 1;
+    const tracks = [];
+    for (const prop of props) {
+      const from = parseFloat(a?.[prop]);
+      const to = parseFloat(b[prop]);
+      const numeric = Number.isFinite(from) && Number.isFinite(to);
+      if (prop === "height" && (!numeric || from === to)) {
+        return null;
+      }
+      if (numeric) {
+        tracks.push({ prop, from, to, unit: prop === "opacity" ? "" : "px" });
+      } else if (Number.isFinite(from)) {
+        // Growing back to a natural size ("auto"): hold the size it starts
+        // at until the very end, when the tab is its full height anyway.
+        tracks.push({ prop, hold: a[prop], end: b[prop] });
+      } else {
+        tracks.push({ prop, hold: b[prop], end: b[prop] });
+      }
+    }
+    try {
+      if (!Services.prefs.getBoolPref("zia.folders.bounce", true)) {
+        return null;
+      }
+    } catch (err) {
+      return null;
+    }
+    const count = Math.max(2, Math.ceil((FOLDER_SPRING_MS / 1000) * STEPS_PER_SECOND));
+    const frames = [];
+    for (let i = 0; i <= count; i++) {
+      const offset = i / count;
+      const k = offset >= FOLDER_ARRIVE ? 1 : EASE_OUT(offset / FOLDER_ARRIVE);
+      const frame = { offset, easing: "steps(1, end)" };
+      for (const track of tracks) {
+        if (track.hold !== undefined) {
+          frame[track.prop] = i === count ? track.end : track.hold;
+          continue;
+        }
+        let value = track.from + (track.to - track.from) * k;
+        if (track.unit) {
+          value = track.to + Math.round((value - track.to) * scale) / scale;
+        }
+        frame[track.prop] = `${value}${track.unit}`;
+      }
+      frames.push(frame);
+    }
+    delete frames.at(-1).easing;
+    const bounce = motion.bounced
+      ? null
+      : {
+          container,
+          keyframes: pixelSteps(
+            "marginBottom",
+            [
+              [0, 0, EASE_OUT],
+              [FOLDER_ARRIVE, motion.closing ? -FOLDER_CLOSE_BOUNCE_PX : FOLDER_OVERSHOOT_PX, EASE_IN_OUT],
+              [1, 0],
+            ],
+            FOLDER_SPRING_MS,
+            0
+          ),
+        };
+    motion.bounced = true;
+    return {
+      bounce,
+      keyframes: frames,
+      options: { ...options, duration: FOLDER_SPRING_MS, easing: "linear" },
+    };
+  }
+
   function allowEmojiFolderIcons() {
     const picker = window.gZenEmojiPicker;
     if (!picker || typeof picker.open !== "function" || picker.open.__zia) {
@@ -175,7 +292,14 @@
     const patched = function (keyframes, options) {
       const spring = springFolderAnimation(this, keyframes, options);
       if (!spring) {
-        return animate.call(this, keyframes, options);
+        const item = springFolderItem(this, keyframes, options);
+        if (!item) {
+          return animate.call(this, keyframes, options);
+        }
+        if (item.bounce) {
+          animate.call(item.bounce.container, item.bounce.keyframes, { duration: FOLDER_SPRING_MS });
+        }
+        return animate.call(this, item.keyframes, item.options);
       }
       if (spring.closing) {
         bounceUpAfterClosing(this.parentElement, animate);
@@ -184,6 +308,8 @@
     };
     patched.__zia = true;
     Element.prototype.animate = patched;
+    window.addEventListener("TabGroupCollapse", noteFolderMotion, true);
+    window.addEventListener("TabGroupExpand", noteFolderMotion, true);
   }
 
   function hideWwwInUrlbar() {

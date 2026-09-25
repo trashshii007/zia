@@ -4,6 +4,25 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.49.0] — 2026-09-25
+
+### Changed
+
+- **Copying a link pops the paperclip into a tick.** In the address bar,
+  on a tab's hover card and on a split pane's bar, the paperclip shrinks,
+  tilts and fades, then the tick springs in, running a touch past full
+  size. After a moment the tick pops back into the paperclip. It used to
+  swap in a single frame.
+
+### Fixed
+
+- A folder with a selected tab inside it didn't bounce when it opened or
+  closed. Zen moves that kind of folder differently, shrinking its other
+  tabs away (or growing them back) rather than sliding the folder shut, and
+  Zia's spring only knew the slide. Those tabs now move with the same
+  spring, and the folder stretches a couple of pixels past where it lands
+  opening, or pulls up past it closing, then settles.
+
 ## [2.48.0] — 2026-09-25
 
 ### Added

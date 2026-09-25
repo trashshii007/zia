@@ -510,9 +510,10 @@
           } else {
             keepCardUntil = Date.now() + 1200;
             if (action.name === "copy") {
-              const button = card.querySelector('[zia-action="copy"] img');
-              button?.setAttribute("src", "chrome://sine/content/zia/icons/tabler/outline/check.svg");
-              setTimeout(() => button?.setAttribute("src", "chrome://sine/content/zia/icons/tabler/outline/paperclip.svg"), 1200);
+              const button = card.querySelector('[zia-action="copy"]');
+              if (button) {
+                showCopiedIcon(button, button.querySelector("img"));
+              }
             }
           }
           if (!tab?.isConnected) {
