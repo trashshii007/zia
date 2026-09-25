@@ -4,7 +4,7 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.51.0] — 2026-09-25
 
 ### Changed
 
@@ -15,6 +15,10 @@ Every release of Zia, newest first. The format follows
 
 ### Fixed
 
+- The buttons at the bottom of the sidebar (and the tab list chevron) turn
+  fully white while clicked or while their menu is open, as meant. 2.50.0
+  had them stay at their hover brightness instead. Resting and hovered,
+  they're unchanged.
 - A site's address with nothing after it showed a trailing "/" for a moment
   (youtube.com/) before it went, and kept it while autofill was completing
   what you typed. It's never shown now.
@@ -22,15 +26,6 @@ Every release of Zia, newest first. The format follows
 ### Removed
 
 - The bookmark button on tab hover cards.
-
-## [2.50.1] — 2026-09-25
-
-### Fixed
-
-- The buttons at the bottom of the sidebar (and the tab list chevron) turn
-  fully white while clicked or while their menu is open, as meant. 2.50.0
-  had them stay at their hover brightness instead. Resting and hovered,
-  they're unchanged.
 
 ## [2.50.0] — 2026-09-25
 
