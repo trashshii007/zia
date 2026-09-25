@@ -366,7 +366,7 @@
 }
 
 #reload-button {
-  list-style-image: url("chrome://sine/content/zia/icons/reload.svg") !important;
+  list-style-image: url("chrome://sine/content/zia/icons/reload-arc.svg") !important;
 }
 
 #stop-button {

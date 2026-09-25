@@ -556,7 +556,7 @@
 }
 
 #reload-button {
-  list-style-image: url("chrome://sine/content/zia/icons/reload.svg") !important;
+  list-style-image: url("chrome://sine/content/zia/icons/reload-arc.svg") !important;
 }
 
 #stop-button {
@@ -3895,4 +3895,205 @@ zen-folder .tab-reset-button {
   & .urlbarView-row[selected] .urlbarView-shortcutContent {
     fill: rgb(28, 28, 30) !important;
   }
+}
+/* Back, forward and reload move like Dia's.
+   Zen draws a toolbar button's hover square on the same element as its
+   icon, so the icons here are left in place but see-through (keeping the
+   square still), and the glyphs are drawn on top by the buttons' ::before
+   and ::after, which are the only things that move.
+   Back and forward: hovered, the chevron (::before) squeezes narrower and
+   a touch taller; let go and it slides out the way it points (::after)
+   while a fresh one slides in from behind (::before).
+   Reload and stop: the one going away is drawn by #stop-reload-button's
+   ::after and shrinks away (the arrow spinning, the cross turning into a
+   plus) while the incoming glyph grows in. Reload on hover: its arrowhead
+   (::after) draws back round the circle and the arc (::before) shortens
+   with it, both driven by --zia-reload-cut. */
+
+#stop-reload-button,
+:is(#back-button, #forward-button, #reload-button, #stop-button) {
+  position: relative;
+}
+
+:is(#back-button, #forward-button, #reload-button, #stop-button) > .toolbarbutton-icon {
+  fill: transparent !important;
+}
+
+:is(#back-button, #forward-button, #reload-button, #stop-button)::before,
+:is(#back-button, #forward-button, #reload-button)::after,
+#stop-reload-button::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  background: center / 16px no-repeat;
+  -moz-context-properties: fill, fill-opacity;
+  fill: var(--toolbarbutton-icon-fill, currentColor);
+  pointer-events: none;
+}
+
+/* Reload isn't dimmed when disabled: Firefox disables it for a moment
+   after every load, which flashed it dim. */
+:is(#back-button, #forward-button, #stop-button)[disabled]::before {
+  opacity: 0.4;
+}
+
+#back-button::before {
+  background-image: url("chrome://sine/content/zia/icons/back.svg");
+}
+
+#forward-button::before {
+  background-image: url("chrome://sine/content/zia/icons/forward.svg");
+}
+
+#stop-button::before {
+  background-image: url("chrome://sine/content/zia/icons/stop.svg");
+}
+
+/* Back and forward */
+:is(#back-button, #forward-button)::before {
+  transition: scale 110ms ease-out;
+}
+
+:is(#back-button, #forward-button):not([disabled]):hover::before {
+  scale: 0.72 1.08;
+}
+
+:is(#back-button, #forward-button)::after,
+#stop-reload-button::after {
+  display: none;
+}
+
+#back-button[zia-slide]::before {
+  animation: zia-nav-in-back 220ms cubic-bezier(0.3, 1.35, 0.5, 1) 50ms both;
+}
+
+#forward-button[zia-slide]::before {
+  animation: zia-nav-in-forward 220ms cubic-bezier(0.3, 1.35, 0.5, 1) 50ms both;
+}
+
+#back-button[zia-slide]::after {
+  display: block;
+  background-image: url("chrome://sine/content/zia/icons/back.svg");
+  animation: zia-nav-out-back 150ms ease-in both;
+}
+
+#forward-button[zia-slide]::after {
+  display: block;
+  background-image: url("chrome://sine/content/zia/icons/forward.svg");
+  animation: zia-nav-out-forward 150ms ease-in both;
+}
+
+@keyframes zia-nav-in-back {
+  from { translate: 9px 0; opacity: 0; }
+  to { translate: 0 0; opacity: 1; }
+}
+
+@keyframes zia-nav-in-forward {
+  from { translate: -9px 0; opacity: 0; }
+  to { translate: 0 0; opacity: 1; }
+}
+
+@keyframes zia-nav-out-back {
+  from { translate: 0 0; scale: 0.72 1.08; opacity: 1; }
+  to { translate: -9px 0; scale: 1 1; opacity: 0; }
+}
+
+@keyframes zia-nav-out-forward {
+  from { translate: 0 0; scale: 0.72 1.08; opacity: 1; }
+  to { translate: 9px 0; scale: 1 1; opacity: 0; }
+}
+
+/* Reload: the arc (::before) and the arrowhead (::after) both turn about
+   the circle's centre, 1px below the middle of the icon. */
+#reload-button {
+  /* eased by springReloadHover(), as Zen's chrome sheets can't transition
+     a custom property */
+  --zia-reload-cut: 0deg;
+}
+
+#reload-button::before {
+  background-image: url("chrome://sine/content/zia/icons/reload-arc.svg");
+  transform-origin: 50% calc(50% + 1px);
+  mask: conic-gradient(from 90deg at 50% calc(50% + 1px), #000 calc(301.6deg - var(--zia-reload-cut) * 1.35), transparent 0);
+}
+
+#reload-button::after {
+  background-image: url("chrome://sine/content/zia/icons/reload-head.svg");
+  transform-origin: 50% calc(50% + 1px);
+  rotate: calc(var(--zia-reload-cut) * -1);
+}
+
+/* Reload to stop */
+#stop-reload-button[zia-morph="to-stop"] > #stop-button::before {
+  animation: zia-stop-in 200ms 100ms both;
+}
+
+#stop-reload-button[zia-morph="to-stop"]::after {
+  display: block;
+  background-image: url("chrome://sine/content/zia/icons/reload.svg");
+  transform-origin: 50% calc(50% + 1px);
+  animation: zia-reload-out 120ms ease-in both;
+}
+
+/* Stop to reload */
+#stop-reload-button[zia-morph="to-reload"] > #reload-button::before,
+#stop-reload-button[zia-morph="to-reload"] > #reload-button::after {
+  animation: zia-reload-in 240ms 90ms both;
+}
+
+#stop-reload-button[zia-morph="to-reload"]::after {
+  display: block;
+  background-image: url("chrome://sine/content/zia/icons/stop.svg");
+  animation: zia-stop-out 110ms ease-in both;
+}
+
+@keyframes zia-reload-out {
+  from { rotate: 0deg; scale: 1; opacity: 1; }
+  to { rotate: 200deg; scale: 0; opacity: 0; }
+}
+
+@keyframes zia-stop-in {
+  0% { rotate: -45deg; scale: 0; opacity: 0; animation-timing-function: ease-out; }
+  15% { rotate: -45deg; scale: 0.3; opacity: 1; animation-timing-function: cubic-bezier(0.3, 1.35, 0.5, 1); }
+  100% { rotate: 0deg; scale: 1; opacity: 1; }
+}
+
+@keyframes zia-stop-out {
+  from { rotate: 0deg; scale: 1; opacity: 1; }
+  to { rotate: -45deg; scale: 0; opacity: 0; }
+}
+
+@keyframes zia-reload-in {
+  0% { rotate: -200deg; scale: 0; opacity: 0; animation-timing-function: ease-out; }
+  25% { rotate: -120deg; scale: 0.35; opacity: 1; animation-timing-function: cubic-bezier(0.3, 1.35, 0.5, 1); }
+  100% { rotate: 0deg; scale: 1; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(#back-button, #forward-button, #reload-button, #stop-button)::before,
+  :is(#back-button, #forward-button, #reload-button)::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  :is(#back-button, #forward-button)::after,
+  #stop-reload-button::after {
+    display: none !important;
+  }
+}
+
+/* The sidebar's bottom buttons stay dim when clicked or while their menu is
+   open, at their hover brightness, rather than turning white. */
+#zen-sidebar-foot-buttons toolbarbutton:not(#downloads-button):is(:active, [open], [checked]) > .toolbarbutton-icon,
+#alltabs-button:is(:active, [open]) .toolbarbutton-icon {
+  opacity: 0.7 !important;
+}
+
+/* Firefox's own reload/stop animation would play over Zia's. */
+#stop-reload-button .toolbarbutton-animatable-box {
+  display: none !important;
 }

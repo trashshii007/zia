@@ -4,6 +4,24 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.50.0] — 2026-09-25
+
+### Changed
+
+- **Back, forward and reload move like Dia's.** Hover back or forward and
+  the chevron squeezes; click and it slides out the way it points while a
+  fresh one slides in behind it. When a page starts loading, the reload
+  arrow spins as it shrinks away and the stop cross grows out of a small
+  plus; when it's done, the cross turns back into a plus as it shrinks and
+  the arrow spins back in. Hovering reload draws its arrowhead back a
+  little round the circle.
+
+### Fixed
+
+- The buttons at the bottom of the sidebar (and the tab list chevron)
+  turned bright white when clicked or while their menu was open. They now
+  stay at their hover brightness.
+
 ## [2.49.0] — 2026-09-25
 
 ### Added

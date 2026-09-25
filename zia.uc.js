@@ -1042,6 +1042,84 @@
     setTimeout(alignOpenedUrlbar, 200);
   }
 
+
+  // Restarts a CSS animation keyed on an attribute, then clears it.
+  function replayAttribute(el, name, ms, value = "true") {
+    el.removeAttribute(name);
+    el.getBoundingClientRect();
+    el.setAttribute(name, value);
+    clearTimeout(el.ziaReplayTimers?.[name]);
+    el.ziaReplayTimers = { ...el.ziaReplayTimers, [name]: setTimeout(() => el.removeAttribute(name), ms) };
+  }
+
+  // Back and forward slide through when clicked; reload and stop turn into
+  // each other as a page starts and finishes loading (the motion itself is
+  // in the CSS, keyed on these attributes).
+  function animateNavButtons() {
+    for (const id of ["back-button", "forward-button"]) {
+      const button = document.getElementById(id);
+      button?.addEventListener(
+        "click",
+        (event) => {
+          if (event.button === 0 && !button.hasAttribute("disabled")) {
+            replayAttribute(button, "zia-slide", 420);
+          }
+        },
+        true
+      );
+    }
+    const reload = document.getElementById("reload-button");
+    const container = document.getElementById("stop-reload-button");
+    if (!reload || !container) {
+      return;
+    }
+    let showingStop = reload.hasAttribute("displaystop");
+    new MutationObserver(() => {
+      const now = reload.hasAttribute("displaystop");
+      if (now === showingStop) {
+        return;
+      }
+      showingStop = now;
+      replayAttribute(container, "zia-morph", 450, now ? "to-stop" : "to-reload");
+    }).observe(reload, { attributes: true, attributeFilter: ["displaystop"] });
+  }
+
+  // Reload on hover: the arrowhead draws back 20 degrees round the circle
+  // and the arc shortens with it, on Zia's spring. The CSS reads the angle
+  // from --zia-reload-cut, eased here frame by frame.
+  const RELOAD_HOVER_CUT = 20;
+  const RELOAD_HOVER_MS = 260;
+
+  function springReloadHover() {
+    const button = document.getElementById("reload-button");
+    if (!button) {
+      return;
+    }
+    const ease = cubicBezier(0.3, 1.35, 0.5, 1);
+    let cut = 0;
+    let frame = 0;
+    const go = (target) => {
+      cancelAnimationFrame(frame);
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        cut = target;
+        button.style.setProperty("--zia-reload-cut", `${cut}deg`);
+        return;
+      }
+      const from = cut;
+      const start = performance.now();
+      const step = (now) => {
+        const t = Math.min(1, (now - start) / RELOAD_HOVER_MS);
+        cut = from + (target - from) * ease(t);
+        button.style.setProperty("--zia-reload-cut", `${cut}deg`);
+        if (t < 1) {
+          frame = requestAnimationFrame(step);
+        }
+      };
+      frame = requestAnimationFrame(step);
+    };
+    button.addEventListener("mouseenter", () => go(RELOAD_HOVER_CUT));
+    button.addEventListener("mouseleave", () => go(0));
+  }
   let workspaceSlot = null;
   let movedIndicator = null;
   let movedFromSpace = null;
@@ -9669,6 +9747,8 @@
     safely("keepWholeUrlSelected", () => keepWholeUrlSelected(urlbar));
     safely("matchTabCorners", matchTabCorners);
     safely("addCopyLinkButton", addCopyLinkButton);
+    safely("animateNavButtons", animateNavButtons);
+    safely("springReloadHover", springReloadHover);
     safely("watchEdgeGlow", watchEdgeGlow);
     safely("watchColorDrift", watchColorDrift);
     safely("watchPopUpColor", watchPopUpColor);
