@@ -17,6 +17,14 @@ Every release of Zia, newest first. The format follows
   thin line of another colour. It also checks when the window comes back
   into view or is resized.
 
+### Fixed
+
+- Tabs' close buttons could vanish until Zen restarted. They're hidden while
+  a tab is dragged, and a drag that ended somewhere the window couldn't see
+  (dropped in another window or on the desktop, or its tab moved or closed
+  mid-drag) never cleared that. Zia now tidies up as soon as the mouse moves
+  with no button held.
+
 ## [2.47.0] — 2026-09-24
 
 ### Added

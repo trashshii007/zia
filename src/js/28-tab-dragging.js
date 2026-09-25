@@ -2026,5 +2026,36 @@
       settle();
       setTimeout(settle, 0);
     });
+
+    // A drag that ends somewhere this window can't see (dropped in another
+    // window or on the desktop, or its tab moved or closed mid-drag) never
+    // sends dragend here, which left the drag state on, and with it every
+    // tab's close button hidden until Zen restarted. No mouse moves arrive
+    // during a drag, so an ordinary move with no button held means none is
+    // going on any more: tidy up whatever was left.
+    let lastTidy = 0;
+    window.addEventListener(
+      "mousemove",
+      (event) => {
+        if (event.buttons || event.timeStamp - lastTidy < 500) {
+          return;
+        }
+        lastTidy = event.timeStamp;
+        if (drag || document.documentElement.hasAttribute("zia-dragging-tab")) {
+          settle();
+        }
+        const strip = document.getElementById("tabbrowser-tabs");
+        if (strip?.hasAttribute("zia-settling") && Date.now() > blockAnimUntil + 1000) {
+          strip.removeAttribute("zia-settling");
+        }
+        for (const tab of document.querySelectorAll(".tabbrowser-tab[zia-essential-dragged]")) {
+          if (!essentialDrag) {
+            tab.removeAttribute("zia-essential-dragged");
+            tab.style.visibility = "";
+          }
+        }
+      },
+      true
+    );
   }
 
