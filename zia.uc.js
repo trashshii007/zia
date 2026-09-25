@@ -152,7 +152,9 @@
     }
   }
 
-  async function sampleTopColor(browser) {
+  // `rows` is how deep a band to read when the scroll position isn't known
+  // (the whole view is drawn small, so one row is 8px of page)
+  async function sampleTopColor(browser, rows = 1) {
     const windowGlobal = browser?.browsingContext?.currentWindowGlobal;
     const width = browser?.clientWidth;
     if (!windowGlobal || !width) {
@@ -168,7 +170,7 @@
     sampleTopColor.canvas ||= document.createElementNS("http://www.w3.org/1999/xhtml", "canvas");
     const canvas = sampleTopColor.canvas;
     canvas.width = bitmap.width;
-    canvas.height = pos ? bitmap.height : Math.min(1, bitmap.height);
+    canvas.height = pos ? bitmap.height : Math.min(rows, bitmap.height);
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     ctx.drawImage(bitmap, 0, 0);
     bitmap.close();
@@ -304,6 +306,71 @@
     if (!fromScroll && rgb) {
       rememberSiteColor(browser, rgb);
     }
+  }
+
+  // The colour checker. The toolbar's colour is read when a page loads, for
+  // a few seconds after, and on scrolling, so a page that changes later (a
+  // banner closing, a header recolouring itself, a slideshow) or whose very
+  // top edge is a thin line of another colour could leave it wrong. Every
+  // few seconds, while the tab is showing and settled, Zia reads a slightly
+  // deeper band at the top of the page. If two readings in a row agree with
+  // each other and not with the toolbar, the toolbar changes to match and
+  // the site's remembered colour is corrected. It also checks when the
+  // window comes back into view or is resized.
+  const CHECK_EVERY = 3000;
+  const CHECK_ROWS = 3;
+  const CHECK_DISTANCE = 24;
+  let checkSuspect = null;
+  let checking = false;
+
+  async function checkColor() {
+    const browser = gBrowser.selectedBrowser;
+    if (checking || document.hidden || !siteColorOn() || !browser || isErrorPage(browser) || isLoading(browser) ||
+        scrollTimer || scrollSampling || !colorCache.has(browser)) {
+      return;
+    }
+    checking = true;
+    const id = colorRequestId;
+    let reading = null;
+    try {
+      reading = await sampleTopColor(browser, CHECK_ROWS);
+    } catch (err) {
+      noteError("site colour: checkColor", err);
+    } finally {
+      checking = false;
+    }
+    // Something else read or changed the colour meanwhile, or the tab changed
+    if (id !== colorRequestId || browser !== gBrowser.selectedBrowser || isLoading(browser) || !reading?.rgb) {
+      checkSuspect = null;
+      return;
+    }
+    const shown = colorCache.get(browser);
+    if (reading.share < MIN_COLOR_SHARE || colorDistance(reading.rgb, shown) <= CHECK_DISTANCE) {
+      checkSuspect = null;
+      return;
+    }
+    if (!checkSuspect || checkSuspect.browser !== browser || colorDistance(reading.rgb, checkSuspect.rgb) > SAME_COLOR_DISTANCE) {
+      checkSuspect = { browser, rgb: reading.rgb };
+      return;
+    }
+    checkSuspect = null;
+    applyColor(reading.rgb);
+    colorCache.set(browser, reading.rgb);
+    rememberSiteColor(browser, reading.rgb);
+  }
+
+  function watchColorDrift() {
+    setInterval(checkColor, CHECK_EVERY);
+    const soon = () => setTimeout(checkColor, 400);
+    document.addEventListener("visibilitychange", soon);
+    window.addEventListener("focus", soon);
+    window.addEventListener("resize", () => {
+      clearTimeout(watchColorDrift.resizeTimer);
+      watchColorDrift.resizeTimer = setTimeout(checkColor, 500);
+    });
+    gBrowser.tabContainer.addEventListener("TabSelect", () => {
+      checkSuspect = null;
+    });
   }
 
   const SITE_COLORS_PREF = "zia.siteColors";
@@ -8644,6 +8711,7 @@
     safely("matchTabCorners", matchTabCorners);
     safely("addCopyLinkButton", addCopyLinkButton);
     safely("watchEdgeGlow", watchEdgeGlow);
+    safely("watchColorDrift", watchColorDrift);
     safely("quietZenHaptics", quietZenHaptics);
     safely("watchHapticsMute", watchHapticsMute);
     safely("watchUnloadable", watchUnloadable);

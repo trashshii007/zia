@@ -66,7 +66,7 @@ Workspace and folder icons do a lot of the work in the Dia look, so they're wort
 
 ### The page and the toolbar
 
-The page and toolbar sit together in one rounded card. The toolbar picks up the colour of the site underneath and follows it as you scroll, switching to dark text on light sites. Colours are remembered per site, so pages open already in their colour instead of fading into it. While a page loads, a glow runs along the address bar. The address itself reads as `domain / title`, and hovering it shows the full URL.
+The page and toolbar sit together in one rounded card. The toolbar picks up the colour of the site underneath and follows it as you scroll, switching to dark text on light sites. Colours are remembered per site, so pages open already in their colour instead of fading into it. Every few seconds Zia checks the colour against the page again, and if the page has changed or the first reading was off, the toolbar corrects itself. While a page loads, a glow runs along the address bar. The address itself reads as `domain / title`, and hovering it shows the full URL.
 
 ### The address bar
 

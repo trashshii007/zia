@@ -4,6 +4,19 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.48.0] — 2026-09-25
+
+### Added
+
+- **The toolbar's colour checks itself.** Every few seconds, while the tab is
+  showing and the page has settled, Zia reads the top of the page again. If
+  two readings in a row agree with each other but not with the toolbar,
+  the toolbar changes to match and the colour remembered for that site is
+  corrected. This catches pages that change after loading (a banner
+  closing, a header recolouring itself) and pages whose very top edge is a
+  thin line of another colour. It also checks when the window comes back
+  into view or is resized.
+
 ## [2.47.0] — 2026-09-24
 
 ### Added
