@@ -4,6 +4,39 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.49.0] — 2026-09-25
+
+### Added
+
+- **The address bar's pop-up can take the toolbar's colour.** Turn on
+  **Address bar pop-up takes the toolbar's colour as it opens** (it's off
+  by default). Clicking the address bar then opens the pop-up in the same
+  colour as the site-coloured toolbar, with dark text on light sites and
+  light text on dark ones. The colour is taken once, as the pop-up opens,
+  and kept until it closes, so scrolling the page underneath doesn't change
+  it. With the toolbar in the theme's colour, or Zen's own pop-up, nothing
+  changes.
+
+### Changed
+
+- **Copying a link pops the paperclip into a tick.** In the address bar,
+  on a tab's hover card and on a split pane's bar, the paperclip shrinks,
+  tilts and fades, then the tick springs in, running a touch past full
+  size. After a moment the tick pops back into the paperclip. It used to
+  swap in a single frame.
+- **The reload button is Dia's.** A slightly bigger circle, with no tail
+  on the arrow: just the arrowhead sitting on top of the circle, a little
+  right of centre, and the gap running from it round to three o'clock.
+
+### Fixed
+
+- A folder with a selected tab inside it didn't bounce when it opened or
+  closed. Zen moves that kind of folder differently, shrinking its other
+  tabs away (or growing them back) rather than sliding the folder shut, and
+  Zia's spring only knew the slide. Those tabs now move with the same
+  spring, and the folder stretches a couple of pixels past where it lands
+  opening, or pulls up past it closing, then settles.
+
 ## [2.48.0] — 2026-09-25
 
 ### Added

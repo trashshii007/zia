@@ -382,6 +382,7 @@
     safely("addCopyLinkButton", addCopyLinkButton);
     safely("watchEdgeGlow", watchEdgeGlow);
     safely("watchColorDrift", watchColorDrift);
+    safely("watchPopUpColor", watchPopUpColor);
     safely("quietZenHaptics", quietZenHaptics);
     safely("watchHapticsMute", watchHapticsMute);
     safely("watchUnloadable", watchUnloadable);

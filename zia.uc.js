@@ -373,6 +373,53 @@
     });
   }
 
+  // Optionally the address bar's pop-up takes the toolbar's colour as it
+  // opens, so it reads as the same bar growing. The colour is copied once,
+  // when the pop-up opens, and kept until it closes: scrolling the page
+  // underneath (which can recolour the toolbar) doesn't change it. With the
+  // toolbar in the theme's colour, or Zen's own pop-up, nothing changes.
+  const POP_UP_SITE_COLOR_PREF = "zia.urlbar.site-color";
+
+  function freezePopUpColor(urlbar) {
+    const text = root.style.getPropertyValue("--zia-site-bg").trim();
+    if (
+      !text ||
+      !siteColorOn() ||
+      !Services.prefs.getBoolPref(POP_UP_SITE_COLOR_PREF, false) ||
+      urlbar.hasAttribute("zia-classic") ||
+      urlbar.getAttribute("zen-floating-urlbar") === "true"
+    ) {
+      return;
+    }
+    // A see-through colour is laid over what the page would show behind it,
+    // so the pop-up is solid.
+    const behind = matchMedia("(prefers-color-scheme: dark)").matches ? [0, 0, 0, 255] : [255, 255, 255, 255];
+    const rgb = colorOver(parseColor(text), behind);
+    urlbar.style.setProperty("--zia-pop-site-bg", cssColor(rgb.slice(0, 3)));
+    urlbar.setAttribute("zia-pop-site", brightnessOf(rgb) > LIGHT_THRESHOLD ? "light" : "dark");
+  }
+
+  function watchPopUpColor() {
+    const urlbar = gURLBar?.textbox || document.getElementById("urlbar");
+    if (!urlbar) {
+      return;
+    }
+    let open = urlbar.hasAttribute("breakout-extend");
+    new MutationObserver(() => {
+      const nowOpen = urlbar.hasAttribute("breakout-extend");
+      if (nowOpen === open) {
+        return;
+      }
+      open = nowOpen;
+      if (nowOpen) {
+        freezePopUpColor(urlbar);
+      } else {
+        urlbar.removeAttribute("zia-pop-site");
+        urlbar.style.removeProperty("--zia-pop-site-bg");
+      }
+    }).observe(urlbar, { attributes: true, attributeFilter: ["breakout-extend"] });
+  }
+
   const SITE_COLORS_PREF = "zia.siteColors";
   const SITE_COLORS_MAX = 200;
   let siteColors = null;
@@ -1467,6 +1514,123 @@
     );
   }
 
+  // With a tab selected inside it, Zen leaves the folder's start where it
+  // is and shrinks the other tabs away instead (or grows them back), so the
+  // spring above never ran. Those tabs' own animations get the spring's
+  // first leg, arriving at 62% of the way through, and the folder's contents
+  // stretch a couple of pixels past (or pull up past) where they land, then
+  // settle, the same shape as a folder with nothing selected.
+  const FOLDER_ARRIVE = 0.62;
+  let folderMotion = null;
+
+  function noteFolderMotion(event) {
+    const group = event.target;
+    if (!isFolder(group)) {
+      return;
+    }
+    const motion = {
+      group,
+      closing: event.type === "TabGroupCollapse",
+      hadActive: group.hasAttribute("has-active"),
+      bounced: false,
+    };
+    folderMotion = motion;
+    setTimeout(() => {
+      if (folderMotion === motion) {
+        folderMotion = null;
+      }
+    }, 0);
+  }
+
+  function springFolderItem(element, keyframes, options) {
+    const motion = folderMotion;
+    if (
+      !motion ||
+      !Array.isArray(keyframes) ||
+      keyframes.length !== 2 ||
+      !(typeof options === "object" && options?.duration > 0) ||
+      !(motion.closing ? motion.group.hasAttribute("has-active") : motion.hadActive)
+    ) {
+      return null;
+    }
+    const container = motion.group.groupContainer;
+    if (!container?.contains(element) || container === element) {
+      return null;
+    }
+    const [a, b] = keyframes;
+    const props = Object.keys(b).filter((prop) => prop !== "offset" && prop !== "easing" && prop !== "composite");
+    if (!props.includes("height")) {
+      return null;
+    }
+    const scale = window.devicePixelRatio || 1;
+    const tracks = [];
+    for (const prop of props) {
+      const from = parseFloat(a?.[prop]);
+      const to = parseFloat(b[prop]);
+      const numeric = Number.isFinite(from) && Number.isFinite(to);
+      if (prop === "height" && (!numeric || from === to)) {
+        return null;
+      }
+      if (numeric) {
+        tracks.push({ prop, from, to, unit: prop === "opacity" ? "" : "px" });
+      } else if (Number.isFinite(from)) {
+        // Growing back to a natural size ("auto"): hold the size it starts
+        // at until the very end, when the tab is its full height anyway.
+        tracks.push({ prop, hold: a[prop], end: b[prop] });
+      } else {
+        tracks.push({ prop, hold: b[prop], end: b[prop] });
+      }
+    }
+    try {
+      if (!Services.prefs.getBoolPref("zia.folders.bounce", true)) {
+        return null;
+      }
+    } catch (err) {
+      return null;
+    }
+    const count = Math.max(2, Math.ceil((FOLDER_SPRING_MS / 1000) * STEPS_PER_SECOND));
+    const frames = [];
+    for (let i = 0; i <= count; i++) {
+      const offset = i / count;
+      const k = offset >= FOLDER_ARRIVE ? 1 : EASE_OUT(offset / FOLDER_ARRIVE);
+      const frame = { offset, easing: "steps(1, end)" };
+      for (const track of tracks) {
+        if (track.hold !== undefined) {
+          frame[track.prop] = i === count ? track.end : track.hold;
+          continue;
+        }
+        let value = track.from + (track.to - track.from) * k;
+        if (track.unit) {
+          value = track.to + Math.round((value - track.to) * scale) / scale;
+        }
+        frame[track.prop] = `${value}${track.unit}`;
+      }
+      frames.push(frame);
+    }
+    delete frames.at(-1).easing;
+    const bounce = motion.bounced
+      ? null
+      : {
+          container,
+          keyframes: pixelSteps(
+            "marginBottom",
+            [
+              [0, 0, EASE_OUT],
+              [FOLDER_ARRIVE, motion.closing ? -FOLDER_CLOSE_BOUNCE_PX : FOLDER_OVERSHOOT_PX, EASE_IN_OUT],
+              [1, 0],
+            ],
+            FOLDER_SPRING_MS,
+            0
+          ),
+        };
+    motion.bounced = true;
+    return {
+      bounce,
+      keyframes: frames,
+      options: { ...options, duration: FOLDER_SPRING_MS, easing: "linear" },
+    };
+  }
+
   function allowEmojiFolderIcons() {
     const picker = window.gZenEmojiPicker;
     if (!picker || typeof picker.open !== "function" || picker.open.__zia) {
@@ -1491,7 +1655,14 @@
     const patched = function (keyframes, options) {
       const spring = springFolderAnimation(this, keyframes, options);
       if (!spring) {
-        return animate.call(this, keyframes, options);
+        const item = springFolderItem(this, keyframes, options);
+        if (!item) {
+          return animate.call(this, keyframes, options);
+        }
+        if (item.bounce) {
+          animate.call(item.bounce.container, item.bounce.keyframes, { duration: FOLDER_SPRING_MS });
+        }
+        return animate.call(this, item.keyframes, item.options);
       }
       if (spring.closing) {
         bounceUpAfterClosing(this.parentElement, animate);
@@ -1500,6 +1671,8 @@
     };
     patched.__zia = true;
     Element.prototype.animate = patched;
+    window.addEventListener("TabGroupCollapse", noteFolderMotion, true);
+    window.addEventListener("TabGroupExpand", noteFolderMotion, true);
   }
 
   function hideWwwInUrlbar() {
@@ -6341,17 +6514,65 @@
     }
   }
 
-  function showCopied(button) {
-    button.setAttribute("zia-copied", "true");
-    const img = button.localName === "button" ? button.querySelector("img") : null;
-    if (img) {
-      img.setAttribute("src", "chrome://sine/content/zia/icons/tabler/outline/check.svg");
+  // Copying pops the paperclip into a tick: the paperclip shrinks, tilts
+  // and fades, then the tick springs in, running a touch past full size.
+  // After a moment the tick pops back into the paperclip the same way.
+  const POP_SPRING = "cubic-bezier(0.3, 1.4, 0.5, 1)";
+  const COPIED_ICON = "chrome://sine/content/zia/icons/tabler/outline/check.svg";
+  const COPY_ICON = "chrome://sine/content/zia/icons/tabler/outline/paperclip.svg";
+
+  function popIcon(icon, toTick, swap) {
+    icon?.ziaPop?.cancel();
+    if (typeof icon?.animate !== "function" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      swap();
+      return;
     }
+    const out = icon.animate(
+      toTick
+        ? [{ opacity: 1, scale: 1, rotate: "0deg" }, { opacity: 0, scale: 0.35, rotate: "-40deg" }]
+        : [{ opacity: 1, scale: 1 }, { opacity: 0, scale: 0.5 }],
+      { duration: 130, easing: "ease-in", fill: "forwards" }
+    );
+    icon.ziaPop = out;
+    out.finished.then(
+      () => {
+        swap();
+        icon.ziaPop = icon.animate(
+          toTick
+            ? [
+                { opacity: 0, scale: 0.35, rotate: "25deg" },
+                { opacity: 1, scale: 1.18, rotate: "0deg", offset: 0.6 },
+                { opacity: 1, scale: 1, rotate: "0deg" },
+              ]
+            : [{ opacity: 0, scale: 0.5, rotate: "-20deg" }, { opacity: 1, scale: 1, rotate: "0deg" }],
+          { duration: toTick ? 380 : 320, easing: POP_SPRING }
+        );
+        out.cancel();
+      },
+      () => {}
+    );
+  }
+
+  // The icon is an <img> (hover card, split pane bar) or the address bar
+  // button's <image>, whose picture comes from CSS on [zia-copied].
+  function showCopiedIcon(button, icon) {
+    const set = (copied) => () => {
+      if (copied) {
+        button.setAttribute("zia-copied", "true");
+      } else {
+        button.removeAttribute("zia-copied");
+      }
+      if (icon?.localName === "img") {
+        icon.setAttribute("src", copied ? COPIED_ICON : COPY_ICON);
+      }
+    };
+    popIcon(icon, true, set(true));
     clearTimeout(button.ziaCopiedTimer);
-    button.ziaCopiedTimer = setTimeout(() => {
-      button.removeAttribute("zia-copied");
-      img?.setAttribute("src", "chrome://sine/content/zia/icons/tabler/outline/paperclip.svg");
-    }, 1200);
+    button.ziaCopiedTimer = setTimeout(() => popIcon(icon, false, set(false)), 1200);
+  }
+
+  function showCopied(button) {
+    showCopiedIcon(button, button.querySelector(button.localName === "button" ? "img" : "image"));
   }
 
   function addCopyLinkButton() {
@@ -6917,9 +7138,10 @@
           } else {
             keepCardUntil = Date.now() + 1200;
             if (action.name === "copy") {
-              const button = card.querySelector('[zia-action="copy"] img');
-              button?.setAttribute("src", "chrome://sine/content/zia/icons/tabler/outline/check.svg");
-              setTimeout(() => button?.setAttribute("src", "chrome://sine/content/zia/icons/tabler/outline/paperclip.svg"), 1200);
+              const button = card.querySelector('[zia-action="copy"]');
+              if (button) {
+                showCopiedIcon(button, button.querySelector("img"));
+              }
             }
           }
           if (!tab?.isConnected) {
@@ -9449,6 +9671,7 @@
     safely("addCopyLinkButton", addCopyLinkButton);
     safely("watchEdgeGlow", watchEdgeGlow);
     safely("watchColorDrift", watchColorDrift);
+    safely("watchPopUpColor", watchPopUpColor);
     safely("quietZenHaptics", quietZenHaptics);
     safely("watchHapticsMute", watchHapticsMute);
     safely("watchUnloadable", watchUnloadable);

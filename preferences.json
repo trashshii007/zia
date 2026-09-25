@@ -94,6 +94,12 @@
     "defaultValue": true
   },
   {
+    "type": "checkbox",
+    "label": "Address bar pop-up takes the toolbar's colour as it opens (needs the site-coloured toolbar)",
+    "property": "zia.urlbar.site-color",
+    "defaultValue": false
+  },
+  {
     "type": "dropdown",
     "label": "Address bar position",
     "property": "zia.urlbar.position",

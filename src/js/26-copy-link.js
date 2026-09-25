@@ -76,17 +76,65 @@
     }
   }
 
-  function showCopied(button) {
-    button.setAttribute("zia-copied", "true");
-    const img = button.localName === "button" ? button.querySelector("img") : null;
-    if (img) {
-      img.setAttribute("src", "chrome://sine/content/zia/icons/tabler/outline/check.svg");
+  // Copying pops the paperclip into a tick: the paperclip shrinks, tilts
+  // and fades, then the tick springs in, running a touch past full size.
+  // After a moment the tick pops back into the paperclip the same way.
+  const POP_SPRING = "cubic-bezier(0.3, 1.4, 0.5, 1)";
+  const COPIED_ICON = "chrome://sine/content/zia/icons/tabler/outline/check.svg";
+  const COPY_ICON = "chrome://sine/content/zia/icons/tabler/outline/paperclip.svg";
+
+  function popIcon(icon, toTick, swap) {
+    icon?.ziaPop?.cancel();
+    if (typeof icon?.animate !== "function" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      swap();
+      return;
     }
+    const out = icon.animate(
+      toTick
+        ? [{ opacity: 1, scale: 1, rotate: "0deg" }, { opacity: 0, scale: 0.35, rotate: "-40deg" }]
+        : [{ opacity: 1, scale: 1 }, { opacity: 0, scale: 0.5 }],
+      { duration: 130, easing: "ease-in", fill: "forwards" }
+    );
+    icon.ziaPop = out;
+    out.finished.then(
+      () => {
+        swap();
+        icon.ziaPop = icon.animate(
+          toTick
+            ? [
+                { opacity: 0, scale: 0.35, rotate: "25deg" },
+                { opacity: 1, scale: 1.18, rotate: "0deg", offset: 0.6 },
+                { opacity: 1, scale: 1, rotate: "0deg" },
+              ]
+            : [{ opacity: 0, scale: 0.5, rotate: "-20deg" }, { opacity: 1, scale: 1, rotate: "0deg" }],
+          { duration: toTick ? 380 : 320, easing: POP_SPRING }
+        );
+        out.cancel();
+      },
+      () => {}
+    );
+  }
+
+  // The icon is an <img> (hover card, split pane bar) or the address bar
+  // button's <image>, whose picture comes from CSS on [zia-copied].
+  function showCopiedIcon(button, icon) {
+    const set = (copied) => () => {
+      if (copied) {
+        button.setAttribute("zia-copied", "true");
+      } else {
+        button.removeAttribute("zia-copied");
+      }
+      if (icon?.localName === "img") {
+        icon.setAttribute("src", copied ? COPIED_ICON : COPY_ICON);
+      }
+    };
+    popIcon(icon, true, set(true));
     clearTimeout(button.ziaCopiedTimer);
-    button.ziaCopiedTimer = setTimeout(() => {
-      button.removeAttribute("zia-copied");
-      img?.setAttribute("src", "chrome://sine/content/zia/icons/tabler/outline/paperclip.svg");
-    }, 1200);
+    button.ziaCopiedTimer = setTimeout(() => popIcon(icon, false, set(false)), 1200);
+  }
+
+  function showCopied(button) {
+    showCopiedIcon(button, button.querySelector(button.localName === "button" ? "img" : "image"));
   }
 
   function addCopyLinkButton() {
