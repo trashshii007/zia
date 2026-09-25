@@ -4,16 +4,6 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Changed
-
-- Every loaded essential now wears the selected one's look (its favicon's
-  colours glowing behind a glass panel), dimmed, instead of only the
-  selected one having it. The selected essential stays brightest, and
-  asleep ones stay plain grey. It follows Zen's own essential favicon
-  background setting.
-
 ## [2.53.1] — 2026-09-25
 
 ### Added
