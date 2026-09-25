@@ -387,3 +387,44 @@
       replayAttribute(container, "zia-morph", 450, now ? "to-stop" : "to-reload");
     }).observe(reload, { attributes: true, attributeFilter: ["displaystop"] });
   }
+
+  // Reload on hover: the arrowhead draws back 20 degrees round the circle
+  // and the arc shortens with it, on Zia's spring. The CSS reads the angle
+  // from --zia-reload-cut, eased here frame by frame.
+  const RELOAD_HOVER_CUT = 20;
+  const RELOAD_HOVER_MS = 260;
+
+  function springReloadHover() {
+    const button = document.getElementById("reload-button");
+    if (!button) {
+      return;
+    }
+    const ease = cubicBezier(0.3, 1.35, 0.5, 1);
+    let cut = 0;
+    let frame = 0;
+    const go = (target) => {
+      cancelAnimationFrame(frame);
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        cut = target;
+        button.style.setProperty("--zia-reload-cut", `${cut}deg`);
+        return;
+      }
+      const from = cut;
+      const start = performance.now();
+      const step = (now) => {
+        const t = Math.min(1, (now - start) / RELOAD_HOVER_MS);
+        cut = from + (target - from) * ease(t);
+        button.style.setProperty("--zia-reload-cut", `${cut}deg`);
+        if (t < 1) {
+          frame = requestAnimationFrame(step);
+        }
+      };
+      frame = requestAnimationFrame(step);
+    };
+    button.addEventListener("mouseenter", () => {
+      if (!button.hasAttribute("disabled")) {
+        go(RELOAD_HOVER_CUT);
+      }
+    });
+    button.addEventListener("mouseleave", () => go(0));
+  }

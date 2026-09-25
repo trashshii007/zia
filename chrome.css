@@ -3908,13 +3908,7 @@ zen-folder .tab-reset-button {
    ::after and shrinks away (the arrow spinning, the cross turning into a
    plus) while the incoming glyph grows in. Reload on hover: its arrowhead
    (::after) draws back round the circle and the arc (::before) shortens
-   with it. */
-
-@property --zia-reload-cut {
-  syntax: "<angle>";
-  inherits: true;
-  initial-value: 0deg;
-}
+   with it, both driven by --zia-reload-cut. */
 
 #stop-reload-button,
 :is(#back-button, #forward-button, #reload-button, #stop-button) {
@@ -4015,12 +4009,9 @@ zen-folder .tab-reset-button {
 /* Reload: the arc (::before) and the arrowhead (::after) both turn about
    the circle's centre, 1px below the middle of the icon. */
 #reload-button {
+  /* eased by springReloadHover(), as Zen's chrome sheets can't transition
+     a custom property */
   --zia-reload-cut: 0deg;
-  transition: --zia-reload-cut 260ms cubic-bezier(0.3, 1.35, 0.5, 1);
-}
-
-#reload-button:not([disabled]):hover {
-  --zia-reload-cut: 20deg;
 }
 
 #reload-button::before {
