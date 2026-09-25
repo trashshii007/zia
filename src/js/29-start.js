@@ -380,6 +380,7 @@
     safely("keepWholeUrlSelected", () => keepWholeUrlSelected(urlbar));
     safely("matchTabCorners", matchTabCorners);
     safely("addCopyLinkButton", addCopyLinkButton);
+    safely("animateNavButtons", animateNavButtons);
     safely("watchEdgeGlow", watchEdgeGlow);
     safely("watchColorDrift", watchColorDrift);
     safely("watchPopUpColor", watchPopUpColor);

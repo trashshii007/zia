@@ -1042,6 +1042,47 @@
     setTimeout(alignOpenedUrlbar, 200);
   }
 
+
+  // Restarts a CSS animation keyed on an attribute, then clears it.
+  function replayAttribute(el, name, ms, value = "true") {
+    el.removeAttribute(name);
+    el.getBoundingClientRect();
+    el.setAttribute(name, value);
+    clearTimeout(el.ziaReplayTimers?.[name]);
+    el.ziaReplayTimers = { ...el.ziaReplayTimers, [name]: setTimeout(() => el.removeAttribute(name), ms) };
+  }
+
+  // Back and forward slide through when clicked; reload and stop turn into
+  // each other as a page starts and finishes loading (the motion itself is
+  // in the CSS, keyed on these attributes).
+  function animateNavButtons() {
+    for (const id of ["back-button", "forward-button"]) {
+      const button = document.getElementById(id);
+      button?.addEventListener(
+        "click",
+        (event) => {
+          if (event.button === 0 && !button.hasAttribute("disabled")) {
+            replayAttribute(button, "zia-slide", 420);
+          }
+        },
+        true
+      );
+    }
+    const reload = document.getElementById("reload-button");
+    const container = document.getElementById("stop-reload-button");
+    if (!reload || !container) {
+      return;
+    }
+    let showingStop = reload.hasAttribute("displaystop");
+    new MutationObserver(() => {
+      const now = reload.hasAttribute("displaystop");
+      if (now === showingStop) {
+        return;
+      }
+      showingStop = now;
+      replayAttribute(container, "zia-morph", 450, now ? "to-stop" : "to-reload");
+    }).observe(reload, { attributes: true, attributeFilter: ["displaystop"] });
+  }
   let workspaceSlot = null;
   let movedIndicator = null;
   let movedFromSpace = null;
@@ -9669,6 +9710,7 @@
     safely("keepWholeUrlSelected", () => keepWholeUrlSelected(urlbar));
     safely("matchTabCorners", matchTabCorners);
     safely("addCopyLinkButton", addCopyLinkButton);
+    safely("animateNavButtons", animateNavButtons);
     safely("watchEdgeGlow", watchEdgeGlow);
     safely("watchColorDrift", watchColorDrift);
     safely("watchPopUpColor", watchPopUpColor);
