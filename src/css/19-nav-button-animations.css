@@ -38,9 +38,24 @@
 }
 
 /* Reload isn't dimmed when disabled: Firefox disables it for a moment
-   after every load, which flashed it dim. */
-:is(#back-button, #forward-button, #stop-button)[disabled]::before {
-  opacity: 0.4;
+   after every load, which flashed it dim. Back, forward and stop fade to
+   their dim level and back rather than snapping (--zia-nav-rest is also
+   where a chevron's slide-in ends, so a click that leaves nothing more to
+   go back to settles straight into the dim look). */
+:is(#back-button, #forward-button, #stop-button) {
+  --zia-nav-rest: 1;
+}
+
+:is(#back-button, #forward-button, #stop-button)[disabled] {
+  --zia-nav-rest: 0.4;
+}
+
+:is(#back-button, #forward-button, #stop-button)::before {
+  opacity: var(--zia-nav-rest);
+}
+
+:is(#back-button, #forward-button, #stop-button) > .toolbarbutton-icon {
+  transition: background-color 0.2s ease !important;
 }
 
 #back-button::before {
@@ -57,7 +72,11 @@
 
 /* Back and forward */
 :is(#back-button, #forward-button)::before {
-  transition: scale 110ms ease-out;
+  transition: scale 110ms ease-out, opacity 0.2s ease;
+}
+
+#stop-button::before {
+  transition: opacity 0.2s ease;
 }
 
 :is(#back-button, #forward-button):not([disabled]):hover::before {
@@ -91,12 +110,12 @@
 
 @keyframes zia-nav-in-back {
   from { translate: 9px 0; opacity: 0; }
-  to { translate: 0 0; opacity: 1; }
+  to { translate: 0 0; opacity: var(--zia-nav-rest, 1); }
 }
 
 @keyframes zia-nav-in-forward {
   from { translate: -9px 0; opacity: 0; }
-  to { translate: 0 0; opacity: 1; }
+  to { translate: 0 0; opacity: var(--zia-nav-rest, 1); }
 }
 
 @keyframes zia-nav-out-back {
