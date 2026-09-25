@@ -4,6 +4,20 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.53.1] — 2026-09-25
+
+### Added
+
+- **A close button on Zen's toasts.** The little notes that pop up in the
+  corner ("Copied" and the like) get a small ✕, so you don't have to wait
+  for them to time out (or move the mouse off them first).
+
+### Fixed
+
+- The tile behind a peeked page's icon on its tab (Option-click) was
+  stretched wider than tall, its icon off centre. It's a true square now,
+  the icon in its middle.
+
 ## [2.53.0] — 2026-09-25
 
 ### Added
