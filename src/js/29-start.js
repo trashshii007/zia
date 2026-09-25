@@ -258,6 +258,7 @@
     ifOn("icon-picker", "addIconPicker", addIconPicker);
     safely("watchCompactTopRow", watchCompactTopRow);
     safely("watchOldIcons", watchOldIcons);
+    safely("watchNewFolders", watchNewFolders);
     safely("watchFolderColors", watchFolderColors);
     safely("addFolderColorPicker", addFolderColorPicker);
     safely("watchFolderCloseButtons", watchFolderCloseButtons);

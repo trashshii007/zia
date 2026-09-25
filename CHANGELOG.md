@@ -16,6 +16,12 @@ Every release of Zia, newest first. The format follows
   closing, a header recolouring itself) and pages whose very top edge is a
   thin line of another colour. It also checks when the window comes back
   into view or is resized.
+- **Folder names and icons from a local model are back, as an option.**
+  Turn on **Name new folders and choose their icons with a local model** in
+  Zia's settings (it's off by default, because the first use downloads a
+  model of about 25MB). A new folder with a default name and no icon gets a
+  name and a Tabler icon chosen from its tabs, on your machine. See the
+  README for turning on Firefox's local AI runtime first.
 
 ### Fixed
 

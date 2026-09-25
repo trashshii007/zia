@@ -49,7 +49,7 @@
     });
   }
 
-  const FEATURES = ["media-player", "find-bar", "icon-picker", "undo-close", "tab-hover-cards"];
+  const FEATURES = ["media-player", "find-bar", "icon-picker", "undo-close", "folder-icon-suggest", "tab-hover-cards"];
 
   function featureOn(name) {
     try {

@@ -7,14 +7,9 @@
         console.error(`[Zia] Could not set default for ${name}:`, err);
       }
     };
-    // Zia 2.42.0 dropped folder names and icons from a local model; clear
-    // what it left behind.
-    try {
-      Services.prefs.clearUserPref("zia.features.folder-icon-suggest");
-      IOUtils.remove(PathUtils.join(PathUtils.profileDir, "zia-icon-vectors.json"), { ignoreAbsent: true }).catch(() => {});
-    } catch (err) {
-      noteError("zen defaults: old model cleanup", err);
-    }
+    // The icon names cached for the Phosphor icons (before 2.42.0) aren't
+    // used any more; the Tabler ones have their own file.
+    IOUtils.remove(PathUtils.join(PathUtils.profileDir, "zia-icon-vectors.json"), { ignoreAbsent: true }).catch(() => {});
     set("zen.widget.mac.mono-window-controls", false);
     set("zen.urlbar.replace-newtab", !Services.prefs.getBoolPref("zia.newtab.real-tab", true));
     set("zen.splitView.enable-tab-drop", !Services.prefs.getBoolPref("zia.split.drop-cards", true));
@@ -30,6 +25,8 @@
     for (const feature of FEATURES) {
       set(`zia.features.${feature}`, true);
     }
+    // Downloads a model the first time, so it's something to opt into
+    set("zia.features.folder-icon-suggest", false);
 
     for (const name of ZIA_OPTIONS) {
       set(name, true);
