@@ -13,6 +13,12 @@ Every release of Zia, newest first. The format follows
 - A folder's hover colour (and its edge) comes and goes at once instead of
   fading, also while a dragged tab passes over it.
 
+### Fixed
+
+- A site's address with nothing after it showed a trailing "/" for a moment
+  (youtube.com/) before it went, and kept it while autofill was completing
+  what you typed. It's never shown now.
+
 ### Removed
 
 - The bookmark button on tab hover cards.
