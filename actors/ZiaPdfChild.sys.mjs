@@ -27,8 +27,10 @@ export class ZiaPdfChild extends JSWindowActorChild {
     if (!isViewer) {
       return;
     }
+    console.info("[Zia] PDF view: found Firefox's PDF viewer");
     try {
       if (!Services.prefs.getBoolPref("zia.pdf.dia-style", true)) {
+        console.info("[Zia] PDF view: switched off in Zia's settings");
         return;
       }
     } catch (err) {
@@ -37,6 +39,7 @@ export class ZiaPdfChild extends JSWindowActorChild {
     try {
       const url = "chrome://sine/content/zia/actors/ZiaPdf.sys.mjs" + new URL(import.meta.url).search;
       ChromeUtils.importESModule(url).diaPdf(win);
+      console.info("[Zia] PDF view: applied");
     } catch (err) {
       console.error("[Zia] PDF view:", err);
     }

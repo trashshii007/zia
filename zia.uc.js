@@ -591,6 +591,7 @@
         allFrames: false,
         messageManagerGroups: ["browsers"],
       });
+      console.info("[Zia] PDF view: helper registered");
     } catch (err) {
       if (err?.name !== "NotSupportedError") {
         console.error("[Zia] Could not register the PDF view:", err);
