@@ -4,6 +4,27 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.93.1] — 2026-10-04
+
+### Fixed
+
+- A space with no icon, a dot at the foot of the sidebar, is spaced like
+  the spaces beside it, rather than squashed against the one before.
+- The space beside the one shown really no longer peeks in at the
+  sidebar's edge on Windows: 2.93.0 hid it, but its folders' names set
+  themselves visible again, so the coloured slivers stayed. It's faded out
+  whole while it rests to one side.
+- No more "XML Parsing Error: syntax error" in the Browser Console for
+  each space with an icon: two of Zia's functions shared a name, so the
+  space icons went through the one meant for your own extension icons'
+  files, which tried to read the icon as text.
+
+### Changed
+
+- Folder icons, and the box they turn into, are a touch smaller.
+- The Library's empty-list notes ("No boosts yet" and the like) are at
+  the tabs' text size.
+
 ## [2.93.0] — 2026-10-04
 
 ### Fixed
