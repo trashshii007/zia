@@ -3844,15 +3844,19 @@
       kickAvatars.delete(slug);
       return "";
     }
-    actor
-      .sendQuery("Zia:KickAvatar", { slug })
-      .then((pic) => {
-        kickAvatars.set(slug, pic || "");
-        if (pic && kickSlug(card.browser) === slug) {
-          card.updateIcon();
-        }
-      })
-      .catch(() => kickAvatars.delete(slug));
+    try {
+      actor
+        .sendQuery("Zia:KickAvatar", { slug })
+        .then((pic) => {
+          kickAvatars.set(slug, pic || "");
+          if (pic && kickSlug(card.browser) === slug) {
+            card.updateIcon();
+          }
+        })
+        .catch(() => kickAvatars.delete(slug));
+    } catch (err) {
+      kickAvatars.delete(slug);
+    }
     return "";
   }
 
@@ -3931,10 +3935,10 @@
   // of the stream it keeps to go back through), so Zen shows it as a video,
   // with a progress line that jumps about. Asked of YouTube's own player (it
   // marks a live stream) every so often, the card shows LIVE instead, as it
-  // does for Twitch and Kick.
+  // does for Twitch. Kick, below, is told by its address.
   const youTubeLiveChecked = new WeakMap();
 
-  function markYouTubeLive(card) {
+  function markLiveStream(card) {
     const element = card.element;
     const browser = card.browser;
     if (!element || !browser) {
@@ -3945,6 +3949,19 @@
       host = browser.currentURI?.host || "";
     } catch (err) {
       host = "";
+    }
+    // A Kick channel's own page is its live stream. Kick's player gives the
+    // card a few seconds' position at a time, so it showed a progress line
+    // looping round every three seconds instead of LIVE.
+    if (/^(www\.)?kick\.com$/.test(host)) {
+      let path = "";
+      try {
+        path = browser.currentURI.filePath;
+      } catch (err) {
+        path = "";
+      }
+      element.toggleAttribute("zia-live", /^\/[\w-]+\/?$/.test(path));
+      return;
     }
     if (!/(^|\.)youtube\.com$/.test(host)) {
       element.removeAttribute("zia-live");
@@ -3987,7 +4004,7 @@
           this.element.__ziaCard = this;
           watchTimeLeft(this);
           showTimeLeft(this);
-          markYouTubeLive(this);
+          markLiveStream(this);
           if (!known) {
             repaintSoundTabs();
           }
@@ -3999,41 +4016,16 @@
     }
 
     const original = proto.updateIcon;
+    // Zen sets a card up once, as its tab starts to play, and drops it if
+    // anything in that fails, so nothing of Zia's here is let throw: a slip
+    // over a Kick stream's picture had left Kick with no card at all.
     const patched = function () {
       original.call(this);
-      if (this.element && this.element.__ziaCard !== this) {
-        this.element.__ziaCard = this;
-        repaintSoundTabs();
-      }
-      const button = this.focusButton;
-      let art = "";
       try {
-        art = bestArtwork(this.controller?.getMetadata?.()?.artwork);
+        dressCardIcon(this);
       } catch (err) {
-        noteError("music and sound bars: useMediaArtwork (2)", err);
+        noteError("music and sound bars: updateIcon", err);
       }
-      art = youTubeAvatar(this) || art;
-      if (!art) {
-        art = kickAvatar(this);
-      }
-      if (!button) {
-        return;
-      }
-      ensureRing(button);
-      if (art) {
-        const previous = button.getAttribute("zia-art");
-        button.setAttribute("zia-art", art);
-        const showArt = () => button.style.setProperty("--zia-media-art", `url("${art.replace(/"/g, "%22")}")`);
-        if (previous && previous !== art) {
-          flipArtwork(button, showArt);
-        } else {
-          showArt();
-        }
-      } else {
-        button.removeAttribute("zia-art");
-        button.style.removeProperty("--zia-media-art");
-      }
-      showFaviconTile(this, button, art);
     };
     patched.__zia = true;
     proto.updateIcon = patched;
@@ -4044,6 +4036,42 @@
       noteError("music and sound bars: showArt", err);
     }
     return true;
+  }
+
+  function dressCardIcon(card) {
+    if (card.element && card.element.__ziaCard !== card) {
+      card.element.__ziaCard = card;
+      repaintSoundTabs();
+    }
+    const button = card.focusButton;
+    let art = "";
+    try {
+      art = bestArtwork(card.controller?.getMetadata?.()?.artwork);
+    } catch (err) {
+      noteError("music and sound bars: useMediaArtwork (2)", err);
+    }
+    art = youTubeAvatar(card) || art;
+    if (!art) {
+      art = kickAvatar(card);
+    }
+    if (!button) {
+      return;
+    }
+    ensureRing(button);
+    if (art) {
+      const previous = button.getAttribute("zia-art");
+      button.setAttribute("zia-art", art);
+      const showArt = () => button.style.setProperty("--zia-media-art", `url("${art.replace(/"/g, "%22")}")`);
+      if (previous && previous !== art) {
+        flipArtwork(button, showArt);
+      } else {
+        showArt();
+      }
+    } else {
+      button.removeAttribute("zia-art");
+      button.style.removeProperty("--zia-media-art");
+    }
+    showFaviconTile(card, button, art);
   }
 
   function watchMediaGlow() {
@@ -4079,6 +4107,66 @@
     refresh();
   }
 
+
+  // Zen asks a tab for its media's position as it makes the card, and drops
+  // the card if that fails. A stream that never says where it is (Kick's
+  // live player) fails it, so since Zen 1.23 Kick got no card at all. The
+  // question is answered for every controller in this window: an active
+  // one with no position gives an empty one (no length: the card shows no
+  // progress line, as for any live stream). A tab already playing is
+  // offered to Zen again.
+  function cardForPositionlessMedia() {
+    // (on the controller's own type: the one this window knows by name
+    // isn't the one tabs' controllers are made from)
+    const answerPosition = (controller) => {
+      const proto = controller && Object.getPrototypeOf(controller);
+      const own = proto?.getPositionState;
+      if (typeof own !== "function" || own.__zia) {
+        return;
+      }
+      const patched = function () {
+        try {
+          return own.call(this);
+        } catch (err) {
+          if (!this.isActive) {
+            throw err;
+          }
+          // (an endless length: Zen hides the progress line and the card
+          // reads LIVE)
+          return { duration: Infinity, playbackRate: 1, position: 0 };
+        }
+      };
+      patched.__zia = true;
+      Object.defineProperty(proto, "getPositionState", { value: patched, writable: true, configurable: true, enumerable: true });
+    };
+
+    const manager = window.gZenMediaController;
+    if (!manager || typeof manager.activateMediaControls !== "function" || manager.activateMediaControls.__zia) {
+      return;
+    }
+    const original = manager.activateMediaControls;
+    const activate = function (controller, browser) {
+      try {
+        answerPosition(controller);
+      } catch (err) {
+        noteError("music and sound bars: answerPosition", err);
+      }
+      return original.call(this, controller, browser);
+    };
+    activate.__zia = true;
+    manager.activateMediaControls = activate;
+
+    for (const tab of gBrowser.tabs) {
+      if (!tab.hasAttribute("soundplaying")) {
+        continue;
+      }
+      try {
+        manager.activateMediaControls(tab.linkedBrowser.browsingContext?.mediaController, tab.linkedBrowser);
+      } catch (err) {
+        noteError("music and sound bars: cardForPositionlessMedia", err);
+      }
+    }
+  }
 
   // A music player card could be dragged out of the sidebar like a toolbar
   // button, which took it away from Zen's media player and left the player
@@ -9521,6 +9609,69 @@
     if (navBar) {
       watcher.observe(navBar, { childList: true });
     }
+  }
+
+  // ---------- Room for the essentials above every space's tabs
+  // Zen keeps a space's tabs clear of the essentials with a top padding the
+  // essentials' height. It sets that on a space as you go to it, but a space
+  // made this session starts at 0 and wasn't always given it, so its tabs
+  // sat under the essentials and slid in under them as you switched to it
+  // (seen on Windows). With the essentials shared by every space, each space
+  // is given just that room; one being made (Zen's form, with no
+  // essentials over it) and one Zen is animating are left to Zen.
+  function keepRoomForEssentials() {
+    const separate = () => {
+      try {
+        return Services.prefs.getBoolPref("zen.workspaces.separate-essentials", false);
+      } catch (err) {
+        return false;
+      }
+    };
+    const essentials = () =>
+      [...document.querySelectorAll(".zen-essentials-container")].find((el) => !el.hidden && el.getBoundingClientRect().width);
+
+    const fit = () => {
+      if (separate() || root.hasAttribute("zen-creating-workspace")) {
+        return;
+      }
+      const box = essentials();
+      if (!box) {
+        return;
+      }
+      const room = Math.max(2, box.getBoundingClientRect().height);
+      for (const space of document.querySelectorAll("zen-workspace")) {
+        if (space.querySelector("zen-workspace-creation") || space.getAnimations().length) {
+          continue;
+        }
+        const now = parseFloat(space.style.paddingTop);
+        if (!(Math.abs(now - room) < 0.5)) {
+          space.style.paddingTop = `${room}px`;
+        }
+      }
+    };
+
+    // as a switch starts (the space coming in already has its room as it
+    // slides), and once it has settled
+    new MutationObserver((records) => {
+      if (records.some((record) => record.target.localName === "zen-workspace")) {
+        fit();
+        setTimeout(fit, 400);
+      }
+    }).observe(document.getElementById("navigator-toolbox") || root, { subtree: true, attributes: true, attributeFilter: ["active"] });
+
+    let watched = null;
+    const resize = new ResizeObserver(() => fit());
+    const watch = () => {
+      const box = essentials();
+      if (box && box !== watched) {
+        watched?.isConnected && resize.unobserve(watched);
+        watched = box;
+        resize.observe(box);
+      }
+    };
+    watch();
+    setInterval(watch, 5000);
+    fit();
   }
 
   const TAB_CARD_DELAY = 600;
@@ -16781,6 +16932,7 @@
     safely("hideWwwInUrlbar", hideWwwInUrlbar);
     safely("watchRightEdges", watchRightEdges);
     ifOn("media-player", "watchMediaGlow", watchMediaGlow);
+    ifOn("media-player", "cardForPositionlessMedia", cardForPositionlessMedia);
     safely("keepMediaCardsInPlace", keepMediaCardsInPlace);
     safely("watchTabSoundBars", watchTabSoundBars);
     safely("watchSelectedTabGlow", watchSelectedTabGlow);
@@ -16807,6 +16959,7 @@
     safely("watchOldIcons", watchOldIcons);
     safely("watchNewFolders", watchNewFolders);
     safely("watchReopenedFolders", watchReopenedFolders);
+    safely("keepRoomForEssentials", keepRoomForEssentials);
     safely("watchFolderColors", watchFolderColors);
     safely("watchFolderIcon", watchFolderIcon);
     safely("addFolderColorPicker", addFolderColorPicker);
