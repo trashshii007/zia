@@ -4,6 +4,20 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.93.2] — 2026-10-04
+
+### Fixed
+
+- On Windows, the page keeps its gap down the right again: 2.92.0 ran it
+  to the window's right edge for the scrollbar's sake, which looked like
+  the page had lost its right border.
+
+### Changed
+
+- The Library's sliding section tile, Filter and Clear, and Media's tiles
+  have the essentials' fine edge, brightest along the middle of each side
+  and fading into the corners, rather than an even line all round.
+
 ## [2.93.1] — 2026-10-04
 
 ### Fixed
