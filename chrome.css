@@ -3882,6 +3882,16 @@ zen-folder:is(:not([zia-folder-color]), [zia-folder-color="white"]) > .tab-group
   overflow-clip-margin: var(--zen-toolbox-padding) !important;
 }
 
+/* The tab list draws a little past its edges for the selected tab's glow,
+   which let the space beside the one shown peek in at the sidebar's edge:
+   its coloured folders showed as thin coloured slivers down the side (seen
+   on Windows, where the spaces sit closer). A space Zen has put to one side
+   (not shown, at a whole step away) is hidden while it rests there; while
+   it slides in or follows a swipe it's somewhere in between, and shows. */
+zen-workspace:not([active]):is([style*="translateX(1"], [style*="translateX(2"], [style*="translateX(3"], [style*="translateX(4"], [style*="translateX(5"], [style*="translateX(6"], [style*="translateX(7"], [style*="translateX(8"], [style*="translateX(9"], [style*="translateX(-"])[style*="00%)"] {
+  visibility: hidden !important;
+}
+
 /* Room at the end of the tab list for the last tab's glow, which the list
    would otherwise cut off. The list's inner scroll box ends where the last
    row does and doesn't take padding of its own, so the room goes at the end
@@ -7371,15 +7381,16 @@ zen-folder .tab-reset-button {
     }
 
     & #zen-library-sidebar-tabs {
-      gap: var(--zia-essential-gap) !important;
+      gap: 8px !important;
       padding-inline: 4px !important;
     }
 
     & .zen-library-tab {
-      --zen-library-sprite-size: 22px;
+      /* (Zen's animated icons at the 18px of Zia's line icons) */
+      --zen-library-sprite-size: 18px !important;
       margin: 0 !important;
-      padding: 8px 0 7px !important;
-      gap: 3px !important;
+      padding: 9px 0 8px !important;
+      gap: 6px !important;
       font-size: 11.5px !important;
       font-weight: 500 !important;
 
@@ -7398,10 +7409,11 @@ zen-folder .tab-reset-button {
         scale: 0.96;
       }
 
+      /* (the chosen one is lit by the tile that slides between them,
+         below) */
       &[active]::before {
-        background: var(--zia-lib-tile) !important;
-        /* Zia's shine round its edge, as on an essential */
-        box-shadow: inset 0 0 0 var(--zia-shine-width) color-mix(in srgb, var(--zia-lib-ink) 16%, transparent) !important;
+        background: none !important;
+        box-shadow: none !important;
       }
 
       /* the others' icons as faint as their names */
@@ -7411,6 +7423,33 @@ zen-folder .tab-reset-button {
     }
 
     /* the drawn icons in the ink, not Zen's accent */
+    /* The lit tile behind the chosen section, one for them all, sliding
+       to the one chosen with Zia's spring (28k-library.js places it) */
+    & #zen-library-sidebar-tabs {
+      position: relative !important;
+    }
+
+    & .zen-library-tab {
+      z-index: 1;
+    }
+
+    & .zia-library-rail {
+      position: absolute;
+      top: 0;
+      inset-inline: 4px;
+      z-index: 0;
+      border-radius: var(--zia-essential-radius);
+      background: var(--zia-lib-tile);
+      /* Zia's shine round its edge, as on an essential */
+      box-shadow: inset 0 0 0 var(--zia-shine-width) color-mix(in srgb, var(--zia-lib-ink) 16%, transparent);
+      pointer-events: none;
+      transition: transform var(--zia-spring-time) var(--zia-spring), height var(--zia-spring-time) var(--zia-spring);
+
+      &[instant] {
+        transition: none;
+      }
+    }
+
     & :is(.zen-library-tab-icon-image, .empty-state-icon-image) {
       --stroke: var(--zia-lib-ink) !important;
       /* (outline only: no fill when chosen, or while downloading) */
@@ -7420,7 +7459,7 @@ zen-folder .tab-reset-button {
 
     /* a download under way: Zia's progress ring round its icon */
     &[zen-library-downloading] .zen-library-tab[data-section="downloads"]::after {
-      top: 8px !important;
+      top: 9px !important;
       border-width: 2px !important;
       background:
         conic-gradient(var(--zia-loading-color) var(--zen-library-download-progress, 0%), color-mix(in srgb, var(--zia-lib-ink) 18%, transparent) 0) border-box,
@@ -7435,6 +7474,13 @@ zen-folder .tab-reset-button {
 
     & .zen-library-search-box {
       height: 34px !important;
+      /* the typing and its placeholder at the tabs' text size */
+      font-size: var(--zia-text-size) !important;
+
+      & input {
+        font-size: inherit !important;
+      }
+
       background: var(--zia-lib-field) !important;
       border-radius: var(--zia-tab-radius) !important;
     }
@@ -7451,6 +7497,11 @@ zen-folder .tab-reset-button {
 
     & .zen-library-filter-button {
       height: 34px !important;
+    }
+
+    /* the filters' buttons at the tabs' text size */
+    & :is(.zen-library-filter-chip, .zen-library-filter-done) {
+      font-size: var(--zia-text-size) !important;
     }
 
     & .zen-library-filter-chip {
@@ -7592,11 +7643,75 @@ zen-folder .tab-reset-button {
 
     & .zen-library-media-thumb {
       border-radius: 6px !important;
-      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25) !important;
+      /* a soft shadow of a few thin layers, each fainter and wider, as a
+         real one falls, rather than one dark blur */
+      box-shadow:
+        0 0.5px 1px rgba(0, 0, 0, 0.1),
+        0 1px 2px rgba(0, 0, 0, 0.08),
+        0 3px 6px -2px rgba(0, 0, 0, 0.1) !important;
     }
 
     & .zen-library-media-file {
       box-shadow: none !important;
+    }
+
+    /* Over a picture the tile catches the light: it leans a little towards
+       the cursor, its fine edge lights up nearest it with a faint glow
+       beneath, and the picture lifts a touch, its shadow falling the other
+       way (28k-library.js says where the cursor is), all springing back as
+       it leaves */
+    & .zen-library-media-item {
+      position: relative;
+      transform: perspective(500px) rotateX(var(--zia-lift-rx, 0deg)) rotateY(var(--zia-lift-ry, 0deg));
+      transition: transform 0.45s var(--zia-spring), background-color 0.12s ease !important;
+
+      &::before,
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        pointer-events: none;
+        opacity: var(--zia-lift, 0);
+        transition: opacity 0.3s ease;
+      }
+
+      /* the faint glow */
+      &::before {
+        background: radial-gradient(circle at var(--zia-lift-mx, 50%) var(--zia-lift-my, 50%), color-mix(in srgb, var(--zia-lib-ink) 8%, transparent), transparent 55%);
+      }
+
+      /* the edge, lit nearest the cursor */
+      &::after {
+        /* (Zia's own fine edge, no thicker) */
+        padding: var(--zia-shine-width);
+        background: radial-gradient(circle at var(--zia-lift-mx, 50%) var(--zia-lift-my, 50%), color-mix(in srgb, var(--zia-lib-ink) 70%, transparent), transparent 45%);
+        mask:
+          linear-gradient(#000 0 0) content-box exclude,
+          linear-gradient(#000 0 0);
+      }
+    }
+
+    & .zen-library-media-item:hover {
+      scale: 1 !important;
+    }
+
+    & .zen-library-media-frame {
+      transform: scale(calc(1 + var(--zia-lift, 0) * 0.04));
+      transition: transform 0.45s var(--zia-spring);
+    }
+
+    & .zen-library-media-item[zia-lifting] {
+      transition: transform 0.08s linear, background-color 0.12s ease !important;
+
+      & .zen-library-media-thumb:not(.zen-library-media-file) {
+        /* lifted: the same soft layers reaching further, falling away from
+           the cursor */
+        box-shadow:
+          calc(var(--zia-lift-sx, 0px) * 0.15) calc(0.5px + var(--zia-lift-sy, 0px) * 0.15) 1px rgba(0, 0, 0, 0.08),
+          calc(var(--zia-lift-sx, 0px) * 0.4) calc(2px + var(--zia-lift-sy, 0px) * 0.4) 4px -1px rgba(0, 0, 0, 0.08),
+          var(--zia-lift-sx, 0px) calc(6px + var(--zia-lift-sy, 0px)) 14px -4px rgba(0, 0, 0, 0.14) !important;
+      }
     }
 
     /* the media opt-in, as one of Zia's hover cards */
@@ -7779,40 +7894,8 @@ zen-folder .tab-reset-button {
     }
   }
 
-  /* The sections in Zia's line icons (Tabler, as the rest of Zia) rather
-     than Zen's illustrated ones: Zen's own drawing is hidden and Zia's drawn
-     in its place, in the ink */
+  /* The list beside the sections */
   zen-library {
-    & .zen-library-tab .zen-library-tab-icon {
-      background: var(--zia-lib-section-icon) center / 18px no-repeat;
-      -moz-context-properties: fill, fill-opacity;
-      fill: currentColor;
-
-      & .zen-library-tab-icon-image {
-        visibility: hidden !important;
-      }
-    }
-
-    & .zen-library-tab[data-section="media"] {
-      --zia-lib-section-icon: url("chrome://sine/content/zia/icons/ui/photo.svg");
-    }
-
-    & .zen-library-tab[data-section="downloads"] {
-      --zia-lib-section-icon: url("chrome://sine/content/zia/icons/ui/download.svg");
-    }
-
-    & .zen-library-tab[data-section="boosts"] {
-      --zia-lib-section-icon: url("chrome://sine/content/zia/icons/ui/wand.svg");
-    }
-
-    & .zen-library-tab[data-section="spaces"] {
-      --zia-lib-section-icon: url("chrome://sine/content/zia/icons/ui/layout-grid.svg");
-    }
-
-    & .zen-library-tab[data-section="history"] {
-      --zia-lib-section-icon: url("chrome://sine/content/zia/icons/ui/history.svg");
-    }
-
     /* the list runs to the Library's edge: Zen capped it at its own width
        less its wider column, which left a gap at the right */
     & .zen-library-section:not([data-section="spaces"]) {

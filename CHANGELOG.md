@@ -4,6 +4,35 @@ Every release of Zia, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.93.0] — 2026-10-04
+
+### Fixed
+
+- The space beside the one shown no longer peeks in at the sidebar's edge:
+  its coloured folders showed as thin coloured slivers down the side (seen
+  on Windows).
+
+### Added
+
+- A Clear button in the Library's History too, the eraser beside the
+  filter, as in Downloads. It opens Firefox's own Clear browsing data and
+  cookies dialog, to choose what goes.
+- In the Library's Media, a tile catches the light: it leans towards the
+  cursor, its fine edge lights up nearest it, and its picture lifts, its
+  soft layered shadow falling the other way. It springs back as you leave,
+  and stays still for anyone whose system asks for less motion.
+- The Library's chosen section is lit by one tile that slides along the
+  column to the section you choose, with Zia's spring, rather than one
+  going out and another coming on.
+
+### Changed
+
+- The Library's search fields, and the filters' buttons, are at the tabs'
+  text size.
+- The Library's sections are back in Zen's own animated icons, drawn at
+  18px, a little further apart, with more room between each icon and its
+  name.
+
 ## [2.92.0] — 2026-10-04
 
 ### Fixed
@@ -33,9 +62,8 @@ Every release of Zia, newest first. The format follows
   sections' column is narrower, with the others' icons as faint as their
   names and no fill on the chosen one; Filter and Clear are icon buttons,
   so the search field keeps its room; and the footer has no Donate.
-- The Library's sections are in Zia's line icons rather than Zen's
-  illustrated ones, and the list beside them runs to the Library's edge
-  (it stopped short, leaving a gap at the right).
+- The list beside the Library's sections runs to the Library's edge (it
+  stopped short, leaving a gap at the right).
 - The Library's rows, and the downloads above its button, have the tabs'
   own padding before the icon and gap after it, measured off a tab, with
   each icon at a favicon's size.
